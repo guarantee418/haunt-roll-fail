@@ -27,10 +27,16 @@ object Meta extends MetaGame { mmm =>
 
     val minPlayers = 2
 
-    val options = $[O]() ++ RulesChoice.all ++ CommandersChoice.all ++ $(ExpansionCommanders) ++ $(LostBrigades) ++ MapChoice.all ++ $(OptionalMapFeatures) ++ Length.all ++ hiddenOptions
+    val options = $[O]() ++ RulesChoice.all ++ CommandersChoice.all ++ $(ExpansionCommanders) ++ $(LostBrigades) ++ MapChoice.ordered ++ $(OptionalMapFeatures) ++ Length.all ++ hiddenOptions
 
     // hidden rules fixes every new game gets, so games made before keep their rules
-    override def hiddenOptions = $[O](TeamRetreatPoints)
+    override def hiddenOptions = $[O](TeamRetreatPoints, TutorialOption)
+
+    // The main menu's "Tutorial" (tutorial.scala): lessons on the First Game Rules as the US Forces, then a practice game against
+    // the Wehrmacht's Easy bot with a tip for every choice
+    override def tutorialAbout = Tutorial.about
+    override def tutorialLessons = Tutorial.lessons
+    override def tutorialGame = |((Tutorial.seating, Tutorial.bots, Tutorial.options))
 
     override def mandatoryFor(n : Int, l : $[F]) = $[O](TeamRetreatPoints)
 
@@ -129,7 +135,19 @@ object Meta extends MetaGame { mmm =>
 
     // the reworked setup screens, with the factions' emblems
     override def setupDesign = true
-    override def menuImages = Faction.all./(f => ("menu-" + f.id) -> ("/hrf/webp2/tactics/images/emblem/" + f.id + ".webp")).toMap
+    override def menuImages = Faction.all./(f => ("menu-" + f.id) -> ("/hrf/webp2/tactics/images/emblem/" + f.id + ".webp")).toMap ++
+        MapChoice.all./(c => ("thumb-" + c.toString.toLowerCase) -> ("/hrf/webp2/tactics/images/thumb/" + c + ".webp")).toMap ++
+        // the resource icons in the Tutorial's lessons, under their game asset names, as the lessons show in the menu and in the game
+        $(Manpower, Munitions, Fuel, VP, XP)./(r => ("res:" + r.id) -> ("/hrf/webp2/tactics/images/res/" + r.id + ".webp")).toMap
+
+    // the Map choices as tiles: the map's picture with its Spawn Areas and Control Points (tools/map-thumbs.py), its name, panels and
+    // players; an image is fetched only when its section is open
+    override def optionTile(o : O) = o match {
+        case c : MapChoice => |(Image("thumb-" + c.toString.toLowerCase, $(xstyles.tilePicture)) ~ Div(c.map.name.hlb) ~
+            Div((c.panelsText + ", " + c.playersText).spn(xstyles.smaller85)))
+        case _ => None
+    }
+    override def optionTileWide(o : O) = o.is[MapChoice]
     override def factionTile(f : Faction) = |(Div(Image("menu-" + f.id, ExternalStyle("setup-emblem"), "")) ~ Div(f.name.hlb))
     override def factionRowIcon(f : Faction) : Elem = Image("menu-" + f.id, ExternalStyle("setup-row-emblem"), "")
     override def factionChosenElem(f : Faction) = factionRowIcon(f) ~ factionElem(f).spn(xstyles.bold)

@@ -22,6 +22,15 @@ played and the choices made.
   `haunt-roll-fail/webp2/tactics/images/`, which the server serves as `/hrf/webp2/`; they were first committed to the repository root's
   `webp2/`, where the live site couldn't find them (404).
   No ranking.
+- Tutorial (2026-11-25, "some new players need a tutorial"): "Tutorial" on the Company of Heroes menu (URL `/play/tactics/tutorial`,
+  the core `tutorialMenu` Northgard's uses) has eight lessons on the First Game Rules and the site, as the US Forces (`Tutorial.lessons`
+  in `tutorial.scala`, all the text in one place): how you win, the map and Control Points, a round, Maneuver and CP, Damage, Supply,
+  playing on this site, and the Full Game Rules for after; then a practice game, US Forces against the Wehrmacht's Easy bot on Moro
+  River with the First Game Rules, no Commanders, Short (`Tutorial.options`, the hidden `TutorialOption`), saved in the browser like the
+  local games (kind `tutorial`). A "Tutorial tip" above the choices explains each kind of choice (`Tutorial.tip`, `preinfo` in `ui.scala`),
+  "Hide tips" turns them off (`tactics.tutorial-tips-hidden`), "Tutorial Lessons" under the action pane opens the lessons over the game
+  (`TutorialLessonView`). The lessons' resource icons are in `Meta.menuImages` under their asset names (`res:<id>`), so they show in the
+  menu as in the game.
 
 ## Files
 
@@ -48,6 +57,7 @@ played and the choices made.
   `openings`, `queueFree`) and the cases after the "COMMANDER PURCHASES" comment.
 - `ui.scala`: the map (tokens with health and status, Control Points and their flags, Sandbags, Spawn Areas), panels,
   the Building Boards and unit overlays.
+- `tutorial.scala`: the Tutorial (`TutorialOption`, `Tutorial`: the lessons, the practice game, the tips).
 - `bot.scala`: the Easy bot. `host.scala`: headless bot games (`tactics.Host`) and `tactics.Dump`.
 - `tools/commander-art.py`: the Commander cards (`commander/`) and the Commander units' tokens, from the Faction Guide's pages.
 - `tools/tactics-art.py`: every image in `webp2/tactics/images/` from the mod (`fetch`, then `make`), the Operations cards
@@ -92,6 +102,9 @@ booklet's pictures (pages 9 and 10). Moro River's first rows had the bridge poin
   forcing each card and `XP=25`), scenario checks for the rarer ones (Ramming, Thorough Salvage, Hold the Line, Crocodile, Thompsons,
   the Emplacements, Assault Tactics' income), the older games still replaying unchanged. sbt can't fetch from Maven Central here at times (HTTP 429): `~/.sbt/repositories` pointing at Google's mirror
   (`https://maven-central.storage-download.googleapis.com/maven2/`) with `-Dsbt.override.build.repos=true` works.
+- Tutorial: `TACTICS_TUTORIAL=1` plays the practice game's seating and options and prints each kind of choice the US Forces were
+  offered with a tip ("TIP") or without ("NO TIP"); the bot never sees the soft menus (a unit's moves, the spawn hexes), so those were
+  checked in Chromium (2026-11-25: the lessons in the menu, the practice game's setup, Maneuver and unit tips, the lessons overlay).
 - Browser: see "Browser driving" in `nort/HANDOFF.md`. A dump goes into `localStorage` as `tactics.hotseat.game.<time>`
   ("version ...", "title ...", "seating US WM", "options ") and `tactics.hotseat.moves.<time>`, then Local Game opens it.
   On 2026-11-24 a Quick Game (setup, moves, purchases) and a dumped game at a round 4 Damage Phase (assignments, the rolls,
@@ -105,4 +118,7 @@ booklet's pictures (pages 9 and 10). Moro River's first rows had the bridge poin
   `missions-bags.py`, `missions-grid.py`; 2026-11-25), with the optional Modular Bunkers as a setup toggle. A new booklet mission
   goes in `missions-bags.py` (it has a bag) or `missions-grid.py` (read off the booklet's picture with `booklet-tokens.py`: check its
   points against the picture and correct any in `FIX`).
+- Setup's map picker (2026-11-25): the Map choices sit in one folder, in sections by the booklet's chapters (`MapChoice.sectionOf`),
+  each a tile with a thumbnail (`Meta.optionTile`, `optionTileWide`). After adding or changing a map, run `sbt "runMain tactics.MapDump"`
+  into a file and `tools/map-thumbs.py <file> webp2/tactics/images` for its thumbnail.
 - A better bot.

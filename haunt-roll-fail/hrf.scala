@@ -3665,7 +3665,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                         }
                     val title = heading(o) ~ groupInfo.any.?(" ".txt ~ Parameter("group-info", OnClick(Image("question-mark")(xstyles.explain))))
                     ZOption(foldKey(o)./(s => Folds.heading(title, foldOpen(s))).|(groupInfo.any.?(OnClick(title)).|(title)),
-                        meta.optionTile(o)./(tile => OnClick(Div(Div(tile) ~ o.explain.any.?(Div(Parameter(o, OnClick(Span("?", $(xstyles.outlined, xstyles.tileButton))))) : Elem).|(Empty), ZBasic.tile ++ state.$(xstyles.optionOn) ++ state.not.$(ExternalStyle("setup-off")))) : Elem).|(
+                        meta.optionTile(o)./(tile => OnClick(Div(Div(tile) ~ o.explain.any.?(Div(Parameter(o, OnClick(Span("?", $(xstyles.outlined, xstyles.tileButton))))) : Elem).|(Empty), meta.optionTileWide(o).?(ZBasic.wideTile).|(ZBasic.tile) ++ state.$(xstyles.optionOn) ++ state.not.$(ExternalStyle("setup-off")))) : Elem).|(
                         OnClick(Div(state.?(o.decorate(o.valueOn).styled(xstyles.bold)).|(o.decorate(o.valueOff))
                         // not approved for ranked play (MetaGame.rankingUnapproved), marked in an online game's setup
                         ~ (online && meta.ranking.any && meta.rankingUnapproved(o)).?(" unranked".styled(xstyles.warning))

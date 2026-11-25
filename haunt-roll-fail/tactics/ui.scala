@@ -681,6 +681,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
                 Div("Yellow lines are Light Cover (1 Defense Die), green ones Heavy Cover (2), for Infantry in the hex when an attack crosses them. Infantry in a Building gets 3 Defense Dice, in a Destroyed Building 1. Red lines and water ringed in red can't be crossed. Buildings block sight and fire, except indirect fire.".txt) ~
                 game.full.?(Div("Full Game Rules: tank traps (the map's, and the steel hedgehogs units build) keep Vehicles out of their hex, barbed wire (a coil across the hex) keeps Infantry out, and two damage to the hex destroys what was built; a Building has 2 health against HE and Flame and becomes a Destroyed Building (darkened); a unit moving into an enemy's hex Assaults it; a set-up machine gun deals 1 Overwatch damage to enemy Infantry moving onto a hex in its arc.".txt)).|(Empty), styles.legend)), onClick)
 
+        case TutorialLessonView(n) =>
+            showOverlay(overlayScrollX(tutorialLesson(n)).onClick, onClick)
+
         case action : UserAction if lastThen != null =>
             clearOverlay()
 
@@ -699,9 +702,47 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
             clearOverlay()
     }
 
+    // The Tutorial's practice game: a lesson tapped open, with the previous and next ones a tap away (a tap elsewhere closes it)
+    def tutorialLesson(n : Int) : Elem = {
+        val (t, body) = Tutorial.lessons(n)
+        val last = Tutorial.lessons.num - 1
+        val nav = (n > 0).?(("◂ " ~ Tutorial.lessons(n - 1)._1).spn(xstyles.outlined).pointer.onClick.param(TutorialLessonView(n - 1))).|(Empty) ~ " ".pre ~
+            (n < last).?((Tutorial.lessons(n + 1)._1 ~ " ▸").spn(xstyles.outlined).pointer.onClick.param(TutorialLessonView(n + 1))).|(Empty)
+        (("Lesson " + (n + 1) + " of " + (last + 1)).txt.div ~ t.hlb.div ~ body./(e => Div(e)).merge ~ nav.div(styles.menuText)).div(xlo.flexvcenter)
+    }
+
+    // The Tutorial's practice game: its tips, hidden by "Hide tips" (each browser remembers it)
+    def tutorial = game.options.has(TutorialOption)
+
+    val tutorialTipsKey = "tactics.tutorial-tips-hidden"
+
+    def tutorialTipsHidden : Boolean = try { hrf.web.Local.get(tutorialTipsKey, "") == "yes" } catch { case _ : Throwable => false }
+
+    def hideTutorialTips(hide : Boolean) {
+        try { hrf.web.Local.set(tutorialTipsKey, hide.?("yes").|("")) } catch { case _ : Throwable => }
+        if (lastThen != null) ask(lastSelf, lastActions, lastThen)
+    }
+
+    // The tip for the choices offered (Tutorial.tip), or what the bot is doing, above the choices
+    override def preinfo(self : |[Faction], aa : $[UserAction]) : $[ZOption] =
+        if (tutorial.not || tutorialTipsHidden || currentGame.isOver)
+            $
+        else {
+            val tip = (self match {
+                case Some(f) if f == Tutorial.side => Tutorial.tip(currentGame, f, aa)
+                case _ => None
+            }) || aa.none.?(Tutorial.waiting(currentGame))
+            tip./(t => ZOption("Tutorial tip".hl, Div(Div(t, $(styles.tutorialTip)) ~ Div(Parameter("hide", OnClick("Hide tips".spn(xstyles.outlined)(xstyles.smaller85)(xlo.pointer))), $(styles.menuText)), ZBasic.info), {
+                case "hide" => hideTutorialTips(true)
+                case _ =>
+            }, clear = false)).$
+        }
+
     override def info(self : |[Faction], aa : $[UserAction]) = {
         val ii = currentGame.info($, self, aa)
         ii.any.??($(ZOption(Empty, Break)) ++ convertActions(self.of[Faction], ii)) ++
+            tutorial.$(ZBasic(Break ~ Break, "Tutorial Lessons".hh, () => { onClick(TutorialLessonView(0)) }).copy(clear = false)) ++
+            (tutorial && tutorialTipsHidden && currentGame.isOver.not).$(ZBasic(Break, "Show tutorial tips".hh, () => { hideTutorialTips(false) }).copy(clear = false)) ++
             $(ZBasic(Break ~ Break, "Building Boards".hh, () => { onClick(("board", self.|(game.setup.head))) }).copy(clear = false)) ++
             $(ZBasic(Break ~ Break, "Icons".hh, () => { onClick("legend") }).copy(clear = false)) ++
             (currentGame.isOver && hrf.HRF.flag("replay").not).$(

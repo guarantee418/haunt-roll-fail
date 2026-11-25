@@ -28,12 +28,26 @@ object Host extends hrf.host.BaseHost {
 
     override val limit = 60000
 
-    def askBot(g : G, f : F, actions : $[UserAction]) = new BotXX(f).ask(actions, 0)(g)
+    // TACTICS_TUTORIAL=1 plays the Tutorial's practice game (its seating and options) and prints the kinds of choices the US
+    // Forces were offered with no tip ("NO TIP"), and each tip once ("TIP")
+    val tutorial = sys.env.get("TACTICS_TUTORIAL") == Some("1")
+    var tipsSeen = Set[String]()
+
+    def askBot(g : G, f : F, actions : $[UserAction]) = {
+        if (tutorial && f == Tutorial.side && actions.any) {
+            val kinds = actions./(_.unwrap.getClass.getSimpleName).distinct.sorted.mkString(",")
+            Tutorial.tip(g, f, actions) match {
+                case Some(_) => if (tipsSeen.contains(kinds).not) { tipsSeen += kinds ; println("TIP " + kinds) }
+                case None => if (tipsSeen.contains("-" + kinds).not) { tipsSeen += "-" + kinds ; println("NO TIP " + kinds) }
+            }
+        }
+        new BotXX(f).ask(actions, 0)(g)
+    }
 
     def factions = Rules.factions
     def subjects = factions
 
-    def batch = $(() => new G(factions.shuffle, Rules.options))
+    def batch = $(() => tutorial.?(new G(Tutorial.seating, Tutorial.options)).|(new G(factions.shuffle, Rules.options)))
 
     def factionName(f : F) = f.name
     def nameWinner(f : F) = f.name
@@ -126,5 +140,19 @@ object Replay {
         }
         println("ALL " + moves.num + " MOVES VALID, round " + game.round + ", " + game.phase)
         State.print(game)
+    }
+}
+
+// `sbt "runMain tactics.MapDump"` prints each Map choice's picture, size, Spawn Areas and Control Points (in the picture's pixels), one
+// line each, for tools/map-thumbs.py, which draws the setup screen's map thumbnails
+object MapDump {
+    def main(args : Array[String]) {
+        MapChoice.all.foreach { c =>
+            val m = c.map
+            val teams = m.areas.any.?(m.areas.num).|(2)
+            val spawns = 0.until(teams).$./(t => m.spawn(t)./(h => m.x(h).round + "," + m.y(h).round).mkString(";"))
+            val points = m.points.toList./{ case (h, l) => m.x(h).round + "," + m.y(h).round + "," + l./(_.id).mkString("+") }.mkString(";")
+            println("MAP\t" + c + "\t" + m.image + "\t" + m.width + "\t" + m.height + "\t" + spawns.mkString("|") + "\t" + points)
+        }
     }
 }
