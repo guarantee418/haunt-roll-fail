@@ -105,4 +105,7 @@ booklet's pictures (pages 9 and 10). Moro River's first rows had the bridge poin
   `missions-bags.py`, `missions-grid.py`; 2026-11-25), with the optional Modular Bunkers as a setup toggle. A new booklet mission
   goes in `missions-bags.py` (it has a bag) or `missions-grid.py` (read off the booklet's picture with `booklet-tokens.py`: check its
   points against the picture and correct any in `FIX`).
+- Setup's map picker (2026-11-25): the Map choices sit in one folder, in sections by the booklet's chapters (`MapChoice.sectionOf`),
+  each a tile with a thumbnail (`Meta.optionTile`, `optionTileWide`). After adding or changing a map, run `sbt "runMain tactics.MapDump"`
+  into a file and `tools/map-thumbs.py <file> webp2/tactics/images` for its thumbnail.
 - A better bot.
