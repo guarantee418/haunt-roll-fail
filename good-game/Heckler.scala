@@ -6,8 +6,9 @@ import java.nio.file.Files
 // THE ROAST ME ROLE (2026-11-25, asked for: "a notification role that makes fun of you while you play the game"): a member with the
 // role (default "Roast Me"; the owner makes it with the role change and lists it with self-role, so members pick it with /roles) gets,
 // under each of their turn pings, a jab from the game's heckler, posted through the same webhook in the same thread under the heckler's
-// own name (and picture, where it has one): a webhook can post as any name, per message. The jab names the player without pinging
-// them again (allowed_mentions lists no one), and it fits why they were pinged (Turns.reason's tag, as TurnPings.reasonOf reads it).
+// own name (and picture, where it has one): a webhook can post as any name, per message. Since 2026-11-25 (asked for: no double pings)
+// that one message is the ping itself, the jab on its second line, in place of the turns webhook's plain ping; the jab fits why they
+// were pinged (Turns.reason's tag, as TurnPings.reasonOf reads it).
 //
 // The hecklers, one a game, each in its own setting:
 //   Root              the Court Crow: a Corvid in a jester's cap (art by haunt-roll-fail/tools/heckler-art.py, served from /art/)
@@ -66,23 +67,20 @@ object Heckler {
         case _ => crow
     }
 
-    // a jab for a ping (called from TurnPings.attempt, after the ping is queued): the role is checked on the poster's thread, so the
-    // ping isn't held up by it, and the jab follows the ping
-    def heckle(meta : String, tag : String, uid : String, name : String, reminder : Boolean, post : (String, String) => Unit) {
-        if (roleName.isEmpty || !DiscordBot.configured)
-            return
+    // a turn ping (called from TurnPings.attempt; its post goes out on the poster's thread, so the role check, which asks Discord, holds
+    // nothing up and the posts keep their order): a player with the role gets it from the game's heckler, under its own name and picture,
+    // with the jab on the next line, in one message that pings them once; everyone else gets the plain ping from the turns webhook
+    def ping(meta : String, tag : String, uid : String, text : String, reminder : Boolean, post : (String, String) => Unit) {
         Tournament.poster.execute { () =>
-            try {
-                if (roasted(uid)) {
-                    val v = voiceOf(meta)
-                    val options = if (reminder) v.lines("reminder") else v.lines.getOrElse(tag, v.lines("turn"))
-                    val line = pick(uid, options).replace("{name}", name)
-                    post(line, persona(v) + (if (v == crow) gifFor(tag).getOrElse("") else ""))
-                }
+            val troll = roleName.nonEmpty && DiscordBot.configured && (try roasted(uid) catch { case e : Exception => println("Heckler: " + e) ; false })
+            if (troll) {
+                val v = voiceOf(meta)
+                val options = if (reminder) v.lines("reminder") else v.lines.getOrElse(tag, v.lines("turn"))
+                val line = pick(uid, options).replace("{name}", "<@" + uid + ">")
+                post(text + "\n" + line, persona(v) + (if (v == crow) gifFor(tag).getOrElse("") else ""))
             }
-            catch {
-                case e : Exception => println("Heckler: " + e)
-            }
+            else
+                post(text, "")
         }
     }
 

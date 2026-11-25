@@ -1262,10 +1262,10 @@ server. No session can reach the server, and none needs to.
   `self-roles`, `self-role <role>, ...`, `self-role-off <role>, ...`; `role-picker <channel> [| text <text>]` posts the button), and only
   while each gives no server permission, isn't a bot's and sits under the bot's role, checked again at every pick, so Manager or any
   moderating role is never handed out.
-- The "Roast Me" role (2026-11-25, asked for: a notification role that makes fun of you while you play): a member with it gets, under
-  each of their turn pings, a jab from the game's heckler, posted by the same webhook in the same thread under the heckler's own name and
-  picture (a webhook post's `username` and `avatar_url`, `persona` in `Tournament.post`), naming them without pinging them again, and
-  fitting the ping's reason: Root's Court Crow (the Corvid character art in a jester's cap, peeking out of a trash can), Northgard's Ratatoskr (the Norse squirrel who
+- The "Roast Me" role (2026-11-25, asked for: a notification role that makes fun of you while you play): a member with it gets each of their
+  turn pings from the game's heckler instead of the turns webhook's plain ping: one message, the ping with a jab on its second line, posted
+  by the same webhook in the same thread under the heckler's own name and picture (a webhook post's `username` and `avatar_url`, `persona` in
+  `Tournament.post`; `Heckler.ping`; asked for on 2026-11-25: no double pings), the jab fitting the ping's reason: Root's Court Crow (the Corvid character art in a jester's cap, peeking out of a trash can), Northgard's Ratatoskr (the Norse squirrel who
   carries the eagle's insults down Yggdrasil), Pincer's Pamphleteer and Company of Heroes' Sergeant Major (`good-game/Heckler.scala`, its
   lines there; the jabs mock the play, never the person). The Court Crow also mocks, in the game's thread, what happens to a
   player with the role on anyone's turn (asked for the same day): a 3-0 roll against them, their own 0-3, an ambush, a Raze, a Revolt, a
