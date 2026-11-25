@@ -27,7 +27,12 @@ object Meta extends MetaGame { mmm =>
 
     val minPlayers = 2
 
-    val options = $[O]() ++ RulesChoice.all ++ CommandersChoice.all ++ $(ExpansionCommanders) ++ $(LostBrigades) ++ MapChoice.all ++ Length.all
+    val options = $[O]() ++ RulesChoice.all ++ CommandersChoice.all ++ $(ExpansionCommanders) ++ $(LostBrigades) ++ MapChoice.all ++ Length.all ++ hiddenOptions
+
+    // hidden rules fixes every new game gets, so games made before keep their rules
+    override def hiddenOptions = $[O](TeamRetreatPoints)
+
+    override def mandatoryFor(n : Int, l : $[F]) = $[O](TeamRetreatPoints)
 
     // new games play the Full Game Rules (2026-11-24); a game with neither choice (made before) plays the First Game Rules
     override def defaultsFor(n : Int, l : $[F]) = $(FullGameRules, DrawCommanders, MoroRiverMap, ShortGame)

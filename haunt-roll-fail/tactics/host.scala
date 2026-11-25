@@ -17,7 +17,7 @@ object Rules {
     // TACTICS_FACTIONS=BR,OKW plays those two (the first goes first in the seating); US and Wehrmacht by default
     def factions : $[Faction] = sys.env.get("TACTICS_FACTIONS")./(_.split(",").toList./(x => Meta.parseFaction(x).get)).|($(US, Wehrmacht))
 
-    def options : $[Meta.O] = (sys.env.get("TACTICS_RULES") == Some("first")).?($[Meta.O]()).|($[Meta.O](FullGameRules) ++ (sys.env.get("TACTICS_COMMANDERS") != Some("0")).$(DrawCommanders)) ++ MapChoice.all.%(_.map.id == sys.env.getOrElse("TACTICS_MAP", "")) ++ (sys.env.get("TACTICS_EXPANSION") == Some("1")).$(ExpansionCommanders) ++ (sys.env.get("TACTICS_BRIGADES") == Some("1")).$(LostBrigades)
+    def options : $[Meta.O] = (sys.env.get("TACTICS_RULES") == Some("first")).?($[Meta.O]()).|($[Meta.O](FullGameRules) ++ (sys.env.get("TACTICS_COMMANDERS") != Some("0")).$(DrawCommanders)) ++ MapChoice.all.%(_.map.id == sys.env.getOrElse("TACTICS_MAP", "")) ++ (sys.env.get("TACTICS_EXPANSION") == Some("1")).$(ExpansionCommanders) ++ (sys.env.get("TACTICS_BRIGADES") == Some("1")).$(LostBrigades) ++ $(TeamRetreatPoints)
 }
 
 object Host extends hrf.host.BaseHost {

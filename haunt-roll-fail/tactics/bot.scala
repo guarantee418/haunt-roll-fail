@@ -54,6 +54,7 @@ class GameEvaluation(val game : Game, val self : Faction) {
             case SetUpAction(_, u, _) => (nearest(where(u)) <= 4) |=> 400 -> "set up"
             case PackUpAction(_, u, _) => true |=> -100 -> "stay set up"
             case SandbagsAction(_, u, _, _) => (Board.points.contains(where(u))) |=> 150 -> "dig in"
+            case DefensesAction(_, u, w, t, _) => (Board.points.contains(where(u)) && enemies(self)./~(units).exists(e => Board.distance(where(e), where(u)) <= 3)) |=> (90 + (w && t).??(30)) -> "wire and traps"
             case EmbarkAction(_, _, _, _, _) => true |=> -50 -> "walk"
             case DisembarkAction(_, _, h, _) => true |=> 100 -> "out"
             case EndTurnAction(_, _) => true |=> 0 -> "end"

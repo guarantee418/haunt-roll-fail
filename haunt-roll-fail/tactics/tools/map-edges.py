@@ -25,7 +25,7 @@ def cls(p):
     return None
 out={}
 for r in range(-1,13):
-    for c in range(-1,13):
+    for c in range(-1,int(W/DX)+2):
         cx,cy=center(r,c)
         if not (-S*0.3<cx<W+S*0.3 and -S*0.3<cy<H+S*0.3): continue
         cs=corners(cx,cy); res=[]

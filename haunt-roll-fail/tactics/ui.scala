@@ -154,6 +154,51 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         i
     })
 
+    // built barbed wire (a coil of wire across the hex's lower half) and tank traps (three steel hedgehogs in its upper half)
+    lazy val wireImage : CanvasImage = {
+        val canvas = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
+        canvas.width = 200
+        canvas.height = 210
+        val g = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
+        g.lineCap = "round"
+        $(("#14181f", 7.0), ("#b9bec6", 3.0)).foreach { case (c, w) =>
+            g.strokeStyle = c
+            g.lineWidth = w
+            g.beginPath()
+            0.to(56).foreach { i =>
+                val t = i / 56.0
+                val x = 30 + 140 * t + 9 * math.cos(t * 14 * math.Pi)
+                val y = 150 + 13 * math.sin(t * 14 * math.Pi)
+                if (i == 0) g.moveTo(x, y) else g.lineTo(x, y)
+            }
+            g.stroke()
+        }
+        new CanvasImage(canvas)
+    }
+
+    lazy val trapImage : CanvasImage = {
+        val canvas = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
+        canvas.width = 200
+        canvas.height = 210
+        val g = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
+        g.lineCap = "round"
+        $((60.0, 52.0), (100.0, 40.0), (140.0, 52.0)).foreach { case (x, y) =>
+            $(("#14181f", 9.0), ("#6f747c", 5.0)).foreach { case (c, w) =>
+                g.strokeStyle = c
+                g.lineWidth = w
+                g.beginPath()
+                g.moveTo(x - 13, y - 13)
+                g.lineTo(x + 13, y + 13)
+                g.moveTo(x + 13, y - 13)
+                g.lineTo(x - 13, y + 13)
+                g.moveTo(x, y - 15)
+                g.lineTo(x, y + 15)
+                g.stroke()
+            }
+        }
+        new CanvasImage(canvas)
+    }
+
     // the side a Heavy Vehicle or set-up Weapon Team faces: a triangle on the token's edge, in its faction's color
     var arrowImages = Map[(Int, String), CanvasImage]()
 
@@ -371,6 +416,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         }
         game.eyes.values.toList.flatMap(_.toList).distinct.foreach { h =>
             structures.add(Sprite($(ImageRect(fillImage("rgba(60, 120, 230, 0.18)", "#5a8cff"), Rectangle(-100, -105, 200, 210), 1.0)), $))(Board.x(h), Board.y(h))
+        }
+
+        game.wire.foreach { h =>
+            structures.add(Sprite($(ImageRect(wireImage, Rectangle(-100, -105, 200, 210), 1.0)), $))(Board.x(h), Board.y(h))
+        }
+        game.traps.foreach { h =>
+            structures.add(Sprite($(ImageRect(trapImage, Rectangle(-100, -105, 200, 210), 1.0)), $))(Board.x(h), Board.y(h))
         }
 
         game.sandbags.foreach { case (h, l) =>
@@ -620,7 +672,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
                 ).|(Empty) ~
                 line(Image("status:flag-us", styles.icon), "Control Point held") ~
                 Div("Yellow lines are Light Cover (1 Defense Die), green ones Heavy Cover (2), for Infantry in the hex when an attack crosses them. Infantry in a Building gets 3 Defense Dice, in a Destroyed Building 1. Red lines and water ringed in red can't be crossed. Buildings block sight and fire, except indirect fire.".txt) ~
-                game.full.?(Div("Full Game Rules: tank traps keep Vehicles out of their hex; a Building has 2 health against HE and Flame and becomes a Destroyed Building (darkened); a unit moving into an enemy's hex Assaults it; a set-up machine gun deals 1 Overwatch damage to enemy Infantry moving onto a hex in its arc.".txt)).|(Empty), styles.legend)), onClick)
+                game.full.?(Div("Full Game Rules: tank traps (the map's, and the steel hedgehogs units build) keep Vehicles out of their hex, barbed wire (a coil across the hex) keeps Infantry out, and two damage to the hex destroys what was built; a Building has 2 health against HE and Flame and becomes a Destroyed Building (darkened); a unit moving into an enemy's hex Assaults it; a set-up machine gun deals 1 Overwatch damage to enemy Infantry moving onto a hex in its arc.".txt)).|(Empty), styles.legend)), onClick)
 
         case action : UserAction if lastThen != null =>
             clearOverlay()

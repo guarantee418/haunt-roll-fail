@@ -99,10 +99,9 @@ booklet's pictures (pages 9 and 10). Moro River's first rows had the bridge poin
 
 ## Next
 
-- The buildable barbed wire and tank traps. (The Lost Brigades building extensions are in, `brigades.scala`, 2026-11-24.)
 - Full Game readings to confirm with the team (RULES.md, Interpretations 7 to 12): the Firing Arc's width, Retreat paths,
   Overwatch on a hex passed through.
-- Team games: allied abilities for teammates (Reinforce, repairs), the 4-panel missions (the mod has only the four core panels,
+- Team games: the 4-panel missions (the mod has only the four core panels,
   so the 2 vs 2 missions on 3 or 4 panels need their layouts). The other free-for-all missions need LMP panels. The Lost Brigades and terrain packs' missions (4.1 ...)
   need the packs' panels and Bunkers.
 - A better bot.
