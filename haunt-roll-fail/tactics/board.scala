@@ -98,6 +98,9 @@ class MapData(val id : String, val name : String, val image : String, val stock 
 
     val traps : $[Hex] = parsed.%(_._4.contains('T'))./(_._1)
 
+    // Bunkers (Full Game Rules 10.1, "K" in the extras): Special Buildings with 4 health, whose Infantry gets an AP die attacking out
+    val bunkers : $[Hex] = parsed.%(_._4.contains('K'))./(_._1)
+
     val points : Map[Hex, $[Res]] = parsed./~{ case (h, _, _, x) =>
         val l = x.toList./~{
             case 'V' => $(VP)
@@ -426,6 +429,7 @@ object Board {
     def cover = current.cover
     def closed = current.closed
     def traps = current.traps
+    def bunkers = current.bunkers
     def points = current.points
     def neighbors = current.neighbors
     def adjacent(a : Hex, b : Hex) = current.adjacent(a, b)

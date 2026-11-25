@@ -192,6 +192,31 @@ booklet's pictures (pages 6 and 18), each token's centre mapped to its hex:
 | Between Two Rivers (3 panels) | MR2, MR1, MR2 | 4, 2, 6 | left and right edges |
 | Ardennes Forest (3 panels) | AF2, AF1, AF2 | 1, 2, 3 | top and bottom |
 
+Ten of the booklet's 4.1 2-panel LMP missions are on the Large Map Pack panels Hill 331 (HL1, HL2), Trois Ponts (TP1, TP2) and
+Stalingrad (SG1, SG2) (2026-11-25; `tools/missions-lmp.py`). Their panels and Control Points come from the mod's mission bags; the
+Buildings, Destroyed Buildings, Water (ringed in red), Ice and the Hill 331 Bunker were read by hand off the panels; the Spawn Areas are
+the half hexes of the top and bottom rows under the booklet's spawn boxes, or the left and right edges:
+
+| Mission | Panels | Stockpile | Spawn Areas |
+|---|---|---|---|
+| Hill 331 | HL1, HL2 | 6, 4, 2 | left and right edges |
+| Ploiesti Outskirts | HL2, HL1 | 4, 4, 4 | top and bottom, middle |
+| Verrieres Ridge | HL1, HL2 | 4, 2, 4 | top and bottom |
+| Trois Ponts | TP1, TP2 | 4, 2, 3 | top left, bottom right |
+| Caen | TP2, TP1 | 2, 6, 0 | top and bottom, middle |
+| Carentan | TP1, TP2 | 6, 4, 4 | left and right edges |
+| Stalingrad | SG1, SG2 | 2, 4, 0 | top left, bottom right |
+| Bulge | SG2, SG1 | 4, 1, 6 | top right, bottom left |
+| Leningrad | SG1, SG2 | 4, 6, 1 | left and right edges |
+| Mongolian Train Station | SG2, SG1 | 3, 2, 2 | top middle, both bottom corners |
+
+- **Bunker** (Full Game Rules 10.1): the Hill 331 pillbox is a Special Building with 4 health; Infantry inside gets an AP die
+  attacking units outside it (`Board.bunkers`, "K" in the rows; `attacksOf`, `diceOnFull`).
+- **Optional Modular Bunkers** (the A and B hexes some missions mark) are left out; Ploiesti's A hexes, multi-hex Buildings the panels
+  don't print, are Buildings.
+- **Ice on Stalingrad's panels**: the hexes mostly ice (the rule's fallback); the panels' snowflake icons sit on hex edges, and agree.
+- **Stockpiles** are the booklet's; Trois Ponts' bag in the mod says 4/4/3, the booklet 4/2/3.
+
 The 3-panel Between Two Rivers' badges mark the first full column and the half hexes beside it at each edge (`MapData.edge` 1.1).
 The 3-panel missions may be played by two players too, each with 2 starting Infantry.
 

@@ -305,7 +305,7 @@ Forces and Oberkommando West, read off their Building Boards in the mod, with th
 the British and OKW build Emplacements; `tactics/RULES.md`, Factions) on the Mission Booklet's six 2-panel core missions (the setup's
 Map choice, `MapChoice`, 2026-11-24: Moro River, the default, Across the Don, Between Two Rivers, Ardennes Forest, Frozen Lake and Road to
 Moscow, maps in `tactics/missions.scala` made by `tactics/tools/missions.py`, with Ice, the Cathedral and multi-hex Buildings on the Ardennes
-panels; games made before the choice play `MoroRiverFirst`; since 2026-11-25 also the booklet's 1-panel skirmishes The River and Frozen Pond and its 3-panel team maps Between Two Rivers and Ardennes Forest, `MapData.panels`, made by `tactics/tools/missions-panels.py`), its Full Game Rules in every new game
+panels; games made before the choice play `MoroRiverFirst`; since 2026-11-25 also the booklet's 1-panel skirmishes The River and Frozen Pond and its 3-panel team maps Between Two Rivers and Ardennes Forest, `MapData.panels`, made by `tactics/tools/missions-panels.py`; and ten 2-panel Large Map Pack missions on the Hill 331, Trois Ponts and Stalingrad panels, with Stalingrad's Ice and Hill 331's Bunker, `Board.bunkers`, made by `tactics/tools/missions-lmp.py`), its Full Game Rules in every new game
 (the setup's Rules choice, `FullGameRules`, 2026-11-24: Operations deck, Retreats, Assaults, Overwatch, firing arcs and Heavy Vehicle
 facing, HE Splash, Frontal Armor, destructible Buildings, Moro River's tank traps; `game.full`) with its thirty core Commanders (the
 setup's Commanders choice, `DrawCommanders`, 2026-11-24: `tactics/commanders.scala`, cards cut from the Faction Guide by

@@ -993,10 +993,21 @@ case object TheRiverMap extends MapChoice(TheRiver, "Skirmish, two players: MR1 
 case object FrozenPondMap extends MapChoice(FrozenPond, "Skirmish, two players: AF2 alone, the frozen pond's Ice tiles on the right. Each player starts with 2 Infantry; the game ends at 11 VP. Starting stockpile 4 Manpower, 2 Munitions, 4 Fuel.")
 case object BetweenTwoRiversWideMap extends MapChoice(BetweenTwoRiversWide, "Three panels (MR2, MR1, MR2), for team games: the Spawn Areas are the left and right edges; highly asymmetrical. Each player starts with 2 Infantry. Starting stockpile 4 Manpower, 2 Munitions, 6 Fuel.")
 case object ArdennesForestWideMap extends MapChoice(ArdennesForestWide, "Three panels (AF2, AF1, AF2), for team games: the airfield in the middle, Spawn Areas at the top and bottom; highly asymmetrical. Each player starts with 2 Infantry. Starting stockpile 1 Manpower, 2 Munitions, 3 Fuel.")
+case object HillThreeThirtyOneMap extends MapChoice(HillThreeThirtyOne, "Large Map Pack, HL1, HL2: the hill and its Bunker in the middle; the Spawn Areas are the left and right edges. Starting stockpile 6 Manpower, 4 Munitions, 2 Fuel.")
+case object PloiestiOutskirtsMap extends MapChoice(PloiestiOutskirts, "Large Map Pack, HL2, HL1: two multi-hex Buildings (not printed on the panels) either side of the middle. Starting stockpile 4 Manpower, 4 Munitions, 4 Fuel.")
+case object VerrieresRidgeMap extends MapChoice(VerrieresRidge, "Large Map Pack, HL1, HL2: the ridge and its Bunker. Starting stockpile 4 Manpower, 2 Munitions, 4 Fuel.")
+case object TroisPontsMap extends MapChoice(TroisPonts, "Large Map Pack, TP1, TP2: the river town and its bridges. Starting stockpile 4 Manpower, 2 Munitions, 3 Fuel.")
+case object CaenMap extends MapChoice(Caen, "Large Map Pack, TP2, TP1: the river in the middle; highly asymmetrical. Starting stockpile 2 Manpower, 6 Munitions, 0 Fuel.")
+case object CarentanMap extends MapChoice(Carentan, "Large Map Pack, TP1, TP2: the Spawn Areas are the left and right edges; highly asymmetrical. Starting stockpile 6 Manpower, 4 Munitions, 4 Fuel.")
+case object StalingradMap extends MapChoice(Stalingrad, "Large Map Pack, SG1, SG2: the frozen Volga (Ice) and the railway bridge. Starting stockpile 2 Manpower, 4 Munitions, 0 Fuel.")
+case object BulgeMap extends MapChoice(Bulge, "Large Map Pack, SG2, SG1: the frozen river through the middle. Starting stockpile 4 Manpower, 1 Munitions, 6 Fuel.")
+case object LeningradMap extends MapChoice(Leningrad, "Large Map Pack, SG1, SG2: the Spawn Areas are the left and right edges. Starting stockpile 4 Manpower, 6 Munitions, 1 Fuel.")
+case object MongolianTrainStationMap extends MapChoice(MongolianTrainStation, "Large Map Pack, SG2, SG1: Team 2 spawns at both bottom corners; highly asymmetrical. Starting stockpile 3 Manpower, 2 Munitions, 2 Fuel.")
 case object MoroRiverFFAMap extends MapChoice(MoroRiverFFA, "Three players, each on their own: MR1 and MR2 with other Control Points and three Spawn Areas (top left, top right, bottom). Every player who assigned Damage to a destroyed unit gains a VP; the game ends at 15 VP. Starting stockpile 6 Manpower, 4 Munitions, 2 Fuel.")
 
 object MapChoice {
-    val all = $[MapChoice](MoroRiverMap, AcrossTheDonMap, BetweenTwoRiversMap, ArdennesForestMap, FrozenLakeMap, RoadToMoscowMap, MoroRiverFFAMap, TheRiverMap, FrozenPondMap, BetweenTwoRiversWideMap, ArdennesForestWideMap)
+    val all = $[MapChoice](MoroRiverMap, AcrossTheDonMap, BetweenTwoRiversMap, ArdennesForestMap, FrozenLakeMap, RoadToMoscowMap, MoroRiverFFAMap, TheRiverMap, FrozenPondMap, BetweenTwoRiversWideMap, ArdennesForestWideMap,
+        HillThreeThirtyOneMap, PloiestiOutskirtsMap, VerrieresRidgeMap, TroisPontsMap, CaenMap, CarentanMap, StalingradMap, BulgeMap, LeningradMap, MongolianTrainStationMap)
 }
 
 // THE ICE MATRIX (Full Game Rules 10.4): how many dice a unit attacked on an Ice tile rolls for each damage type assigned to it
@@ -1403,7 +1414,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // what it bought, and what its Commander gives it (less what it already bought)
     def effects(u : Squad) : $[Effect] = { val b = boughtEffects(u) ; b ++ (freeEffects(u) ++ u.utype.innate).diff(b) }
     def attacksOf(u : Squad) : $[Attack] = {
-        val l = u.utype.attacks ++ effects(u)./~{ case AddAttack(a) => $(a) ; case AddAttacks(a) => $(a, a) ; case FlameRefit => $(UnitType.flame) ; case CloseFire => $(UnitType.ai, UnitType.ai) ; case _ => $ }
+        // a Bunker (Full Game Rules 10.1): its Infantry has an AP die (only against units outside it, `diceOnFull`)
+        val bunker = (full && u.kind == Infantry && pos.get(u).exists(h => Board.bunkers.has(h) && ruined.contains(h).not) && isPassenger(u).not).$(UnitType.ap)
+        val l = bunker ++ u.utype.attacks ++ effects(u)./~{ case AddAttack(a) => $(a) ; case AddAttacks(a) => $(a, a) ; case FlameRefit => $(UnitType.flame) ; case CloseFire => $(UnitType.ai, UnitType.ai) ; case _ => $ }
         // Operation Crocodile: the Churchill's AI becomes 2 forward Flame
         if (u.utype == Churchill && unlocked(u.faction, OperationCrocodile)) l.%(_.dmg != AI) ++ $(UnitType.flame, UnitType.flame) else l
     }
@@ -2092,7 +2105,10 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         // Close Range Firepower only at range 1 (or in an Assault)
         val dice = (d > 1 && closeAttacks(u).any).?(remaining(u).diff(closeAttacks(u))).|(remaining(u))
 
-        dice.%(a => clear || a.indirect).%(a => fixedGun(u, a).not || inArc(u, where(t))).%(a => a.dmg != HE || hasSplash(u).not)
+        // the Bunker's AP die only against units outside it
+        val inside = (d == 0 && Board.bunkers.has(where(u))).?(dice.diff($(UnitType.ap))).|(dice)
+
+        inside.%(a => clear || a.indirect).%(a => fixedGun(u, a).not || inArc(u, where(t))).%(a => a.dmg != HE || hasSplash(u).not)
     }
 
     // the Ice checks: each unit attacked on an Ice tile rolls the most dice the Ice Matrix gives any damage type assigned to it
@@ -3334,7 +3350,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                     val n = standing(x).exists(u => u.kind == Infantry && unlocked(u.faction, SovietArchitecture)).?(max(0, n0 - 1)).|(n0)
                     buildingDamage += x -> (buildingDamage.getOrElse(x, 0) + n)
                     log("The Building in", x, "took", n.hl, "damage")
-                    if (buildingDamage(x) >= 2) {
+                    if (buildingDamage(x) >= Board.bunkers.has(x).?(4).|(2)) {
                         ruined += x
                         fallen :+= x
                         log("The Building in", x, "was destroyed")
