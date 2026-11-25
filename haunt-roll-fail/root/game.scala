@@ -1648,6 +1648,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
     var frogsSkipLostSouls = false
     var frogsCraftByClearing = false
     var lizardsCraftByClearing = false
+    var lizardsOutcastOnly = false
     var governorsStopEnclaveFlips = false
     var governorsStopDelve = false
     var outragePeekNeedsOk = false
