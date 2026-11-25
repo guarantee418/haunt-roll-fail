@@ -71,7 +71,7 @@ object Heckler {
     // nothing up and the posts keep their order): a player with the role gets it from the game's heckler, under its own name and picture,
     // with the jab on the next line, in one message that pings them once; everyone else gets the plain ping from the turns webhook
     // (faction: the seat's faction its reason names, "RF" for the Riverfolk Company: on the otters' own turns, the otters' lines and GIF)
-    def ping(meta : String, tag : String, faction : String, uid : String, text : String, reminder : Boolean, post : (String, String) => Unit) {
+    def ping(meta : String, tag : String, faction : String, uid : String, text : String, reminder : Boolean, post : (String, String) => Unit, game : String = "") {
         Tournament.poster.execute { () =>
             val troll = roleName.nonEmpty && DiscordBot.configured && (try roasted(uid) catch { case e : Exception => println("Heckler: " + e) ; false })
             if (troll) {
@@ -79,7 +79,7 @@ object Heckler {
                 val otters = v == crow && tag == "turn" && faction == "RF" && !reminder
                 val options = if (reminder) v.lines("reminder") else if (otters) otterLines else v.lines.getOrElse(tag, v.lines("turn"))
                 val line = pick(uid, options).replace("{name}", "<@" + uid + ">")
-                post(text + "\n" + line, persona(v) + (if (v == crow) gifFor(if (reminder) "reminder" else if (otters) "otters" else tag).getOrElse("") else ""))
+                post(text + "\n" + line, persona(v) + (if (v == crow) gifFor(if (reminder) "reminder" else if (otters) "otters" else tag, game).getOrElse("") else ""))
             }
             else
                 post(text, "")
@@ -149,25 +149,36 @@ object Heckler {
 
     def embed(url : String) = ",\"embeds\":[{\"color\":8798896,\"image\":{\"url\":" + Tournament.json(url) + "}}]"
 
-    // A GIF only when it says something about the line (owner, 2026-11-25: "you don't need to send GIFs for no reason, but you should
-    // have used the 3-0 GIF when saying 3-0"): a 3-0 or 0-3 roll always gets the crow's dice, a game lost on 29 VP always Vegeta, the Faithful's lucky draw always a laugh; under
-    // attack or banished, the otters' own turns, an ambush and the harshest things get theirs one time in three; a plain turn ping, a
-    // reminder or anything else none
-    def gifFor(tag : String) : Option[String] = {
+    // A GIF only when it says something about the line, and sparingly (owner, 2026-11-25: "you don't need to send GIFs for no reason";
+    // then "GIFs should be used sparingly. They're funny when used sparingly. Too frequently and they become annoying from cluttering
+    // the thread"): a game lost on 29 VP always gets Vegeta; anything else that has a GIF of its own gets it one time in four, and never
+    // within half an hour of the last GIF in that game's thread (lastGif). A 3-0 or 0-3 roll gets the crow's dice, a Lizard Cult
+    // conversion the unmasking lizard (convert.gif), under attack or banished a terrified Rick Moranis, the otters' own turns Milhouse,
+    // an ambush or the Faithful's lucky draw a laugh, the harshest things Emotional Damage or the crow in its can; a plain turn ping,
+    // a reminder or anything else none
+    val lastGif = new java.util.concurrent.ConcurrentHashMap[String, java.lang.Long]()
+    val gifGap = 30 * 60 * 1000L
+
+    def gifFor(tag : String, game : String = "") : Option[String] = {
         val art = Tournament.site + "/art/lfg/gifs/"
         def r = scala.util.Random
+        def laugh = if (r.nextBoolean()) klipyLaughs(r.nextInt(klipyLaughs.size)) else art + "crow-laugh.gif"
+        val now = System.currentTimeMillis
+        val quiet = game.isEmpty || Option(lastGif.get(game)).forall(t => now - t > gifGap)
         val gif = tag match {
             case _ if Tournament.site.isEmpty => None
             case "lost29" => Some(art + "vegeta-rain.gif")
+            case _ if !quiet || r.nextInt(4) != 0 => None
             case "rolled30" | "whiffed" => Some(art + "crow-dice.gif")
-            case _ if tag != "faithful" && r.nextInt(3) != 0 => None
+            case "convert" => Some(art + "convert.gif")
             case t if scared.contains(t) => Some(art + "terrified.gif")
             case "otters" => Some(art + "milhouse-flirt.gif")
-            case "faithful" => Some(if (r.nextBoolean()) klipyLaughs(r.nextInt(klipyLaughs.size)) else art + "crow-laugh.gif")
-            case "ambushed" => Some(if (r.nextBoolean()) klipyLaughs(r.nextInt(klipyLaughs.size)) else art + "crow-laugh.gif")
+            case "faithful" | "ambushed" => Some(laugh)
             case t if harsh.contains(t) => Some(art + (if (r.nextBoolean()) "emotional-damage.gif" else "crow-can.gif"))
             case _ => None
         }
+        if (gif.nonEmpty && game.nonEmpty)
+            lastGif.put(game, now)
         gif.map(embed)
     }
 
@@ -223,7 +234,7 @@ object Heckler {
                             try {
                                 if (roasted(id)) {
                                     val line = pick(id, lines).replace("{name}", "<@" + id + ">").replace("{other}", factionName(other)).replace("{where}", if (where.nonEmpty) where else "the woods")
-                                    TurnPings.post(game, lobby, line, Nil, persona(crow) + gifFor(tag).getOrElse(""), now = true)
+                                    TurnPings.post(game, lobby, line, Nil, persona(crow) + gifFor(tag, game).getOrElse(""), now = true)
                                 }
                             }
                             catch {
@@ -490,7 +501,7 @@ object Heckler {
                     case None => "<@" + id + ">: nothing found (" + live.size + " games going, " + ends.size + " finished, that the site can post in)"
                     case Some((s, why, text)) =>
                         val voice = v(s)
-                        TurnPings.post(s.game, s.lobby, text, Nil, persona(voice) + (if (voice == crow) gifFor(if (text.contains("29 VP")) "lost29" else why match { case "finishedlast" | "last" => "finishedlast" ; case w => w }).getOrElse("") else ""))
+                        TurnPings.post(s.game, s.lobby, text, Nil, persona(voice) + (if (voice == crow) gifFor(if (text.contains("29 VP")) "lost29" else why match { case "finishedlast" | "last" => "finishedlast" ; case w => w }, s.game).getOrElse("") else ""))
                         Ranking.append(intros, Backup.row(id, s.game, why, Ranking.now()))
                         "<@" + id + "> (" + TurnPings.nameOf(s.lobby, s.user) + "): " + why + " in " + s.lobby.title + " (" + s.game + ")"
                 }
