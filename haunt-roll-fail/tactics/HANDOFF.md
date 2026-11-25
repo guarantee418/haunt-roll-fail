@@ -101,11 +101,9 @@ booklet's pictures (pages 9 and 10). Moro River's first rows had the bridge poin
 
 - Full Game readings to confirm with the team (RULES.md, Interpretations 7 to 12): the Firing Arc's width, Retreat paths,
   Overwatch on a hex passed through.
-- More missions: ten 2-panel LMP missions on the Hill 331, Trois Ponts and Stalingrad panels are in (`tools/missions-lmp.py`,
-  2026-11-25: add a panel pair's features to its BASE, its missions to MISSIONS). Next: the Monastery (MO1, MO2: Cathedral, Opposing
-  Faiths, Cologne, ...), the 3- and 4-panel LMP missions and the other free-for-alls, which need the Large Map Pack panels.
-  The mod has about 30 more panel images in its mission bags (Stalingrad, Hill 331, Cologne, Trois Ponts, Monastery, ...; their
-  `Custom_Tile` URLs in save.json), but each panel's terrain, Buildings and Water must be read by hand, as `map-data.py` and
-  `ardennes-data.py` did for the core four, and some need Bunkers (Full Game Rules 10.1). The four missions on one or three core
-  panels are in (`tools/missions-panels.py`, 2026-11-25).
+- More missions: every LMP mission with a bag in the mod is in (`tools/missions-lmp.py` for the first ten, `tools/missions-bags.py`
+  for the other 27, 2026-11-25: a panel's hand-read features go in its BASE, a mission in M with its bag's name, the booklet's
+  stockpile, spawn boxes and added features as fractions of its picture). Next: the booklet's missions with no bag (A River Too Far,
+  Race Across the Rhine, Frozen River, Mud, Summer Solstice, ...), whose Control Points must be read off the booklet's pictures as
+  `missions-panels.py` does; the square 4-panel missions and 5 Way free-for-alls need flat-topped hexes.
 - A better bot.

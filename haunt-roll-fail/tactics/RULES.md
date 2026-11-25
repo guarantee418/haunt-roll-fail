@@ -217,6 +217,58 @@ the half hexes of the top and bottom rows under the booklet's spawn boxes, or th
 - **Ice on Stalingrad's panels**: the hexes mostly ice (the rule's fallback); the panels' snowflake icons sit on hex edges, and agree.
 - **Stockpiles** are the booklet's; Trois Ponts' bag in the mod says 4/4/3, the booklet 4/2/3.
 
+The rest of the booklet's LMP missions that have a bag in the mod are in too (2026-11-25; `tools/missions-bags.py`): the 4.1 missions
+on the Monastery panels (MO1, MO2: the airstrip, the cross-shaped church, a multi-hex Building, and the ruins), the 5.0 and 5.2
+3-panel missions, the 6.0 and 6.1 4-panel missions in a row, and the 8.1 and 8.2 free-for-alls. Each is laid as its bag lays it, a
+panel with "r" being turned round (the booklet's arrow); the Control Points are the bag's tokens; the Spawn Areas and the Buildings,
+Bunkers and Cathedrals the booklet adds come from its pictures (pages 11 to 25 and 30):
+
+| Mission | Panels | Stockpile | Spawn Areas |
+|---|---|---|---|
+| Cathedral | MO1, MO2 | 4, 4, 2 | top and bottom; a Bunker (A, B) between the churches |
+| Cologne | MO1, TP2r | 4, 4, 6 | top and bottom, left half |
+| Desert Oasis | HL1, TP1 | 6, 2, 2 | top left, bottom right; the Hill 331 Bunker |
+| No Man's Land | HL2, MO2r | 2, 5, 0 | top and bottom |
+| Moscow Outskirts | SG1r, AF1 | 5, 4, 4 | top left, bottom right |
+| Opposing Faiths | MO2, MO1 | 7, 4, 1 | top and bottom; the A and B hexes a Cathedral |
+| Semois | MR2, MO1 | 5, 3, 4 | top right; Team 2 the bottom left corner |
+| Hinderdam | MO2, MR1 | 4, 4, 3 | top left, bottom right |
+| Ancient Fields | MO2, HL1, HL2 | 2, 6, 2 | top right, bottom left; a Bunker and two Buildings added |
+| Airfield | TP1, TP2, MO2 | 4, 3, 3 | top left, bottom right; a Building added (A) |
+| Hilltop Monastery | HL2, MO1, MO2 | 6, 6, 4 | top and bottom |
+| Budapest | MR1, MR2, MO1 | 4, 2, 3 | top right, bottom left |
+| Siege of Leningrad | SG2r, SG1r, AF1 | 6, 4, 0 | top middle; Team 2 both bottom corners |
+| Opposing Faiths (3 panels) | MO1, MO2, MO1 | 6, 4, 2 | top and bottom; a Bunker (A, B) in the middle |
+| The Wide Front | HL2, HL1, HL2 | 4, 6, 4 | top and bottom, middle |
+| Trois Ponts (3 panels) | TP1, TP2, TP1 | 6, 6, 2 | both ends of the top and bottom rows |
+| Two Islands | SG1, SG2, SG1 | 3, 2, 2 | top left, bottom right |
+| Cologne (4 panels) | TP1, TP2, MO1r, MO2r | 4, 4, 6 | top right, bottom left |
+| Trois Ponts Monastery | TP1, TP2, MO1r, MO2r | 6, 6, 4 | two parts of the top and of the bottom row |
+| Hill 331 Monastery | HL1, HL2, MO1, MO2 | 3, 2, 1 | top and bottom, middle |
+| Vengeance | MO2r, MO1r, MO1, MO2 | 6, 4, 4 | Team 1 top and bottom, Team 2 left and right edges |
+| Opposing Faiths (4 panels) | MO1, MO2, MO2r, MO1r | 4, 2, 2 | top right, bottom left |
+| Two Hilltops | HL1, HL2, HL2r, HL1r | 4, 4, 6 | Team 1 left edge and top, Team 2 right edge and bottom |
+| Frozen Fork | SG2, SG1, SG2, SG1 | 3, 3, 3 | two parts of the top and of the bottom row |
+| Six Bridges | TP2r, TP1r, TP1, TP2 | 5, 4, 3 | top and bottom, middle |
+| Hill 331, 3 Way Free-for-all | HL1, HL2 | 6, 2, 4 | top middle, bottom right, bottom left; ends at 15 VP |
+| Cologne, 4 Way Free-for-all | TP1, TP2, MO1r | 6, 4, 4 | the four corners; ends at 15 VP |
+
+- **The mod's bags against the booklet**: three bags lay the booklet's map turned round (Cathedral, Cologne, Opposing Faiths), which
+  is built the booklet's way; three put a panel where its hexes don't line up with the next one's, where the booklet's printed compass
+  marks show otherwise: Hilltop Monastery has HL2 on the left (the bag HL1), The Wide Front's first HL2 isn't turned, and Opposing
+  Faiths on 4 panels starts MO1, MO2 (the bag MO2, MO1). Their tokens stay where the bags put them.
+- **Stockpiles** are the booklet's where the bags' names differ (Cathedral, Cologne, Desert Oasis, No Man's Land, Opposing Faiths, Semois,
+  Ancient Fields, Airfield, Budapest, Cologne on 4 panels, Hill 331 Monastery, Hill 331 3 Way).
+- **Hill 331, 3 Way**: the Bunker is a Destroyed Building ("A Hex"), and the three hexes the booklet rings below it Buildings.
+- **Free-for-alls**: every player is on their own, as on Moro River's 3 Way (11.0); the map takes its number of players.
+- **Monastery's church** is one multi-hex Building (5 hexes); the small roofless sheds around it are cover, not Buildings. Opposing
+  Faiths' Cathedral is the "TP2 Cathedral / Tile" the booklet places over the round tower and four hexes beside it.
+- A Hill 331 Bunker that a layout cuts in half at the map's edge (No Man's Land, Hilltop Monastery, The Wide Front) stays a Bunker.
+- **Left out**: the optional Modular Bunkers and the optional Victory Points; the booklet's missions with no bag in the mod (A River Too
+  Far, Race Across the Rhine, Frozen River, Mud, Summer Solstice and the rest of pages 16 to 22), whose Control Points would have to be
+  read off the booklet's pictures; and the square 4-panel missions (7.0) and 5 Way free-for-alls (8.3, 8.4), whose panels turn a
+  quarter round into flat-topped hexes, which the board doesn't have.
+
 The 3-panel Between Two Rivers' badges mark the first full column and the half hexes beside it at each edge (`MapData.edge` 1.1).
 The 3-panel missions may be played by two players too, each with 2 starting Infantry.
 
