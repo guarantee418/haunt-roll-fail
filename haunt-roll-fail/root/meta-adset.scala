@@ -221,6 +221,7 @@ object MetaAdset extends MetaGame {
     def getBot(f : F, b : String) = new BotAdset(f)
 
     override def turnReason(g : G, f : Any, actions : $[Any]) : String = TurnReasons.of(g, f, actions)
+    override def jests(g : G) = Jests.report(g, f => turnSeat(g, f))
 
     def writeFaction(f : F) = f.short
     def parseFaction(s : String) = factions.%(_.short == s).single
