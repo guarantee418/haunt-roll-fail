@@ -429,6 +429,10 @@ object TurnPings {
         }
         val was = all -- fresh
 
+        // a wait of a day or more just ended: the slow turn's troll gets the crow (Heckler.slow; 2026-11-25)
+        // (only when the game now waits on someone else: a stray report waiting on nobody ends no turn)
+        if (waiting.nonEmpty) (was -- waiting).foreach(u => since.get((game, u)).filter(t => now - t >= 24 * 3600 * 1000L).foreach(t => Heckler.slow(game, u, (now - t) / 3600000)))
+
         reports = latest + (game -> Report(index, waiting))
         waitedSince = since -- (was -- waiting).map(u => (game, u)) ++ (waiting -- was).map(u => (game, u) -> now)
         Files.createDirectories(dir)

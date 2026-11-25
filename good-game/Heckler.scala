@@ -77,7 +77,8 @@ object Heckler {
             if (troll) {
                 val v = voiceOf(meta)
                 val otters = v == crow && tag == "turn" && faction == "RF" && !reminder
-                val options = if (reminder) v.lines("reminder") else if (otters) otterLines else v.lines.getOrElse(tag, v.lines("turn"))
+                val own = if (v == crow && tag == "turn" && !reminder && faction != "RF" && scala.util.Random.nextBoolean()) factionTurns.get(faction) else None
+                val options = if (reminder) v.lines("reminder") else if (otters) otterLines else own.getOrElse(v.lines.getOrElse(tag, v.lines("turn")))
                 val line = pick(uid, options).replace("{name}", "<@" + uid + ">")
                 post(text + "\n" + line, persona(v) + (if (v == crow) gifFor(if (reminder) "reminder" else if (otters) "otters" else tag, game).getOrElse("") else ""))
             }
@@ -134,7 +135,7 @@ object Heckler {
     // (static.klipy.com/.../N9AZXRDopoEX.mp4), made a GIF, as a webhook embed shows no video (webp2/lfg/gifs/emotional-damage.gif, served
     // from /art/). It is half of the GIFs for the harshest things: a 3-0 roll against them, a Raze, a Revolt, Turmoil, a bomb, a Sanctify,
     // and last place
-    val harsh = Set("rolled30", "raze", "revolt", "turmoil", "bomb", "sanctify", "last", "finishedlast")
+    val harsh = Set("wiped", "rolled30", "raze", "revolt", "turmoil", "bomb", "sanctify", "last", "finishedlast")
 
     // TERRIFIED (2026-11-25, the owner's pick for being "scared from a fight"): the Klipy video the owner linked
     // (static.klipy.com/.../2W84h3Sw.mp4), made a GIF (webp2/lfg/gifs/terrified.gif): half of the GIFs when the player is under attack
@@ -257,48 +258,130 @@ object Heckler {
     }
 
     val crowJests = Map(
+        "wiped" -> List(
+            "{name} has left {where}. Not by choice.",
+            "{other} cleared {name} out of {where}. Every last piece. Tidy work.",
+            "{where} is now a {name}-free zone. {other} handled the paperwork."),
+        "zerovp" -> List(
+            "Round 3, {name}, and still on zero. Bold minimalist strategy.",
+            "{name} is on 0 VP in round 3. Somewhere, a score track is weeping.",
+            "Zero VP in round 3, {name}. Saving them all for the end? Interesting plan."),
+        "closing" -> List(
+            "{other} is about to win, {name}. You're about to watch.",
+            "{other} just passed 25 VP. {name}, the view from last place must be lovely.",
+            "{other} is closing in on 30, {name}, and you're closing in on the bottom of the score track."),
+        "hostile" -> List(
+            "The Vagabond is Hostile to {name} now. Even the guy with no friends has standards.",
+            "{name}, the Vagabond has turned on you. Smart Vagabond.",
+            "{name} made the Vagabond Hostile. Now there's someone in the woods who hates you on purpose."),
+        "prisoner" -> List(
+            "{other} took {name}'s warrior prisoner at {where}. At least someone wanted it.",
+            "{name}, your warrior from {where} is now a Knaves house guest. Indefinitely."),
+        "dominance" -> List(
+            "A dominance card, {name}? Bold, desperate, or both?",
+            "{name} activated a dominance. Your points are gone. Your hope remains. For now.",
+            "{name} has given up on points and gone for a dominance. The crows respect the audacity. Not the odds."),
         "faithful" -> List(
+            "Faith: rewarded. {name}: not.",
             "HA! {other}'s Faithful hit {name} in {where} AND drew the matching card. The deck is in on it, {name}.",
             "Caw! The Faithful hit {name} at {where}, flipped the top card, and of course it matched. Of course it did.",
             "{name}, {other} took an extra swing at you in {where} and the deck said \"keep it\". Even the cards are against you.",
             "The top card of the deck had one job, {name}: not to match {where}. It matched. {other} keeps The Faithful."),
         "rolled30" -> List(
+            "3-0, {name}. The dice didn't just pick a side at {where}, they built a house there.",
+            "{name}'s warriors at {where} died the way they lived: rolling zeros.",
+            "A perfect 3-0 at {where}. {other} thanks {name} for the demonstration.",
             "HA! {other} rolled 3-0 against {name} in {where}. The dice have chosen a side, and it isn't yours.",
             "Caw caw caw! A 3-0 roll at {where}. {name}, your warriors didn't even get to swing.",
             "{other} rolled a 3, {name} rolled a 0. I'd call it a battle, but that would be generous.",
             "3-0 at {where}! {name}, have you tried rolling the die the other way up?"),
         "whiffed" -> List(
+            "Zero hits at {where}, {name}. Have you considered diplomacy?",
+            "{name}'s warriors charged into {where} and tripped. All of them.",
             "{name} attacked {other} at {where} and rolled a 0. Bold strategy. Terrible dice.",
             "Caw! {name} charged into {where} and rolled 0-3. {other} sends their thanks.",
             "{name}'s attack at {where}: zero hits dealt, three taken. I've seen sparrows do better."),
         "ambushed" -> List(
+            "{other} sat in that bush at {where} for three turns, {name}. Did you not hear the giggling?",
+            "{name}'s scouting report for {where}: \"probably fine.\"",
             "AMBUSH! {name} walked right into {other}'s trap at {where}. The crows saw it coming. Everyone saw it coming.",
             "{name} marched into {where} without checking the bushes. {other} was in the bushes.",
             "Ambushed at {where}, {name}! Rule one of the Woodland: never trust a quiet clearing."),
         "raze" -> List(
+            "{where} has been razed. {name}'s insurance does not cover rats.",
+            "Think of it as free demolition, {name}. {where} needed a fresh start anyway.",
             "The Mob just razed {name}'s buildings in {where}. Don't worry, rubble has a rustic charm.",
             "{other}'s rats burned down {where}. {name}, I hope you weren't attached to anything there.",
             "Raze! {name}'s things in {where} are now a nice open field. The crows thank you for the view.",
             "{name}, the Mob came to {where}. The Mob left. Your buildings did not."),
         "revolt" -> List(
+            "{where} revolted, {name}. Turns out the locals had opinions about you.",
+            "Revolt at {where}! {name}'s pieces there are now a historical footnote.",
             "REVOLT in {where}! {name} has been wiped out of it by {other}. Viva la Woodland!",
             "The {other} rose up in {where} and {name} went down. Should have listened to the people, {name}.",
             "{name}, {where} has revolted. Everything you had there is now a very sympathetic base.",
             "Caw! A Revolt in {where} cleared out {name}. Sympathy: one. {name}: zero."),
         "convert" -> List(
+            "Another of {name}'s warriors traded them in for a robe and a garden at {where}. Can't blame it.",
+            "Honestly, joining the Cult at {where} is the best career move that warrior ever made, {name}.",
             "{other} converted one of {name}'s warriors in {where}. It looks happier already.",
             "{name}, your warrior in {where} has found religion. Lizard religion.",
             "Another of {name}'s warriors joins the Cult in {where}. They say the robes are very comfortable."),
         "sanctify" -> List(
+            "{name}'s building in {where} is a shrine now. Finally, something there worth visiting.",
             "{other} sanctified {name}'s building in {where}. It's a garden now. A lovely garden. Not yours.",
             "{name}, your building in {where} has been redecorated by {other}. Very green. Very lizard."),
         "turmoil" -> List(
+            "The Decree was a house of cards, {name}, and you built it in a wind tunnel.",
+            "TURMOIL for {name}! The new Eyrie leader is said to be \"slightly less embarrassing.\"",
             "TURMOIL! {name}'s Eyrie tripped over its own Decree. The crows are crying with laughter.",
             "{name}, the Decree collapsed. Your leader has been deposed. Your nobles are embarrassed. I'm delighted.",
             "Caw! The Eyrie's Decree broke and {name} fell into Turmoil. Birds of a feather fall together."),
         "bomb" -> List(
+            "{name} stepped on a plot in {where}. It went boom. Shocking, I know.",
+            "Kaboom in {where}! The Corvids send their regards, {name}, and a cleaning bill.",
             "BOOM! A Corvid bomb went off on {name}'s warriors in {where}. That was one of ours. You're welcome.",
             "{name}, that plot in {where}? It was a bomb. It's always a bomb."))
+
+    // FACTION TURN LINES (2026-11-25, "add all of them"): on a faction's own turn, half the time the crow uses its lines (the Riverfolk's
+    // are the otters', always); the reason's faction is the seat's
+    val factionTurns : Map[String, List[String]] = Map(
+        "MC" -> List(
+            "Another sawmill, {name}? Bold, building in a forest full of people who hate you.",
+            "The Keep is lovely, {name}. Pity it's the only thing you're keeping."),
+        "ED" -> List(
+            "Read the Decree carefully, {name}. Your ancestors are watching. They're disappointed.",
+            "The Decree grows, {name}. So does the list of ways it breaks."),
+        "WA" -> List(
+            "Power to the people, {name}! All three of them.",
+            "{name}, the revolution will be televised. The ratings are terrible."),
+        "VB" -> List(
+            "Whose side are you on today, {name}? Asking for everyone you've betrayed.",
+            "Roaming the woods with a bag of other people's stuff, {name}. Living the dream."),
+        "LC" -> List(
+            "Preach, {name}. The congregation is three outcasts and a garden.",
+            "The Lost Souls grow, {name}. So does my concern for your plan."),
+        "UD" -> List(
+            "The Duchy digs, {name}. Down. Like your score.",
+            "Your Ministers have sat idle so long they've unionized, {name}."),
+        "CC" -> List(
+            "Ah, {name}, a fellow corvid. I'll be watching your plots. Professionally.",
+            "Place a plot, {name}. Make it a bomb. It's always a bomb."),
+        "LH" -> List(
+            "The Warlord demands loot, {name}. Your opponents demand you stop.",
+            "Mob time, {name}. Burn something useful to you, for once."),
+        "KI" -> List(
+            "Delve, {name}! Find something shinier than your current position.",
+            "The Keepers march on, {name}, carrying relics nobody asked for."),
+        "TC" -> List(
+            "The Council convenes again, {name}. Democracy is so tiring.",
+            "Your Loyalists are hanging there like bats, {name}. Because they are."),
+        "KD" -> List(
+            "Steal something, {name}. It's what you're good at. It's the only thing you're good at.",
+            "The Knaves are up, {name}. Lock up the valuables. And the warriors."),
+        "LDvE" -> List(
+            "The frogs are restless, {name}. Provoke someone. You know you want to.",
+            "Ribbit, {name}. That's frog for \"please make a good move for once.\""))
 
     // the otters' own turns (the Riverfolk Company, "otters trying to sell")
     val otterLines = List(
@@ -315,6 +398,16 @@ object Heckler {
         "29 VP, {name}. Twenty. Nine. The crows will be singing about this one for years. {winner} won with {top}.",
         "So close, {name}. {game}: the {faction} on 29, {winner} on {top}. Somewhere, it's raining.")
 
+    val lostByOne = List(
+        "{name} lost {game} by ONE point as the {faction}. {winner} took it with {top}. So close you can taste it. It tastes like defeat.",
+        "One VP, {name}. One more craft, one more battle, one less mistake. {winner} won {game} with {top}.",
+        "{name} finished {game} on {score}, {winner} on {top}. Second place is just the first loser, but closer.")
+
+    val wonByOne = List(
+        "{name} won {game} as the {faction} with {top}... by one point. I'll allow it. Barely.",
+        "Congratulations, {name}. A one-point win in {game}. Even your victories are nail-biters.",
+        "{name} took {game} by a single VP. The crows had money on the other side. We're not happy.")
+
     def gameOver(game : String, meta : String, sides : String) : Unit = if (roleName.nonEmpty && DiscordBot.configured && TurnPings.rootMetas.contains(meta)) try {
         val all = sides.split(';').toList.flatMap(t => t.split(":", 2).toList match {
             case w :: rest :: Nil if w == "W" || w == "L" => rest.split(',').toList.flatMap(x => x.split('/').toList match {
@@ -326,14 +419,22 @@ object Heckler {
         val win = all.filter(_._1).headOption
         TurnPings.lobbyOf(game).foreach { lobby =>
             val table = TurnPings.table(game).nonEmpty
-            all.filter(x => !x._1 && x._4 == "29").foreach { case (_, u, f, _) =>
+            // CLOSE FINISHES (2026-11-25, "add all of them"): a loss by one VP, and a win by one VP, the crow grudging; 29 VP is Vegeta's
+            val top = win.flatMap(_._4.toIntOption)
+            val second = all.filter(!_._1).flatMap(_._4.toIntOption).maxOption
+            all.flatMap { case x @ (w, u, f, sc) =>
+                if (!w && sc == "29") Some((x, lost29, "lost29"))
+                else if (!w && top.nonEmpty && sc.toIntOption == top.map(_ - 1)) Some((x, lostByOne, ""))
+                else if (w && second.nonEmpty && sc.toIntOption == second.map(_ + 1)) Some((x, wonByOne, ""))
+                else None
+            }.foreach { case ((_, u, f, sc), lines, gif) =>
                 TurnPings.mentionOf(u, table).foreach { id =>
                     Tournament.poster.execute { () =>
                         try {
                             if (roasted(id)) {
-                                val line = pick(id, lost29).replace("{name}", "<@" + id + ">").replace("{game}", "**" + lobby.title + "**").replace("{faction}", "**" + f + "**")
-                                    .replace("{winner}", win.map(w => "**" + w._3 + "**").getOrElse("the winner")).replace("{top}", win.map(w => if (w._4 == "D") "a dominance" else w._4 + " VP").getOrElse("more"))
-                                TurnPings.post(game, lobby, line, Nil, persona(crow) + gifFor("lost29").getOrElse(""), now = true)
+                                val line = pick(id, lines).replace("{name}", "<@" + id + ">").replace("{game}", "**" + lobby.title + "**").replace("{faction}", "**" + f + "**")
+                                    .replace("{winner}", win.map(w => "**" + w._3 + "**").getOrElse("the winner")).replace("{top}", win.map(w => if (w._4 == "D") "a dominance" else w._4 + " VP").getOrElse("more")).replace("{score}", sc + " VP")
+                                TurnPings.post(game, lobby, line, Nil, persona(crow) + (if (gif.nonEmpty) gifFor(gif).getOrElse("") else ""), now = true)
                             }
                         }
                         catch { case e : Exception => println("Heckler: " + e) }
@@ -343,6 +444,31 @@ object Heckler {
         }
     }
     catch { case e : Exception => println("Heckler: game over not taken: " + e) }
+
+    // SLOW TURNS (2026-11-25, "add all of them"): a troll member whose wait in a Root game lasted a day or more gets the crow in the
+    // game's thread once they've moved (TurnPings.waiting, when the wait ends)
+    val slowLines = List(
+        "That turn took {hours} hours, {name}. Was it worth it? (It wasn't.)",
+        "{name} finally moved in {game}, after {hours} hours. The crows had started a memorial.",
+        "{hours} hours, {name}. Civilizations have risen and fallen faster. The Eyrie certainly has.",
+        "Welcome back, {name}! {hours} hours for one turn in {game}. We kept your seat warm. Barely.")
+
+    def slow(game : String, user : String, hours : Long) : Unit = if (roleName.nonEmpty && DiscordBot.configured) try {
+        TurnPings.lobbyOf(game).filter(l => TurnPings.rootMetas.contains(l.meta)).foreach { lobby =>
+            TurnPings.mentionOf(user, TurnPings.table(game).nonEmpty).foreach { id =>
+                Tournament.poster.execute { () =>
+                    try {
+                        if (roasted(id)) {
+                            val line = pick(id, slowLines).replace("{name}", "<@" + id + ">").replace("{game}", "**" + lobby.title + "**").replace("{hours}", hours.toString)
+                            TurnPings.post(game, lobby, line, Nil, persona(crow), now = true)
+                        }
+                    }
+                    catch { case e : Exception => println("Heckler: " + e) }
+                }
+            }
+        }
+    }
+    catch { case e : Exception => println("Heckler: slow turn not taken: " + e) }
 
     // the tournament changes
     val words = Set("roast-role", "roasts", "troll-intro")
@@ -526,6 +652,18 @@ object Heckler {
     // ROOT: the Court Crow, a Corvid jester
     val crow = Voice("The Court Crow", "lfg/webhooks/heckler-root.png", Map(
         "turn" -> List(
+            "{name}, it's your turn. Take your time. The game's only been going since the Marquise was a kitten.",
+            "Oh good, it's {name}'s turn. Grab a snack, everyone.",
+            "{name}, I've prepared a list of your best moves. It's blank. Good luck.",
+            "Your move, {name}. I've seen trees make faster decisions, and they're rooted.",
+            "{name}, statistically you're due for a good turn. Statistically.",
+            "Your turn, {name}. Remember your last one? Neither does anyone else. It was that forgettable.",
+            "{name}, it's your turn. Please don't do what you did last time.",
+            "Your strategy is like the forest at night, {name}: nobody can see it, including you.",
+            "{name}, I've watched worms with better long-term plans.",
+            "The other factions met and voted, {name}. They'd like you to keep playing exactly like this.",
+            "Your turn, {name}. If you're going to lose, at least lose quickly.",
+            "{name}, every move you make is a gift to someone. Usually not you.",
             "Caw! Your turn, {name}. The whole Woodland is holding its breath. Mostly to stop laughing.",
             "{name}, it's your move. I've already plotted against it. Face down, of course.",
             "Your turn, {name}. Try not to give the Vagabond another item this time.",
@@ -535,11 +673,16 @@ object Heckler {
             "{name}, your turn. I'd tell you the winning move, but where's the fun in that?",
             "Wake up, {name}! Even the Lizards' Lost Souls have moved since your last turn."),
         "defend" -> List(
+            "{name}, you're under attack. On the bright side, you were losing anyway.",
+            "Have you considered surrendering in advance, {name}? It saves time.",
+            "Your warriors asked me to tell you they quit, {name}.",
             "Under attack, {name}! Do you have an ambush, or are you bluffing? I know. I always know.",
             "{name}, they're hitting you. Remember: you can't lose warriors you never placed. Think about it.",
             "Someone's battling {name}. I've got a seed on the attacker. Nothing personal.",
             "Defend yourself, {name}! Or don't. The crows will tidy up either way."),
         "battle" -> List(
+            "Attacking again, {name}? The defenders are starting to feel sorry for you.",
+            "Roll, {name}. The dice have been looking forward to this.",
             "{name}, your battle needs you. Roll high. Or roll at all, really.",
             "A battle! {name}, may the dice be kinder to you than your last three moves were.",
             "{name} is attacking. Bold. Ill-advised, but bold."),
@@ -585,6 +728,10 @@ object Heckler {
             "Caw! Digging through your games, {name}. {game}: you lost as the {faction} with {score}. {winner} won with {top}. I remember everything.",
             "{name}, welcome. Remember {game}? You don't want to. The {faction}, {score}, and {winner} winning with {top}. I'll be bringing it up."),
         "reminder" -> List(
+            "It's been 12 hours, {name}. The Eyrie has had three leaders since your last move.",
+            "Moss has started growing on your warriors, {name}.",
+            "Reminder, {name}: Root is a game where you take turns. This is one of them.",
+            "I've seen glaciers with more momentum, {name}.",
             "Still waiting, {name}. The crows have started a betting pool on when you'll move.",
             "{name}, a reminder: the game hasn't moved. I checked. Twice.",
             "Caw. Caw. CAW. That's crow for \"{name}, it's still your turn\".",

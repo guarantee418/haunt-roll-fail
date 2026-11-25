@@ -23,12 +23,20 @@ import hrf.colmat._
 //   revolt     a Woodland Alliance Revolt removed the victim's pieces      convert   the Lizard Cult converted the victim's warrior
 //   sanctify   the Lizard Cult sanctified the victim's building            turmoil   the Eyrie fell into Turmoil (the victim is the Eyrie)
 //   bomb       a Corvid bomb went off on the victim's warriors
+//   wiped      a battle left the victim with nothing in the clearing    zerovp    the victim starts a turn of the third round on 0 VP
+//   closing    a faction reached 25 VP, the victim alone in last place   hostile   the Vagabond turned Hostile toward the victim
+//   prisoner   the Knaves took the victim's warrior prisoner              dominance the victim played a dominance card
+//   (the six above asked for on 2026-11-25: "add all of them")
 //   faithful   the Faithful's extra hit against the victim drew a card matching the clearing, so it stays (2026-11-25, asked for: "drawing
 //              the matching card is hilariously lucky/unlucky")
 object Jests {
     def see(action : Action)(implicit game : Game) : Unit = try {
-        def note(tag : String, victim : Faction, other : |[Faction], c : |[Clearing]) =
-            game.jests :+= tag + "/" + victim.short + "/" + other./(_.short).|("") + "/" + c./(_.name).|("")
+        def note(tag : String, victim : Faction, other : |[Faction], c : |[Clearing]) = {
+            val e = tag + "/" + victim.short + "/" + other./(_.short).|("") + "/" + c./(_.name).|("")
+            // the same event twice in a row (a battle finished again by a card's wrapper, a second prisoner of the same battle) is noted once
+            if (game.jests.lastOption.has(e).not)
+                game.jests :+= e
+        }
 
         action @@ {
             case BattleFinishRollAction(b, f, o, _, _, fr, or, _, _) =>
@@ -50,6 +58,47 @@ object Jests {
 
             case TheFaithfulRevealAction(f, c, BattlePostRollAction(b, _, _, _, _, _)) if f.drawn.$.exists(_.matches(c.cost)) =>
                 note("faithful", if (f == b.attacker) b.defender else b.attacker, |(f), |(c))
+
+            // the battle left a side with nothing in the clearing (2026-11-25: "wiped out of a clearing")
+            // (only a real presence lost: 4 pieces or more, or a building, when the battle started; most battles clear a lone warrior)
+            case BattleStartAction(_, _, a, _, c, o, _, _) =>
+                def weight(e : Faction) = e.at(c).num + e.at(c).exists { case _ : Building => true ; case _ => false }.?(4).|(0)
+                game.jestBattle = Map(a -> weight(a), o -> weight(o))
+
+            case BattleFinishedAction(b) =>
+                $(b.defender -> b.attacker, b.attacker -> b.defender).foreach { case (e, o) =>
+                    if (game.factions.has(e) && game.jestBattle.get(e).exists(_ >= 4) && e.at(b.clearing).none)
+                        note("wiped", e, |(o), |(b.clearing))
+                }
+
+            // a faction starting a turn of the third round still on 0 VP (once each, as the third round comes once), and the first time
+            // a faction stands on 25 VP or more at a turn's start, the faction alone in last place
+            case StartPlayerTurnAction(f) =>
+                val n = game.factions.num
+                if (n > 0 && game.turn / n + 1 == 3 && f.vp == 0 && f.dominance.none)
+                    note("zerovp", f, None, None)
+
+                if (game.factions.num > 1 && game.jests.exists(_.startsWith("closing/")).not) {
+                    val leader = game.factions.maxBy(_.vp)
+                    val low = game.factions.minBy(_.vp)
+                    if (leader.vp >= 25 && low != leader && game.factions.count(_.vp == low.vp) == 1)
+                        note("closing", low, |(leader), None)
+                }
+
+            // the Vagabond turning Hostile toward the victim
+            case ForcedRemoveSourceEffectAction(e : Hero, c, f, p : Warrior, _) if f.is[Hireling].not && e.hostile(f).not =>
+                note("hostile", f, |(e), |(c))
+
+            case BattleCleanupAttackerAction(b, f : Hero) if b.balance < 0 && b.ally.any && f.named.has(b.ally.get).not =>
+                note("hostile", b.ally.get, |(f), |(b.clearing))
+
+            // the Knaves taking the victim's warriors prisoner
+            case KnavesTakePrisonerAction(f, b, _, _, _) => note("prisoner", b.defender, |(f), |(b.clearing))
+
+            case KnavesTakeCodefPrisonerAction(f, b, e, _, _, _) => note("prisoner", e, |(f), |(b.clearing))
+
+            // playing a dominance card (the victim is the player)
+            case ActivateDominanceAction(f, _, _) => note("dominance", f, None, None)
 
             case TurmoilAction(f) => note("turmoil", f, None, None)
 
