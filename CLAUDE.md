@@ -1270,18 +1270,19 @@ server. No session can reach the server, and none needs to.
   carries the eagle's insults down Yggdrasil), Pincer's Pamphleteer and Company of Heroes' Sergeant Major (`good-game/Heckler.scala`, its
   lines there; the jabs mock the play, never the person). The Court Crow also mocks, in the game's thread, what happens to a
   player with the role on anyone's turn (asked for the same day): a 3-0 roll against them, their own 0-3, an ambush, a Raze, a Revolt, a
-  Lizard Convert or Sanctify, the Eyrie's Turmoil, a Corvid bomb. The Root game notes each event with its victim as it plays out, before the
+  Lizard Convert or Sanctify, the Eyrie's Turmoil, a Corvid bomb, The Faithful's extra hit against them drawing the card that keeps it. The Root game notes each event with its victim as it plays out, before the
   board changes (`Jests` in `root/jests.scala`, from `internalPerform`; `game.jests`, display only, numbered in order, so every client numbers
   them alike, which `ReplayCheck` checks), the clients send the last 12 with their turn reports (the seventh line, `Meta.jests`), and the
-  server takes each number once (`Heckler.jests`, `turns/jests.tsv`; a game's first report only sets where it starts). About one Court Crow post in three carries one of its animated GIFs under the line (asked for:
-  "sometimes the crow just sends a trolling gif, with some context"): the 3-0 dice for a roll or a battle, the crow popping out of its
-  trash can for something trashed, else the crow laughing (`Heckler.gifFor`, a webhook embed; `webp2/lfg/gifs/`, made by
-  `heckler-art.py`, served by `/art/`). Half of those GIFs are instead one of 18 laughing GIFs from Klipy (the library Discord's GIF picker searches),
-  the first results of its "lol" search, picked by the owner on 2026-11-25 and linked from Klipy's servers (`Heckler.klipyLaughs`). For the harshest events (a 3-0 roll against them, a Raze, a Revolt, Turmoil, a bomb, a Sanctify, last place) half the
-  GIFs are Emotional Damage instead, the owner's pick, a Klipy video made a GIF (`webp2/lfg/gifs/emotional-damage.gif`, `Heckler.harsh`). When they're under attack or banished, half are a terrified Rick Moranis, another owner's pick
-  (`terrified.gif`, `Heckler.scared`). A troll member who loses a Root game on exactly 29 VP gets the crow in its thread with Vegeta in the
+  server takes each number once (`Heckler.jests`, `turns/jests.tsv`; a game's first report only sets where it starts). A Court Crow post carries one of its animated GIFs under the line only when the line gives it a reason (asked for:
+  "sometimes the crow just sends a trolling gif, with some context"; owner, 2026-11-25: "you don't need to send GIFs for no reason", and
+  a 3-0 needs the 3-0 GIF): a 3-0 or 0-3 roll always the crow's dice (`webp2/lfg/gifs/crow-dice.gif`, made by `heckler-art.py`, served
+  by `/art/`), The Faithful's extra hit drawing the matching card always a laugh, and one time in three: under attack or banished, a terrified Rick Moranis (`terrified.gif`, `Heckler.scared`); an ambush,
+  the crow laughing or one of 18 laughing GIFs from Klipy (the library Discord's GIF picker searches, the first results of its "lol"
+  search, picked by the owner and linked from Klipy's servers, `Heckler.klipyLaughs`); the harshest events (a Raze, a Revolt, Turmoil, a
+  bomb, a Sanctify, last place), Emotional Damage (a Klipy video made a GIF, `emotional-damage.gif`, `Heckler.harsh`) or the crow popping
+  out of its trash can; a plain turn ping or a reminder none (`Heckler.gifFor`, a webhook embed). A troll member who loses a Root game on exactly 29 VP gets the crow in its thread with Vegeta in the
   rain (`vegeta-rain.gif`, `Heckler.gameOver`, from `/report-result`). On the Riverfolk's own turns the crow has its own lines (`otterLines`),
-  half its GIFs Milhouse flirting (`milhouse-flirt.gif`; "otters trying to sell"). The role is called @troll on the server since 2026-11-25 (`roast-role troll`). The tournament change `troll-intro`
+  and one time in three Milhouse flirting (`milhouse-flirt.gif`; "otters trying to sell"). The role is called @troll on the server since 2026-11-25 (`roast-role troll`). The tournament change `troll-intro`
   gives every member with the role one first jab at once, in the thread of the game it is about, for the first thing found in their games:
   a game waiting on them (and for how long), last on VP in a Root game, last place in a finished game (`ranking/results.tsv`), a game that
   needed 4 or more turn pings, 8 VP or more behind the leader, or a lost game; nothing found, nothing posted (no welcome, owner's ask;

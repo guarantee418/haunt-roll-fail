@@ -23,6 +23,8 @@ import hrf.colmat._
 //   revolt     a Woodland Alliance Revolt removed the victim's pieces      convert   the Lizard Cult converted the victim's warrior
 //   sanctify   the Lizard Cult sanctified the victim's building            turmoil   the Eyrie fell into Turmoil (the victim is the Eyrie)
 //   bomb       a Corvid bomb went off on the victim's warriors
+//   faithful   the Faithful's extra hit against the victim drew a card matching the clearing, so it stays (2026-11-25, asked for: "drawing
+//              the matching card is hilariously lucky/unlucky")
 object Jests {
     def see(action : Action)(implicit game : Game) : Unit = try {
         def note(tag : String, victim : Faction, other : |[Faction], c : |[Clearing]) =
@@ -45,6 +47,9 @@ object Jests {
             case FanaticConvertAction(f, _, c, e, _) => note("convert", e, |(f), |(c))
 
             case FanaticSanctifyAction(f, _, c, _, e, _) => note("sanctify", e, |(f), |(c))
+
+            case TheFaithfulRevealAction(f, c, BattlePostRollAction(b, _, _, _, _, _)) if f.drawn.$.exists(_.matches(c.cost)) =>
+                note("faithful", if (f == b.attacker) b.defender else b.attacker, |(f), |(c))
 
             case TurmoilAction(f) => note("turmoil", f, None, None)
 
