@@ -1257,7 +1257,7 @@ server. No session can reach the server, and none needs to.
   session, which can't reach Discord, can do it): `roles`, `role <name> [| color #rrggbb] [| hoist] [| mentionable]`, `rename-role`,
   `give-role <user> -> <role>`, `take-role`, `channels`, `category <name> [| private] [| see <roles>] [| read-only <roles>]`,
   `channel <name> [| in <category>] [| text|voice|forum|announcement|stage] [| topic <text>] [| private] [| see ...] [| read-only ...] [| synced]`,
-  `rename-channel`, `move-channel <name> -> <category>|none`, `order <category> -> <channel>, ...` (`good-game/DiscordServer.scala`, its header has the forms). Creating
+  `rename-channel`, `move-channel <name> -> <category>|none`, `order <category> -> <channel>, ...`, and `merge-role <role> -> <role>` (everyone holding the first gets the second and loses the first; 2026-11-25, used to merge ng-spectator into root-spectator, renamed spectator) (`good-game/DiscordServer.scala`, its header has the forms). Creating
   changes the one of that name if there is one. On purpose nothing is deleted, nobody kicked or banned, and a role is never given
   server permissions; every request carries the audit log reason "HRF server change". The bot needs Manage Roles and Manage Channels,
   and its role above the roles it manages.
