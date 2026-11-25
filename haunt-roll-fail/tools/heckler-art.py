@@ -3,6 +3,8 @@
 # Conspiracy's character art (faction/mischief/cc-char.webp, laughing with its beak open) in a jester's cap drawn here.
 #   webp2/lfg/webhooks/heckler-root.png          the Court Crow's avatar (256, on a gold-ringed badge)
 #   webp2/lfg/server-emoji/root_crowjester.png   the same crow for a Discord server emoji (128, transparent), to upload by hand
+#   webp2/lfg/server-emoji/root_jestercan.png    the capped crow peeking out of a trash can, lid up (128, transparent; asked for on
+#                                                2026-11-25), to upload by hand
 #   webp2/lfg/webhooks/heckler-nort.png          Ratatoskr's avatar: the Squirrel Clan's emblem (nort/images/clan/squirrel.webp) as a PNG
 # Run from the repository root: python3 haunt-roll-fail/tools/heckler-art.py
 import math
@@ -106,7 +108,7 @@ def collar(d):
         bell(d, m, top(m) + 205, 34)
 
 
-def crow():
+def crow(with_collar=True):
     src = Image.open(os.path.join(BASE, "root/images/faction/mischief/cc-char.webp")).convert("RGBA")
     im = Image.new("RGBA", (src.width + 2 * PAD, src.height + 2 * PAD), (0, 0, 0, 0))
     im.alpha_composite(src, (OX, OY))
@@ -116,10 +118,13 @@ def crow():
     dc.polygon([P(-200, 560), P(1700, 640), P(1700, 2000), P(-200, 2000)], fill=0)
     dc.rectangle(P(-200, 420) + P(350, 2000), fill=0)      # the bomb's fuse
     dc.rectangle(P(1280, 420) + P(2000, 2000), fill=0)     # the sword's hilt
+    if not with_collar:
+        dc.polygon([P(-200, 470), P(1700, 470), P(1700, 2000), P(-200, 2000)], fill=0)   # the tunic, down in the can
     im.putalpha(Image.composite(im.getchannel("A"), Image.new("L", im.size, 0), cut))
     d = ImageDraw.Draw(im)
     cap(d)
-    collar(d)
+    if with_collar:
+        collar(d)
     return im
 
 
@@ -155,6 +160,77 @@ def badge(content, size=1024):
     return im
 
 
+STEEL = (150, 158, 166, 255)
+STEEL_LIGHT = (196, 204, 210, 255)
+STEEL_DARK = (98, 106, 116, 255)
+
+
+def can(c, size=1024):
+    """The capped crow's head peeking out of a galvanized trash can, its lid propped up behind."""
+    im = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    cx, rim_y, rx, ry = 560, 600, 330, 70     # the can's opening
+    bottom_y, brx = 1000, 280
+    # the lid, tipped up behind the head on the right
+    lid = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    ld = ImageDraw.Draw(lid)
+    lx, ly = 760, 380
+    ld.ellipse((lx - 300, ly - 80, lx + 300, ly + 80), fill=INK)
+    ld.ellipse((lx - 284, ly - 66, lx + 284, ly + 66), fill=STEEL)
+    ld.ellipse((lx - 200, ly - 44, lx + 200, ly + 44), outline=STEEL_DARK, width=10)
+    ld.ellipse((lx - 110, ly - 24, lx + 110, ly + 24), outline=STEEL_LIGHT, width=8)
+    lid = lid.rotate(-58, center=(lx, ly), resample=Image.BICUBIC)
+    im.alpha_composite(lid)
+    # the opening, dark inside
+    d.ellipse((cx - rx, rim_y - ry, cx + rx, rim_y + ry), fill=INK)
+    d.ellipse((cx - rx + 22, rim_y - ry + 16, cx + rx - 22, rim_y + ry - 12), fill=(20, 18, 24, 255))
+    # the crow's head and cap, its neck down in the can
+    x0, y0, x1, y1 = P(-40, -440) + P(1560, 700)
+    head = c.crop((x0, y0, x1, y1))
+    k = 0.56
+    head = head.resize((int(head.width * k), int(head.height * k)), Image.LANCZOS)
+    im.alpha_composite(head, (int(cx - (40 + 800) * k), int(rim_y + 75 - (440 + 560) * k)))
+    # the can's body over the neck: from the opening's middle line down, ribbed
+    body = [(cx - rx, rim_y), (cx + rx, rim_y), (cx + brx, bottom_y), (cx - brx, bottom_y)]
+    d.polygon(body, fill=STEEL)
+    for i in range(1, 8):
+        t = i / 8
+        xt = cx - rx + 2 * rx * t
+        xb = cx - brx + 2 * brx * t
+        d.line((xt, rim_y + 40, xb, bottom_y - 30), fill=STEEL_DARK if i % 2 else STEEL_LIGHT, width=14)
+    d.line((cx - rx + 30, rim_y + 30, cx - brx + 20, bottom_y - 20), fill=STEEL_LIGHT, width=22)   # the shine
+    d.polygon(body, outline=INK, width=16)
+    # the front of the rim, over the neck
+    d.arc((cx - rx, rim_y - ry, cx + rx, rim_y + ry), 0, 180, fill=INK, width=38)
+    d.arc((cx - rx + 8, rim_y - ry + 8, cx + rx - 8, rim_y + ry - 8), 10, 170, fill=STEEL_LIGHT, width=12)
+    # a band near the bottom and the handles
+    d.arc((cx - brx - 10, bottom_y - 150, cx + brx + 10, bottom_y - 70), 0, 180, fill=INK, width=14)
+    for side in (-1, 1):
+        hx = cx + side * (rx - 6)
+        d.arc((hx - 60, rim_y + 60, hx + 60, rim_y + 170), 90 if side > 0 else 270, 270 if side > 0 else 90, fill=INK, width=18)
+    d.ellipse((cx - brx, bottom_y - 22, cx + brx, bottom_y + 22), fill=INK)
+    return im
+
+
+def edged(im, grow=13):
+    # a light sticker edge, so the dark crow shows on Discord's dark theme
+    edge = im.getchannel("A").filter(ImageFilter.MaxFilter(grow))
+    out = Image.new("RGBA", im.size, (240, 232, 222, 0))
+    out.putalpha(edge)
+    out.alpha_composite(im)
+    return out
+
+
+def fit(im, size, margin):
+    im = im.crop(im.getbbox())
+    s = max(im.size)
+    sq = Image.new("RGBA", (s, s), (0, 0, 0, 0))
+    sq.alpha_composite(im, ((s - im.width) // 2, (s - im.height) // 2))
+    out = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    out.alpha_composite(sq.resize((size - 2 * margin, size - 2 * margin), Image.LANCZOS), (margin, margin))
+    return out
+
+
 def main():
     c = crow()
     emoji = square(c, 512, 12)
@@ -170,6 +246,8 @@ def main():
     badge(emoji).resize((256, 256), Image.LANCZOS).save(os.path.join(BASE, "lfg/webhooks/heckler-root.png"), optimize=True)
     sq = Image.open(os.path.join(BASE, "nort/images/clan/squirrel.webp")).convert("RGBA")
     sq.resize((256, 256), Image.LANCZOS).save(os.path.join(BASE, "lfg/webhooks/heckler-nort.png"), optimize=True)
+    bin_ = edged(fit(can(crow(with_collar=False)), 512, 12))
+    bin_.resize((128, 128), Image.LANCZOS).save(os.path.join(BASE, "lfg/server-emoji/root_jestercan.png"), optimize=True)
 
 
 if __name__ == "__main__":

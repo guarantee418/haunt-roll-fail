@@ -1265,7 +1265,7 @@ server. No session can reach the server, and none needs to.
   lines there; the jabs mock the play, never the person). The bot checks the role on each ping. The owner makes it with the server changes
   `role Roast Me` and `self-role Roast Me`; `roast-role <role>` picks another (`off`: none), `roasts` says how it stands. The pictures are
   `webp2/lfg/webhooks/heckler-*.png`, served by `/art/` (`Lookup.artFile` serves that folder), and the crow as a Discord server emoji,
-  `webp2/lfg/server-emoji/root_crowjester.png`, uploaded to the server by hand; `haunt-roll-fail/tools/heckler-art.py` makes them.
+  `webp2/lfg/server-emoji/root_crowjester.png`, and peeking out of a trash can, `root_jestercan.png`, both uploaded to the server by hand; `haunt-roll-fail/tools/heckler-art.py` makes them.
 - The bot's `/rule <rule> [game] [private]` (2026-11-22, asked for as a bot "to help cite the rules", not to interpret them): Root's
   rules by their Law of Root number (`4.3.2`, `H.1`, a section lists the rules under it) or name, with the rule's text and the link to
   it on the Root Database (`webp2/lfg/rules-root.tsv`, made by `haunt-roll-fail/tools/law-index.py` from the Root Database's copy, kept up
