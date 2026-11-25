@@ -847,6 +847,14 @@ case object HirelingsByTheCard extends GameOption with ToggleOption with FoldedO
     val valueOn = "Hirelings".hh ~ " as their cards say"
 }
 
+// Lizard Cult gardens craft only in the Outcast's suit (Law of Root 10.2.1): the others paid for any-suit costs, a house rule
+// from 2026-10-13 that players took for a bug (2026-11-25, Tournament 1 Table B: Saboteurs crafted with no Outcast garden).
+// Hidden, in RulesVersion7; older games keep the house rule (LizardsOutcastOnlyAction switches a running one over).
+case object LizardsOutcastOnly extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Lizard Cult".hh ~ " crafts only with " ~ "Outcast".hh ~ " gardens"
+}
+
 // Lizard Cult gardens of the Outcast suit pay for their clearing's suits (frog at enclaves, the Lost City's three,
 // double suited landmarks), not their printed suit (Homeland Lilypad Diaspora rules). Hidden and on by default for
 // new games; older games keep the printed suit so their replays don't change.
@@ -2083,7 +2091,7 @@ object Meta extends MetaGame {
 
     // The hidden options of rules fixes, each gating a fix so the games started before it replay the same (most new games get through
     // their RulesVersion); not listed in a game's log (OptionsAction)
-    lazy val fixes : $[O] = $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, HitsAndAmbushesSetup, DuskDeckFixes, BanishCaptainsLast, SuitedLandmarkAnySuit, NabFearsOrder, CharismaticPlacesWhatItCan, SilverTongueWholeRecover)
+    lazy val fixes : $[O] = $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, HitsAndAmbushesSetup, DuskDeckFixes, BanishCaptainsLast, SuitedLandmarkAnySuit, NabFearsOrder, CharismaticPlacesWhatItCan, SilverTongueWholeRecover, LizardsOutcastOnly)
 
     def unlisted : $[O] = fixes ++ settled ++ RulesVersion.all
 
@@ -5012,9 +5020,14 @@ case object RulesVersion6 extends RulesVersion(6) {
     def fixes = RulesVersion5.fixes ++ $[Meta.O](SilverTongueWholeRecover)
 }
 
+// The Lizard Cult crafts only with Outcast gardens (2026-11-25)
+case object RulesVersion7 extends RulesVersion(7) {
+    def fixes = RulesVersion6.fixes ++ $[Meta.O](LizardsOutcastOnly)
+}
+
 object RulesVersion {
-    val all : $[RulesVersion] = $(RulesVersion1, RulesVersion2, RulesVersion3, RulesVersion4, RulesVersion5, RulesVersion6)
-    def latest : RulesVersion = RulesVersion6
+    val all : $[RulesVersion] = $(RulesVersion1, RulesVersion2, RulesVersion3, RulesVersion4, RulesVersion5, RulesVersion6, RulesVersion7)
+    def latest : RulesVersion = RulesVersion7
     def implied : $[Meta.O] = all./~(_.fixes).distinct
 
     def expand(l : $[Meta.O]) : $[Meta.O] = l ++ l.of[RulesVersion]./~(_.fixes).distinct.diff(l)

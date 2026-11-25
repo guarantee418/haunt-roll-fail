@@ -1020,8 +1020,10 @@ server. No session can reach the server, and none needs to.
   recoloured on 2026-10-22 to the lime of its warriors and gardens (`#b6dc6c`), lighter than the olive it had (owner's ask).
 - Lizard Cult crafting (house rule, asked for on 2026-10-13): gardens of the Outcast suit craft as
   usual, and every other garden pays only for wild (any suit) cost icons (`WildOnly` in `root/game.scala`, `craft` in
-  `root/faction-fanatic.scala`). Law of Root 10.2.1 allows only Outcast gardens. Not gated by an option: it only adds
-  craft choices, so recorded games replay the same.
+  `root/faction-fanatic.scala`). Law of Root 10.2.1 allows only Outcast gardens. Players took it for a bug (2026-11-25,
+  Tournament 1 Table B: Saboteurs offered with no Outcast garden), so new games get the hidden `LizardsOutcastOnly`, in
+  `RulesVersion7`: only Outcast gardens craft (`FanaticExpansion.outcastOnly`); older games keep the house rule, and a running game
+  can be switched over with `LizardsOutcastOnlyAction(X)` (done for that table).
 - Lizard Cult Outcast gardens pay for their clearing's suits, not their printed suit (Homeland Lilypad Diaspora rules,
   posted on 2026-10-15): only frog at a Militant enclave, either at a Peaceful one, any of the Lost City's three,
   and either of a double suited Mousehold, Foxburrow or Rabbittown clearing (`c.asset`, a `OneOf`). New games get the hidden
