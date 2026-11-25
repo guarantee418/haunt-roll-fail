@@ -281,6 +281,9 @@ trait MetaBase {
     // why that seat is asked, for its Discord turn ping (good-game/TurnPings.scala; asked for on 2026-11-21): a short tag ("defend",
     // "trade", ...), with "/<faction>" for a ping showing the faction's icon, or "" for none; never anything only the seat may know
     def turnReason(g : G, f : Any, actions : $[Any]) : String = ""
+    // what happened to whom lately, for the Roast Me heckler's jests (good-game/Heckler.scala; Root's root/jests.scala): the last
+    // events, numbered from the game's first, "<n>:<tag>/<seat>/..."; display only
+    def jests(g : G) : $[String] = $
     // Play Online's games list (2026-11-22): icons summing up a game, its map and then its factions. An icon is an image name: a
     // faction's glyph (glyph(f)) or "lfg:<name>", a picture of webp2/lfg/emoji (the Discord emojis', lfg-emoji.py). overviewIcons
     // names the options (as writeOption writes them) that have one, the map first. overview is reported by a client playing the game

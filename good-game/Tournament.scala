@@ -660,7 +660,9 @@ object Tournament {
                 case w if DiscordServer.words(w) => DiscordServer.change(w, rest)
                 // the roles members pick for themselves, and the role picker post (SelfRoles.scala; 2026-11-24)
                 case w if SelfRoles.words(w) => SelfRoles.change(w, rest)
-                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, congratulate, turns, nort-turns, pincer-turns, tactics-turns, bot, guild, discord, ping waiting, pings, status, no-discord, lfg-key, lfg-commands, invite, or the server changes roles, role, rename-role, give-role, take-role, channels, category, channel, rename-channel, move-channel, order, webhooks, make-webhook, rename-webhook, test-ping, self-roles, self-role, self-role-off and role-picker)"
+                // the Roast Me role's hecklers (Heckler.scala; 2026-11-25)
+                case w if Heckler.words(w) => Heckler.change(w, rest)
+                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, congratulate, turns, nort-turns, pincer-turns, tactics-turns, bot, guild, discord, ping waiting, pings, status, no-discord, lfg-key, lfg-commands, invite, or the server changes roles, role, rename-role, give-role, take-role, channels, category, channel, rename-channel, move-channel, order, webhooks, make-webhook, rename-webhook, test-ping, self-roles, self-role, self-role-off and role-picker, roast-role, roasts)"
             }
 
             (if (word == "webhook" || word == "forum" || TurnPings.slot(word).nonEmpty || word == "bot") word else line) + ": " + result
@@ -799,8 +801,9 @@ object Tournament {
 
     def withoutAppEmojis(text : String) = { val ids = Lfg.appEmojiIds ; customEmoji.replaceAllIn(text, m => if (ids.contains(m.group(1))) "" else scala.util.matching.Regex.quoteReplacement(m.matched)) }
 
-    def post(url : String, text0 : String, key : String, name : String, ids : List[String], file : Path = threads) {
-        val byBot = appEmojis(text0) && DiscordBot.token.exists(t => threadOf(key, file).exists { thread =>
+    // persona: more JSON fields for a webhook post, its own username and avatar_url (the Roast Me hecklers, Heckler.scala)
+    def post(url : String, text0 : String, key : String, name : String, ids : List[String], file : Path = threads, persona : String = "") {
+        val byBot = persona.isEmpty && appEmojis(text0) && DiscordBot.token.exists(t => threadOf(key, file).exists { thread =>
             DiscordBot.send("POST", "https://discord.com/api/v10/channels/" + thread + "/messages",
                 "{\"content\":" + json(text0.take(1900)) + ",\"allowed_mentions\":{\"parse\":[],\"users\":[" + ids.map(json).mkString(",") + "]}}", Some(t)).nonEmpty
         })
@@ -810,7 +813,7 @@ object Tournament {
         val text = withoutAppEmojis(text0)
 
         def send(fields : String, query : String) = {
-            val body = "{\"content\":" + json(text.take(1900)) + ",\"allowed_mentions\":{\"parse\":[],\"users\":[" + ids.map(json).mkString(",") + "]}" + fields + "}"
+            val body = "{\"content\":" + json(text.take(1900)) + ",\"allowed_mentions\":{\"parse\":[],\"users\":[" + ids.map(json).mkString(",") + "]}" + persona + fields + "}"
             val request = java.net.http.HttpRequest.newBuilder(java.net.URI.create(url + "?wait=true" + query))
                 .header("Content-Type", "application/json")
                 .POST(java.net.http.HttpRequest.BodyPublishers.ofString(body, UTF_8))

@@ -530,6 +530,18 @@ object ReplayCheck {
             // "cctc": exposures a Council's Governors kept from removing a plot (GovernorsStopExposure)
             if (game.governedGuesses.any)
                 used += "GovernedGuess" -> (used.getOrElse("GovernedGuess", 0) + game.governedGuesses.num)
+            // the Court Crow's jests (root/jests.scala): how often each was noted, and a rebuilt game must note the same, numbered alike,
+            // as every client numbers them by replaying the log
+            game.jests.foreach(j => used += ("Jest " + j.split('/').head) -> (used.getOrElse("Jest " + j.split('/').head, 0) + 1))
+            if (recorded.any) try {
+                val (g2, _) = rebuild(seating, recorded)
+                if (g2.jests != game.jests) {
+                    failures += 1
+                    +++("  JESTS DIFFER: live", game.jests.num, "rebuilt", g2.jests.num)
+                    game.jests.zipAll(g2.jests, "-", "-").filter(x => x._1 != x._2).take(5).foreach { case (a, b) => +++("    live:", a, " rebuilt:", b) }
+                }
+            }
+            catch { case e : Throwable => +++("  jests rebuild threw:", e) }
 
             var bad = 0
             val points = (if (args.lift(2).has("dense")) 1.until(math.min(recorded.num, 400)).$ else (1.until(recorded.num).by(math.max(1, recorded.num / 80)).$ :+ (recorded.num - 1))).distinct.%(snapshots.contains)
