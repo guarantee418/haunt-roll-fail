@@ -319,6 +319,13 @@ trait MetaBase {
     def tutorialAbout : Elem = Empty
     def tutorialLessons : $[(Elem, $[Elem])] = $
     def tutorialGame : |[($[F], Map[F, String], $[O])] = None
+    // Several practice games (Company of Heroes': the First Game Rules, then the Full Game Rules; 2026-11-25): each the group of
+    // lessons it ends (tutorialLessonGroup), its button's label, the kind its saves are kept under and its game; by default the one
+    // tutorialGame, after every lesson
+    def tutorialGames : $[(String, Elem, String, $[F], Map[F, String], $[O])] =
+        tutorialGame.$./{ case (s, b, o) => ("Lessons", "Practice Game".hlb, "tutorial", s, b, o) }
+    // The group a lesson is listed under on the Tutorial menu
+    def tutorialLessonGroup(i : Int) : String = "Lessons"
     // A note at the top of the main menu (Northgard's Adset: its rules in short)
     def menuAbout : |[Elem] = None
     // A "How to Play" page on the game's menu (Pincer and Company of Heroes, 2026-11-24): links to the publisher's own pages for

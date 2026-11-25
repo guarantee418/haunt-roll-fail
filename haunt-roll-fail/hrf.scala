@@ -1405,7 +1405,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             HRF.offline.not.$(ZBasic(" ", Div("Back"), () => dom.document.location.assign("/play" + HRF.metas.%(_.linkedModes.exists(_._2 == meta.name)).single./("/" + _.name).|("")), third))
         )
 
-        if (HRF.segments.startsWith($("tutorial")) && meta.tutorialLessons.any)
+        if (HRF.segments.headOption.exists(_.startsWith("tutorial")) && meta.tutorialLessons.any)
             goTutorial()
         else
         if (HRF.segments.startsWith($("how-to-play")) && (meta.howToPlay.any || meta.howToPlayLinks.any)) {
@@ -1462,6 +1462,12 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
     def tutorialMenu() {
         val label = "Tutorial".hlb
         val lessons = meta.tutorialLessons
+        val games = meta.tutorialGames
+
+        def group(i : Int) = meta.tutorialLessonGroup(i)
+
+        // a group's practice game is offered after its last lesson
+        def gameAfter(i : Int) = (i + 1 == lessons.num || group(i + 1) != group(i)).??(games.%(_._1 == group(i)))
 
         def goLesson(i : Int) {
             history.pushState("/play/" + meta.name + "/tutorial/lesson", () => tutorialMenu())
@@ -1473,11 +1479,11 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
             ui.action.asker.zask(
                 $(ZOption(("Lesson " + (i + 1) + " of " + lessons.num).txt.div ~ t.hlb.div, Div(body./(e => Div(e)).merge, ZBasic.info))) ++
-                (i + 1 < lessons.num).$(ZBasic(" ", "Next: ".txt ~ lessons(i + 1)._1.hh, () => lesson(i + 1))) ++
-                (i + 1 == lessons.num).??(meta.tutorialGame.$./(_ => ZBasic(" ", "Start the Practice Game".hlb, () => {
+                gameAfter(i)./(g => ZBasic(" ", ("Start the " + (games.num > 1).?(group(i) + " ").|("") + "Practice Game").hlb, () => {
                     history.popState()
-                    goPractice()
-                }))) ++
+                    goPractice(g)
+                })) ++
+                (i + 1 < lessons.num).$(ZBasic(" ", "Next: ".txt ~ lessons(i + 1)._1.hh, () => lesson(i + 1))) ++
                 (i > 0).$(ZBasic(" ", "Previous: ".txt ~ lessons(i - 1)._1, () => lesson(i - 1))) ++
                 $(ZBasic(" ", "All Lessons", () => history.popState()))
             )
@@ -1485,40 +1491,43 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             ui.action.scroll.scrollTop = 0
         }
 
-        def practice() {
+        def practice(g : (String, Elem, String, $[meta.F], Map[meta.F, String], $[meta.O])) {
             HRF.segments = $
 
-            meta.tutorialGame.foreach { case (seating, bots, options) =>
-                val difficulties = seating./(f => f -> bots.get(f)./(b => Bot(b) : Difficulty).|(Human)).toMap
+            val (_, _, kind, seating, bots, options) = g
+            val difficulties = seating./(f => f -> bots.get(f)./(b => Bot(b) : Difficulty).|(Human)).toMap
 
-                startGame(seating, difficulties, options, $, newLocalGame("tutorial", seating, difficulties, options, "Tutorial"), "Tutorial", () => Map(), NoSwitches)
-            }
+            startGame(seating, difficulties, options, $, newLocalGame(kind, seating, difficulties, options, "Tutorial"), "Tutorial", () => Map(), NoSwitches)
         }
 
-        def goPractice() {
-            history.pushState("/play/" + meta.name + "/tutorial/practice", () => tutorialMenu())
-            savedGamesMenu("tutorial", "New Practice Game", () => practice())
+        // the first game's address is .../tutorial/practice, as it always was; the others' .../tutorial/<kind>
+        def path(g : (String, Elem, String, $[meta.F], Map[meta.F, String], $[meta.O])) = (g._3 == "tutorial").?("practice").|(g._3)
+
+        def goPractice(g : (String, Elem, String, $[meta.F], Map[meta.F, String], $[meta.O])) {
+            history.pushState("/play/" + meta.name + "/tutorial/" + path(g), () => tutorialMenu())
+            savedGamesMenu(g._3, "New Practice Game", () => practice(g))
         }
 
         ui.action.asker.zask(
             $(ZOption(label, Div(meta.tutorialAbout, ZBasic.info))) ++
-            lessons.zipWithIndex./{ case ((t, _), i) => ZBasic("Lessons", ((i + 1) + ". ").txt ~ t, () => goLesson(i)) } ++
-            meta.tutorialGame.$./(_ => ZBasic("Practice", "Practice Game".hlb, () => goPractice())) ++
+            lessons.zipWithIndex./{ case ((t, _), i) => ZBasic(group(i), ((i + 1) + ". ").txt ~ t, () => goLesson(i)) } ++
+            games./(g => ZBasic("Practice", g._2, () => goPractice(g))) ++
             ZBasic(" ", "Back", () => {
                 history.popState()
             }).?
         )
 
-        // savedGamesMenu's own address for a new game is .../tutorial/new
-        if (HRF.segments.startsWith($("tutorial", "new")) && meta.tutorialGame.any)
-            goPractice()
-        else
-        if (HRF.segments.startsWith($("tutorial", "practice")) && meta.tutorialGame.any) {
-            HRF.segments = $
-            goPractice()
+        // savedGamesMenu's own address for a new game is .../<kind>/new (.../tutorial/new for the first)
+        games.%(g => HRF.segments.startsWith($(g._3, "new"))).take(1).foreach(goPractice)
+        if (HRF.segments.any) {
+            games.%(g => HRF.segments.startsWith($("tutorial", path(g)))).take(1) match {
+                case List(g) =>
+                    HRF.segments = $
+                    goPractice(g)
+                case _ =>
+                    HRF.segments = $
+            }
         }
-        else
-            HRF.segments = $
     }
 
     // A mode from the main menu (Northgard's Training Grounds): a local or an online game, set up with the mode's factions and options
