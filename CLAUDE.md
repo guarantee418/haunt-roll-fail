@@ -1260,7 +1260,7 @@ server. No session can reach the server, and none needs to.
 - The "Roast Me" role (2026-11-25, asked for: a notification role that makes fun of you while you play): a member with it gets, under
   each of their turn pings, a jab from the game's heckler, posted by the same webhook in the same thread under the heckler's own name and
   picture (a webhook post's `username` and `avatar_url`, `persona` in `Tournament.post`), naming them without pinging them again, and
-  fitting the ping's reason: Root's Court Crow (the Corvid character art in a jester's cap), Northgard's Ratatoskr (the Norse squirrel who
+  fitting the ping's reason: Root's Court Crow (the Corvid character art in a jester's cap, peeking out of a trash can), Northgard's Ratatoskr (the Norse squirrel who
   carries the eagle's insults down Yggdrasil), Pincer's Pamphleteer and Company of Heroes' Sergeant Major (`good-game/Heckler.scala`, its
   lines there; the jabs mock the play, never the person). The bot checks the role on each ping. The owner makes it with the server changes
   `role Roast Me` and `self-role Roast Me`; `roast-role <role>` picks another (`off`: none), `roasts` says how it stands. The pictures are

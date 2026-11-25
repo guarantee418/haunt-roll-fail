@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # The hecklers of the "Roast Me" role (2026-11-25, good-game/Heckler.scala). The Root heckler, the Court Crow, is the Corvid
 # Conspiracy's character art (faction/mischief/cc-char.webp, laughing with its beak open) in a jester's cap drawn here.
-#   webp2/lfg/webhooks/heckler-root.png          the Court Crow's avatar (256, on a gold-ringed badge)
+#   webp2/lfg/webhooks/heckler-root.png          the Court Crow's avatar: the crow in the can on a gold-ringed badge (256)
 #   webp2/lfg/server-emoji/root_crowjester.png   the same crow for a Discord server emoji (128, transparent), to upload by hand
 #   webp2/lfg/server-emoji/root_jestercan.png    the capped crow peeking out of a trash can, lid up (128, transparent; asked for on
 #                                                2026-11-25), to upload by hand
@@ -243,11 +243,12 @@ def main():
     os.makedirs(os.path.join(BASE, "lfg/server-emoji"), exist_ok=True)
     emoji.resize((128, 128), Image.LANCZOS).save(os.path.join(BASE, "lfg/server-emoji/root_crowjester.png"), optimize=True)
     os.makedirs(os.path.join(BASE, "lfg/webhooks"), exist_ok=True)
-    badge(emoji).resize((256, 256), Image.LANCZOS).save(os.path.join(BASE, "lfg/webhooks/heckler-root.png"), optimize=True)
     sq = Image.open(os.path.join(BASE, "nort/images/clan/squirrel.webp")).convert("RGBA")
     sq.resize((256, 256), Image.LANCZOS).save(os.path.join(BASE, "lfg/webhooks/heckler-nort.png"), optimize=True)
     bin_ = edged(fit(can(crow(with_collar=False)), 512, 12))
     bin_.resize((128, 128), Image.LANCZOS).save(os.path.join(BASE, "lfg/server-emoji/root_jestercan.png"), optimize=True)
+    # the crow in the can is the Court Crow's picture too (2026-11-25, liked best)
+    badge(fit(bin_, 512, 0)).resize((256, 256), Image.LANCZOS).save(os.path.join(BASE, "lfg/webhooks/heckler-root.png"), optimize=True)
 
 
 if __name__ == "__main__":
