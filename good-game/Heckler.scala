@@ -77,7 +77,7 @@ object Heckler {
                 val v = voiceOf(meta)
                 val options = if (reminder) v.lines("reminder") else v.lines.getOrElse(tag, v.lines("turn"))
                 val line = pick(uid, options).replace("{name}", "<@" + uid + ">")
-                post(text + "\n" + line, persona(v) + (if (v == crow) gifFor(tag).getOrElse("") else ""))
+                post(text + "\n" + line, persona(v) + (if (v == crow) gifFor(if (reminder) "reminder" else tag).getOrElse("") else ""))
             }
             else
                 post(text, "")
@@ -139,9 +139,15 @@ object Heckler {
     // or being banished
     val scared = Set("defend", "banished")
 
+    // VEGETA IN THE RAIN (2026-11-25, the owner's pick): the Klipy video the owner linked (static.klipy.com/.../2n80SKFK.mp4), made a GIF
+    // (webp2/lfg/gifs/vegeta-rain.gif): half of the GIFs for the gloomy things: their own attack whiffing, an ambush, a conversion, a
+    // reminder that it's still their turn, a lost game or a long way behind
+    val gloomy = Set("whiffed", "ambushed", "convert", "reminder", "lost", "behind")
+
     def gifFor(tag : String) : Option[String] =
         if (Tournament.site.isEmpty || scala.util.Random.nextInt(3) != 0) None
         else Some(if (scared.contains(tag) && scala.util.Random.nextBoolean()) Tournament.site + "/art/lfg/gifs/terrified.gif"
+        else if (gloomy.contains(tag) && scala.util.Random.nextBoolean()) Tournament.site + "/art/lfg/gifs/vegeta-rain.gif"
         else if (harsh.contains(tag) && scala.util.Random.nextBoolean()) Tournament.site + "/art/lfg/gifs/emotional-damage.gif"
         else if (scala.util.Random.nextBoolean()) klipyLaughs(scala.util.Random.nextInt(klipyLaughs.size)) else Tournament.site + "/art/lfg/gifs/" + (tag match {
             case "rolled30" | "whiffed" | "defend" | "battle" => "crow-dice.gif"
@@ -419,7 +425,7 @@ object Heckler {
                     case None => "<@" + id + ">: nothing found (" + live.size + " games going, " + ends.size + " finished, that the site can post in)"
                     case Some((s, why, text)) =>
                         val voice = v(s)
-                        TurnPings.post(s.game, s.lobby, text, Nil, persona(voice) + (if (voice == crow) gifFor(why match { case "finishedlast" | "lost" | "last" | "behind" => "rolled30" ; case _ => "intro" }).getOrElse("") else ""))
+                        TurnPings.post(s.game, s.lobby, text, Nil, persona(voice) + (if (voice == crow) gifFor(why match { case "finishedlast" | "last" => "finishedlast" ; case "pings" | "waiting" => "reminder" ; case w => w }).getOrElse("") else ""))
                         Ranking.append(intros, Backup.row(id, s.game, why, Ranking.now()))
                         "<@" + id + "> (" + TurnPings.nameOf(s.lobby, s.user) + "): " + why + " in " + s.lobby.title + " (" + s.game + ")"
                 }
