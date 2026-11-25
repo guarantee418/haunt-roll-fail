@@ -557,12 +557,13 @@ object TurnPings {
         Ranking.append(pinged, row(Ranking.now(), game, user))
 
         val (icon, words) = reasonOf(game, lobby, user)
-        post(game, lobby, icon + "<@" + id + ">, " + (if (reminder) "a reminder: " + (if (words == "it's your turn") "it's still your turn" else words) else words) + " in **" + lobby.title + "**" + " (" + nameOf(lobby, user) + ").", List(id))
+        val text = icon + "<@" + id + ">, " + (if (reminder) "a reminder: " + (if (words == "it's your turn") "it's still your turn" else words) else words) + " in **" + lobby.title + "**" + " (" + nameOf(lobby, user) + ")."
 
-        // a jab from the game's heckler under the ping, for a player with the Roast Me role (Heckler.scala; 2026-11-25), naming them
-        // with a mention that doesn't ping them again
-        val tag = lobby.lines.map(_.split(" ").toList).collectFirst { case "user" :: s :: u :: _ if u == user => s }.flatMap(s => Turns.reason(game, s)).map(_.split("/").head).getOrElse("")
-        Heckler.heckle(lobby.meta, tag, id, "<@" + id + ">", reminder, (text, persona) => post(game, lobby, text, Nil, persona, now = true))
+        // a player with the troll role (Heckler.scala; 2026-11-25) gets one message from the game's heckler, the ping with its jab under
+        // it, in place of the turns webhook's own ping and a second message (asked for: "don't have them get double pinged, the Court Crow
+        // should replace Command Warren"); everyone else gets the plain ping
+        val why = lobby.lines.map(_.split(" ").toList).collectFirst { case "user" :: s :: u :: _ if u == user => s }.flatMap(s => Turns.reason(game, s)).getOrElse("")
+        Heckler.ping(lobby.meta, why.split("/").head, why.split("/").lift(1).getOrElse(""), id, text, reminder, (t, persona) => post(game, lobby, t, List(id), persona, now = true))
         "pinged"
     }
 }

@@ -465,6 +465,9 @@ object GoodGame {
                             if (first)
                                 try Tournament.reported(journalId, all)
                                 catch { case e : Exception => println("Tournament result not taken: " + e) }
+                            // a troll member who lost a Root game on 29 VP (Heckler.gameOver; 2026-11-25)
+                            if (first)
+                                Heckler.gameOver(journalId, l(0).safe.take(32), all)
                             plain(first.toString)
                         }
                     }
