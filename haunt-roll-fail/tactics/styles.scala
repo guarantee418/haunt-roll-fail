@@ -35,6 +35,11 @@ package object elem {
         object die extends CustomStyle(height("1.5em"), vertical.align("middle"), margin("0.05em"))
         object token extends CustomStyle(height("2.4ex"), vertical.align("middle"))
         object boardImg extends CustomStyle(max.width("100%"), max.height("100%"), margin("auto"))
+        // the Tutorial's lessons and tips (tutorial.scala)
+        object tutorialText extends CustomStyle(width("60ex"), max.width("100%"), margin.left("auto"), margin.right("auto"), margin.top("1ex"), text.align("left"))
+        object tutorialSite extends CustomStyle(SimpleCSSRule("border-left", "0.5ex solid #8fbf6f"), padding.left("1ex"))
+        object tutorialTip extends CustomStyle(text.align("left"), SimpleCSSRule("border-left", "0.5ex solid #8fbf6f"))
+        object menuText extends CustomStyle(text.align("center"))
         object opCard extends CustomStyle(height("6em"), vertical.align("middle"), border.radius("0.4em"))
 
         object name extends CustomStyle()
