@@ -53,6 +53,12 @@ before, any two factions, and play as they did (`teamGame` in `game.scala` is fa
 - Reinforce and Wrench repairs help teammates' units too (rulebook p. 25-26: "all sources of this ability may also benefit your
   teammates"). Not done: Commander abilities that help "allied" units still help only the player's own.
 
+- Teammates (the rulebook's Commander FAQ 4): Repair (Wrenches), Reinforce, Retreat Points and sight always benefit teammates;
+  other Commander abilities affect only their own player's units. Sight, Reinforce and Repair were shared from the start; a
+  teammate's Retreat Point (a Major, a Transport that is one) is one for the whole team in games with the hidden
+  `TeamRetreatPoints` every new game gets (2026-11-25; `retreatPoints` in `game.scala`), so team games made before keep their
+  retreats.
+
 ### Free-for-all
 
 The Mission Booklet's 8.0, **Moro River, 3 Way Free-for-all** (`MoroRiverFFA` in `missions.scala`, the Map choice
@@ -123,6 +129,14 @@ What the rulebook's grey boxes add (`full` in `game.scala`), and Moro River's ow
   gets none of the hex's Cover; other attacks on the assaulted unit trigger Cover as usual. No neutralization happens in
   the Damage Phase on a hex with an Assault. A Heavy Vehicle assaulting a hex with Sandbags destroys them only when it
   wins it. Infantry assaulting into a Building can be pinned.
+- **Barbed wire and tank traps** (4.1.2, Additional Battlefield Defenses; 2026-11-25): a unit with a Wrench, not in a Building,
+  not assaulting or assaulted, builds Barbed Wire or a Tank Trap on its own hex for 1 CP (both at once with two Wrenches;
+  `defenseChoices`, `DefensesAction`). Barbed Wire keeps every Infantry out of its hex and Emplacements off it, whoever built it;
+  a Heavy Vehicle moving in crushes it, and Light Vehicles ignore it. A Tank Trap keeps every Vehicle out. Units already there may
+  leave but not come back. An Assault may still go into an enemy-held hex behind them (`canAssault`). Like Sandbags they have 2 flat
+  health: two damage assigned to the hex destroys every Battlefield Defense there (`destroyDefenses`), and a unit in range may fire
+  at an empty defended hex as at an empty Building, with any of its damage dice (`shotChoices`). They are drawn as a coil of wire
+  across the hex and steel hedgehogs.
 - **Overwatch** (4.1.4): enemy Infantry moving onto a hex in a set-up machine gun's range, line of sight and Firing Arc
   takes 1 Damage at once, nothing saved (2 from two machine guns, ...); each hex moved onto counts, also a hex passed
   through and the hex an Infantry leaves a transport to. Not for Retreats, boarding a transport, or entering a Building
@@ -165,6 +179,21 @@ its bag, which match the booklet's pictures):
 | Ardennes Forest | AF1, AF2 | 6, 2, 3 | top and bottom |
 | Frozen Lake | AF2, AF1 | 6, 4, 3 | top and bottom |
 | Road to Moscow | AF1, AF2 | 6, 4, 4 | left and right edges |
+
+Four more use only the core panels (2026-11-25; `tools/missions-panels.py`): the 3.0 Skirmish Core Missions on one panel, two
+players with 2 starting Infantry each and the game ending at 11 VP, and the 5.1 3 Panel Core (x2) Missions on three panels (two core
+sets), for team games, every player starting with 2 Infantry. The mod has no bags for them, so their Control Points were read off the
+booklet's pictures (pages 6 and 18), each token's centre mapped to its hex:
+
+| Mission | Panels | Stockpile | Spawn Areas |
+|---|---|---|---|
+| The River (skirmish) | MR1 | 4, 2, 2 | top and bottom |
+| Frozen Pond (skirmish) | AF2 | 4, 2, 4 | top and bottom |
+| Between Two Rivers (3 panels) | MR2, MR1, MR2 | 4, 2, 6 | left and right edges |
+| Ardennes Forest (3 panels) | AF2, AF1, AF2 | 1, 2, 3 | top and bottom |
+
+The 3-panel Between Two Rivers' badges mark the first full column and the half hexes beside it at each edge (`MapData.edge` 1.1).
+The 3-panel missions may be played by two players too, each with 2 starting Infantry.
 
 - **Side Spawn Areas**: the booklet's numbered badges mark the full hexes of the edge column; the half hexes cut by the edge
   beside them are taken too (`MapData.spawn`). Team 1 (the first player in the seating) is on the left.
@@ -430,8 +459,9 @@ Vehicles: 3 of each tier 1 and 2 vehicle, 2 of each tier 3 one, at a time.
 10. **Overwatch** counts each hex moved onto, the hex passed through by a 2 CP move too (it is moved onto).
 11. **Splash on Sandbags**: each splash die counts once for each unit it hits in the hex and once for the hex toward the
     two Damage that destroy Sandbags.
-12. **Not in the core box** (left out): barbed wire and tank traps that units build (the core units' Wrenches build only
-    Sandbags), Terrain Pack 3's foot bridges, Bunkers and the terrain packs' other special Buildings.
+12. **Not in the core box** (left out): Terrain Pack 3's foot bridges, Bunkers and the terrain packs' other special Buildings.
+    Barbed wire and tank traps (2026-11-25): an Assault on an empty hex holding only a Battlefield Defense isn't offered (shoot it
+    instead); one CP builds one defense type per Wrench, but Sandbags stay their own 1 CP action.
 13. **Commander readings**: Osttruppen's two icons beside the Wrench (a veteran star and a Speed Die) are read as the squad's Speed Die;
     the Paradrop and Airdropped Group costs are the whole cost of the units; Smoke "disrupting Pins" isn't modeled beyond the sight rules;
     Combat Group Advance's and Armor Blitzkrieg's free move lasts the turn the ability is used; a drawn Commander's cards are shown to
