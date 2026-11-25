@@ -60,6 +60,5 @@ with too few colony pieces, Retreat and Fortify always asked. Saved games from b
 ## Next
 
 - Ask the designer about the open questions in `RULES.md` (Boar's War penalty first).
-- A better bot; the Easy one wanders, and since the rulings about half its two-player games stall
-  (no building) until the host's 60,000-step cap.
+- The Easy bot plays for the nearest seal since 2026-11-24 (`goals` in `bot.scala`); it finishes its games, but does not plan wars.
 - Rulebook diagrams the draft refers to ("fig. x", "pg. X") may change rules when they appear.

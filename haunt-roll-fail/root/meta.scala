@@ -2177,7 +2177,7 @@ object Meta extends MetaGame {
     val quickMin = 4
     val quickMax = 4
 
-    override val quickFactions = official ++ $(XC) ++ $(CUv2) ++ $(FH)
+    override val quickFactions = official
 
     def randomGameName() = {
         val n = $("Power", "Victory", "Glory", "Destiny", "Might", "Fight", "Right", "Betrayal", "Wood", "Land", "Air", "Ground").shuffle
