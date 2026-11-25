@@ -396,7 +396,7 @@ cd haunt-roll-fail && sbt fullOptJS
   with any of it can't be started (`rankedCheck`, in `validateFactionSeatingOptions`). Root's Tidal Flats, Tundra and Gloom maps and
   the Dawn and Dusk deck are approved since 2026-11-22, and the Simple Landmarks and the Negabond (a second Vagabond, `approved`) since 2026-11-23 (owner). A ranked game with a bot gets a warning. The Discord bot's `/root` and
   `/northgard` take `ranked` (`LfgSetup.sections`), the catalog's tenth field marks each unapproved option (its menus say "makes the
-  game unranked"), the post says Ranked or Unranked and why (`rankingLine`), and a Ranked game with unapproved picks is created
+  game unranked"), the post says Ranked or Unranked and why (`rankingLine`), and a Root Advanced Setup post always lists the factions in the draft by their emojis, picked or left as the defaults (`summary` in `LfgSetup.scala`; 2026-11-25), and a Ranked game with unapproved picks is created
   Unranked (`rankedOptions`). Names are released or
   moved by committing `ranking-changes/<name>.txt` to `hrf-games` (`release <name>`, `rename <name> -> <new>`, `seat <user> <name>`, and `merge <name> -> <into>` for one player under two names, which gives `<into>` the first name's devices and seats and frees it, 2026-11-22;
   `Ranking.change`, applied once each by `Backup`, outcome in `<name>.result`).
@@ -1275,7 +1275,11 @@ server. No session can reach the server, and none needs to.
   server takes each number once (`Heckler.jests`, `turns/jests.tsv`; a game's first report only sets where it starts). About one Court Crow post in three carries one of its animated GIFs under the line (asked for:
   "sometimes the crow just sends a trolling gif, with some context"): the 3-0 dice for a roll or a battle, the crow popping out of its
   trash can for something trashed, else the crow laughing (`Heckler.gifFor`, a webhook embed; `webp2/lfg/gifs/`, made by
-  `heckler-art.py`, served by `/art/`). The bot checks the role on each ping. The owner makes it with the server changes
+  `heckler-art.py`, served by `/art/`). The role is called @troll on the server since 2026-11-25 (`roast-role troll`). The tournament change `troll-intro`
+  gives every member with the role one first jab at once, in the thread of the game it is about, for the first thing found in their games:
+  a game waiting on them (and for how long), last on VP in a Root game, last place in a finished game (`ranking/results.tsv`), a game that
+  needed 4 or more turn pings, 8 VP or more behind the leader, or a lost game; nothing found, nothing posted (no welcome, owner's ask;
+  `Heckler.intro`, once each, `turns/troll-intros.tsv`). The bot checks the role on each ping. The owner makes it with the server changes
   `role Roast Me` and `self-role Roast Me`; `roast-role <role>` picks another (`off`: none), `roasts` says how it stands. The pictures are
   `webp2/lfg/webhooks/heckler-*.png`, served by `/art/` (`Lookup.artFile` serves that folder), and the crow as a Discord server emoji,
   `webp2/lfg/server-emoji/root_crowjester.png`, and peeking out of a trash can, `root_jestercan.png`, both uploaded to the server by hand; `haunt-roll-fail/tools/heckler-art.py` makes them.

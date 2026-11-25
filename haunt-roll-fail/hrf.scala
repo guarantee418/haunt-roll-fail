@@ -663,7 +663,7 @@ class HRFUI(implicit resources : Resources) {
                 else if (m == pincer.Meta)
                     card(m, $("home-musketeer", "home-cavalry", "home-cannon", "home-frigate"), "Colonial powers trade, build and wage a gentleman's war", () => new HRFMetaUI(this, m, 0)(resources).withMeta())
                 else if (m == tactics.Meta)
-                    card(m, $("home-us", "home-sherman", "home-panzer", "home-wehrmacht"), "US Forces and the Wehrmacht fight for Moro River", () => new HRFMetaUI(this, m, 0)(resources).withMeta())
+                    card(m, $("home-us", "home-sherman", "home-panzer", "home-wehrmacht"), "Squads and armor fight for ground, munitions and fuel", () => new HRFMetaUI(this, m, 0)(resources).withMeta())
                 else
                     card(m, $("home-wolf", "home-stag", "home-bear", "home-raven"), "Viking clans explore, build and conquer", () => new HRFMetaUI(this, m, 0)(resources).withMeta())
             ) ++
@@ -1373,7 +1373,6 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             meta.menuAbout./(e => ZOption(title, Div(e, ZBasic.info))).$ ++
             (
                 meta.tutorialLessons.any.$(ZBasic(title, "Tutorial".hlb, () => goTutorial())) ++
-                (meta.howToPlay.any || meta.howToPlayLinks.any).$(ZBasic(title, "How to Play".hlb, () => goHowToPlay())) ++
                 $(ZBasic(title, "Quick Game".hlb, meta.factions.%(f => meta.getBots(f).has(meta.defaultBot(f))).any.??(() => goQuickGame()))) ++
                 $(ZBasic(title, "Local Game".hhb, () => goHotseat())) ++
                 meta.soloFaction./(s => ZBasic(title, ("Solo vs " + meta.factionName(s).split(' ').head).hhb, () => goSolo())).$ ++
@@ -1384,6 +1383,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     }.|(throw new Error("meta not found " + l))
                 }) } ++
                 $(ZBasic(title, "Play Online".hlb, (HRF.server.any && HRF.offline.not).??(() => goOnline()))) ++
+                (meta.howToPlay.any || meta.howToPlayLinks.any).$(ZBasic(title, "How to Play".hhb, () => goHowToPlay())) ++
                 (meta.ranking.any && HRF.server.any && HRF.offline.not).$(ZBasic("Players", "Rankings".hhb, () => goRankings())) ++
                 // the site's tournament, on the menu of the game whose tournament it is (Root's, played in Advanced Setup), and on
                 // the menu of the meta its games use (Root's Adset, 2026-11-20), where it opens that game's Tournament page

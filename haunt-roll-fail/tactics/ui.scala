@@ -753,7 +753,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         super.wait(self, factions, message)
     }
 
-    val foldFrom = 9
+    // (from five: a unit's moves are lit on the map, and listed they pushed its other choices away)
+    val foldFrom = 5
     var unfolded = false
     var folded = false
     var unfold : () => Unit = () => {}

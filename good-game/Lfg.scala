@@ -440,7 +440,7 @@ object Lfg {
     def message(p : Post) : String = {
         val label = p.kind.label
         // the options its host chose
-        val picks = if (p.game.nonEmpty || p.cancelled) "" else LfgSetup.catalog(p.meta).map(c => LfgSetup.rankingLine(c, p.options) + (if (p.chosen.isEmpty) "" else LfgSetup.summary(c, p.chosen, p.options))).getOrElse("")
+        val picks = if (p.game.nonEmpty || p.cancelled) "" else LfgSetup.catalog(p.meta).map(c => LfgSetup.rankingLine(c, p.options) + LfgSetup.summary(c, p.chosen, p.options)).getOrElse("")
         val head = LfgSetup.emojiText(p.kind.emoji)
         val (text, bb) = p.game match {
             case Some(s) =>
