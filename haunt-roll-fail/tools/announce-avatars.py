@@ -9,7 +9,8 @@
 #   stronger-than-a-lion-sun.png "Stronger than a Lion": the sun in its might (Judges 5:31)
 #   informants.png              Root's game updates (Informants): the Informants card's art
 #   dispatch-rider.png          Pincer's (Dispatch Rider): the horse medallion of its Mustang card
-#   signal-corps.png            Company of Heroes' (Signal Corps): the US Forces emblem
+#   signal-corps.png            Company of Heroes' (Signal Corps): the tank crewman in his radio headset, the Mechanized Company
+#                               commander card's portrait
 #   vedrfolnir.png              Northgard Announcements' Vedrfolnir as the Clan of the Eagle's painted eagle (only with its path:
 #                               python3 haunt-roll-fail/tools/announce-avatars.py <painting>)
 # Run from the repository root: python3 haunt-roll-fail/tools/announce-avatars.py
@@ -223,8 +224,8 @@ eater()
 honey()
 strength_sweet()
 sun()
-game_art("root/images/card/deck/informants.webp", (10, 70, 500, 560), "informants.png")
-game_art("pincer/images/card/mustang.webp", (44, 74, 196, 226), "dispatch-rider.png")
-game_art("tactics/images/emblem/us.webp", (0, 0, 160, 160), "signal-corps.png")
+game_art("root/images/card/deck/informants.webp", (20, 95, 480, 555), "informants.png")
+game_art("pincer/images/card/mustang.webp", (60, 81, 172, 193), "dispatch-rider.png")
+game_art("tactics/images/commander/mechanized-company.webp", (86, 96, 250, 260), "signal-corps.png")
 if len(sys.argv) > 1:
     vedrfolnir(sys.argv[1])

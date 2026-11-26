@@ -31,8 +31,8 @@ import java.nio.file.{Files, Paths}
 // name: Northgard's Vedrfolnir above; Root's through Royal Claim, the tournament's webhook in #root-announcements (Tournament.webhook),
 // as Informants (root-announce <name>); Pincer's Dispatch Rider in #pincer-announcements (pincer-announce <name>, make-webhook ... | for
 // pincer-announcements); Company of Heroes' Signal Corps in #coh-announcements (coh-announce <name>, make-webhook ... | for
-// coh-announcements). Avatars in webp2/lfg/webhooks/: the Informants card's art, Pincer's Mustang card medallion, the US Forces emblem
-// (announce-avatars.py).
+// coh-announcements). Avatars in webp2/lfg/webhooks/: the Informants card's art, Pincer's Mustang card medallion, the Mechanized
+// Company commander card's crewman in his radio headset (announce-avatars.py).
 object Announce {
     case class Voice(name : String, avatar : String)
 

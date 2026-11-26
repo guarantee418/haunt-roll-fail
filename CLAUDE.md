@@ -1340,7 +1340,7 @@ server. No session can reach the server, and none needs to.
   `hrf-games` and add the change line to a `tournament-changes/<name>.txt` there, after the deploy is live. Never post a game's update through
   General Announcements (site-wide news only), another game's webhook or a turns webhook; a change to the whole site goes to General.
   Avatars in `webp2/lfg/webhooks/` (`informants.png` from the Informants card, `dispatch-rider.png` from Pincer's Mustang card,
-  `signal-corps.png` the US Forces emblem; `announce-avatars.py`).
+  `signal-corps.png` the Mechanized Company commander card's crewman in his radio headset; `announce-avatars.py`).
 - The bot's `/rule <rule> [game] [private]` (2026-11-22, asked for as a bot "to help cite the rules", not to interpret them): Root's
   rules by their Law of Root number (`4.3.2`, `H.1`, a section lists the rules under it) or name, with the rule's text and the link to
   it on the Root Database (`webp2/lfg/rules-root.tsv`, made by `haunt-roll-fail/tools/law-index.py` from the Root Database's copy, kept up
