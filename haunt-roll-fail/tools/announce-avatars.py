@@ -7,8 +7,8 @@
 #   sweeter-than-honey.png      "Sweeter than Honey": a honeycomb dripping honey
 #   strength-became-sweet.png   "Strength became Sweet": a honeycomb and bees inside a lion's head
 #   stronger-than-a-lion-sun.png "Stronger than a Lion": the sun in its might (Judges 5:31)
-#   vedrfolnir.png              Northgard Announcements' Vedrfolnir: the Clan of the Eagle's emblem (only with the header's path:
-#                               python3 haunt-roll-fail/tools/announce-avatars.py <header.jpg>)
+#   vedrfolnir.png              Northgard Announcements' Vedrfolnir on the eagle's head, from a painting (only with its path:
+#                               python3 haunt-roll-fail/tools/announce-avatars.py <painting>)
 # Run from the repository root: python3 haunt-roll-fail/tools/announce-avatars.py
 import math
 import os
@@ -190,12 +190,15 @@ def sun():
     save(im, "stronger-than-a-lion-sun.png")
 
 
-def vedrfolnir(header):
-    # Northgard Announcements (2026-11-26): Vedrfolnir, shown with the video game's official eagle, the emblem of Hraesvelg, Clan of
-    # the Eagle (Shiro Games' DLC, Steam app 2138500), cut from its Steam store header and set in the gold-ringed badge. The header
-    # isn't in the repository: give its path, downloaded from
-    # https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2138500/header.jpg (460x215; the emblem's disc is 158-302, 30-174)
-    art = Image.open(header).convert("RGB").crop((158, 30, 302, 174)).resize((S - 168, S - 168), Image.LANCZOS)
+def vedrfolnir(picture):
+    # Northgard Announcements (2026-11-26): Vedrfolnir, the hawk sitting on the eagle's head at the top of Yggdrasil, from a painting of
+    # the eagle on the World Tree (with Ratatoskr below) that the owner gave (550x557; not in the repository: give its path). Cropped to
+    # the eagle's head and the hawk on it, sharpened a little, and set in the gold-ringed badge. Turned down before it: a drawing, the
+    # Wastelands tile's eagle ("looks dead") and the Clan of the Eagle's emblem.
+    from PIL import ImageEnhance, ImageFilter
+    art = Image.open(picture).convert("RGB").crop((120, 15, 430, 325)).resize((S - 168, S - 168), Image.LANCZOS)
+    art = art.filter(ImageFilter.UnsharpMask(3, 90, 2))
+    art = ImageEnhance.Color(ImageEnhance.Contrast(art).enhance(1.08)).enhance(1.1)
     im, d = badge((40, 24, 20), (40, 24, 20))
     disc = Image.new("L", art.size, 0)
     ImageDraw.Draw(disc).ellipse((0, 0, art.width - 1, art.height - 1), fill=255)
