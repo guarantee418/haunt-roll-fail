@@ -954,7 +954,9 @@ server. No session can reach the server, and none needs to.
   (`EveningNAction(30, f : Council)` and `Council.clearPathWanted` in `root/faction-council.scala`): it reveals its cards in
   Birdsong and gets them back only in Evening, so its Daylight hand was empty and the path never came up (Discord,
   2026-11-04). New games get the hidden default option `CouncilEveningClearPath`; older games keep their Evening so their replays
-  don't change, and a running game can be switched over with `CouncilEveningClearPathAction(X)`. `ReplayCheck <games> mountain`
+  don't change, and a running game can be switched over with `CouncilEveningClearPathAction(X)`. Taken out again on 2026-11-25
+  (Discord root-feedback: clearing a path is Daylight only): `RulesVersion8` is `RulesVersion7` without it, so new games don't offer it;
+  the games that have it keep it, and `CouncilNoEveningClearPathAction(X)` switches one off. `ReplayCheck <games> mountain`
   plays the Mountain map with the Council.
 - Governors (17.2.3) stop Lilypad Diaspora's enclaves and the Corvids' plots at an enemy Council's Governing assemblies from
   crafting until the Council is entreated (`Council.craftingIn` in `root/faction-council.scala`, used by `craftEnclaves` and
@@ -1259,7 +1261,7 @@ server. No session can reach the server, and none needs to.
   session, which can't reach Discord, can do it): `roles`, `role <name> [| color #rrggbb] [| hoist] [| mentionable]`, `rename-role`,
   `give-role <user> -> <role>`, `take-role`, `channels`, `category <name> [| private] [| see <roles>] [| read-only <roles>]`,
   `channel <name> [| in <category>] [| text|voice|forum|announcement|stage] [| topic <text>] [| private] [| see ...] [| read-only ...] [| synced]`,
-  `rename-channel`, `move-channel <name> -> <category>|none`, `order <category> -> <channel>, ...` (`good-game/DiscordServer.scala`, its header has the forms). Creating
+  `rename-channel`, `move-channel <name> -> <category>|none`, `order <category> -> <channel>, ...`, and `merge-role <role> -> <role>` (everyone holding the first gets the second and loses the first; 2026-11-25, used to merge ng-spectator into root-spectator, renamed spectator) (`good-game/DiscordServer.scala`, its header has the forms). Creating
   changes the one of that name if there is one. On purpose nothing is deleted, nobody kicked or banned, and a role is never given
   server permissions; every request carries the audit log reason "HRF server change". The bot needs Manage Roles and Manage Channels,
   and its role above the roles it manages.
