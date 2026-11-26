@@ -464,6 +464,7 @@ object Meta extends MetaGame { mmm =>
     def defaultBot(f : Faction) = "Easy"
 
     override def turnReason(g : G, f : Any, actions : $[Any]) : String = TurnReasons.of(g, f, actions)
+    override def jests(g : G) = Jests.report(g, f => turnSeat(g, f))
 
     def writeFaction(f : Faction) = f.short
     def parseFaction(s : String) : |[Faction] = factions.%(_.short == s).single

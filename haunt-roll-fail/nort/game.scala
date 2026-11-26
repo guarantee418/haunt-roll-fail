@@ -870,6 +870,10 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     // The combat report of the fight just decided, until everyone shown it has tapped OK (CombatReportAction)
     var fightReport : |[FightReport] = None
 
+    // what happened to whom, for Ratatoskr's jests (display only: nort/jests.scala), and the last fight noted
+    var jests : $[String] = $
+    var jestFight : |[FightReport] = None
+
     // Clan powers that went off by themselves since the last clan power report (ClanPowerReports, ClanPowers in map.scala)
     var powerNotes : $[PowerNote] = $
 
@@ -1451,6 +1455,9 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
         // Clan Fame upgrades: abilities unlocked by the fame reached (before too, as a replay stops at soft actions)
         if (has(FameUpgradesModule))
             FameUpgradesExpansion.sweep(this)
+
+        // (noted before the action changes the board: Ratatoskr's jests, display only, nort/jests.scala)
+        Jests.see(action)(this)
 
         val raw = action.as[SelfPerform]./(_.perform(soft)).|(internalPerform(action, soft))
 
