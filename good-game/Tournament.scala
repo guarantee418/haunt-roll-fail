@@ -671,7 +671,9 @@ object Tournament {
                 case w if SelfRoles.words(w) => SelfRoles.change(w, rest)
                 // the Roast Me role's hecklers (Heckler.scala; 2026-11-25)
                 case w if Heckler.words(w) => Heckler.change(w, rest)
-                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, congratulate, turns, nort-turns, pincer-turns, tactics-turns, bot, guild, discord, ping waiting, pings, status, no-discord, lfg-key, lfg-commands, invite, or the server changes roles, role, rename-role, merge-role, give-role, take-role, channels, category, channel, rename-channel, move-channel, order, webhooks, make-webhook, rename-webhook, test-ping, self-roles, self-role, self-role-off and role-picker, roast-role, roasts)"
+                // the General Announcements webhook's posts (Announce.scala; 2026-11-26)
+                case w if Announce.words(w) => Announce.change(w, rest)
+                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, congratulate, turns, nort-turns, pincer-turns, tactics-turns, bot, guild, discord, ping waiting, pings, status, no-discord, lfg-key, lfg-commands, invite, or the server changes roles, role, rename-role, merge-role, give-role, take-role, channels, category, channel, rename-channel, move-channel, order, webhooks, make-webhook, rename-webhook, test-ping, self-roles, self-role, self-role-off and role-picker, roast-role, roasts, announce, announce-voices)"
             }
 
             (if (word == "webhook" || word == "forum" || TurnPings.slot(word).nonEmpty || word == "bot") word else line) + ": " + result

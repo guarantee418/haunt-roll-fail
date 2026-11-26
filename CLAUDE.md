@@ -1308,6 +1308,14 @@ server. No session can reach the server, and none needs to.
   Northgard, Pincer and Company of Heroes forums' own): the winners congratulated and mentioned when they can be pinged, then every seat's
   faction and final score, winners first, each led by its faction's or clan's emoji (2026-11-25, asked for) (`TurnPings.finished`); the tournament change `final-scores <game> ...` posts it again, or for a game that ended before. A tournament table's game is left out, as `Tournament.reported`
   congratulates it.
+- General Announcements (2026-11-26, asked for): a webhook in the server's #announcements channel (General category, above #welcome), named
+  "General Announcements" with a scroll picture, that posts each announcement under the next of four names from Samson's riddle, in turn, each
+  with its own picture: Eater to Eat, Sweeter than Honey, Strength became Sweet, Stronger than a Lion (`good-game/Announce.scala`; pictures
+  `webp2/lfg/webhooks/general-announcements.png` and the four, drawn by `haunt-roll-fail/tools/announce-avatars.py`, served by `/art/`). Made
+  by the tournament change `make-webhook General Announcements | in announcements | avatar general-announcements.png | for general` (its URL
+  in `discord-general-webhook`); the texts are `announcements/<name>.md` in `hrf-games`, posted by the change `announce <name>` (a line of
+  `---` starts a new message, longer ones split at blank lines, nobody pinged); `announce-voices` says which name is next. The how-tos for the
+  Discord and the site are `announcements/discord-how-to.md` and `site-how-to.md`.
 - The bot's `/rule <rule> [game] [private]` (2026-11-22, asked for as a bot "to help cite the rules", not to interpret them): Root's
   rules by their Law of Root number (`4.3.2`, `H.1`, a section lists the rules under it) or name, with the rule's text and the link to
   it on the Root Database (`webp2/lfg/rules-root.tsv`, made by `haunt-roll-fail/tools/law-index.py` from the Root Database's copy, kept up
