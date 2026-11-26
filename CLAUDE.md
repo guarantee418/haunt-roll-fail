@@ -467,6 +467,12 @@ server. No session can reach the server, and none needs to.
   with `None.get` in the console. Test changes to the loaders both on
   `localhost` (cache path) and through a non-localhost http address (no
   cache).
+- Some webviews have Cache Storage that never answers or refuses: Discord's in-app browser on an iPad stayed on the first
+  log lines ("John 3:16", the game's name), as every image, the menus' too, waited on `caches.open` (2026-11-26). The three
+  cached loaders share `CacheFirstLoader` in `loader.scala`: a cache that rejects, or hasn't answered in 6 seconds (20 for
+  `cache.add`, which downloads), is given up for the page's life (`CacheGuard.broken`) and every load waiting on it, and
+  after, goes straight to the network. Test with Chromium and `CacheStorage.prototype.open` replaced by a never-settling or
+  rejecting promise: the menu should show after about 6 seconds.
 - Browsers keep every image in Cache Storage under `hrf-image-cache-<imageDataVersion>`
   (`HRF.imageDataVersion` in `haunt-roll-fail/hrf.scala`) and never refetch it. When an image
   changes but keeps its file name, bump `imageDataVersion`, or players keep seeing the old one
