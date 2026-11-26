@@ -7,7 +7,7 @@
 #   sweeter-than-honey.png      "Sweeter than Honey": a honeycomb dripping honey
 #   strength-became-sweet.png   "Strength became Sweet": a honeycomb and bees inside a lion's head
 #   stronger-than-a-lion-sun.png "Stronger than a Lion": the sun in its might (Judges 5:31)
-#   vedrfolnir.png              Northgard Announcements' Vedrfolnir: a white-headed hawk over the crown of Yggdrasil
+#   vedrfolnir.png              Northgard Announcements' Vedrfolnir: the eagle of the Wastelands tile, cut out, on a sky badge
 # Run from the repository root: python3 haunt-roll-fail/tools/announce-avatars.py
 import math
 import os
@@ -189,53 +189,43 @@ def sun():
 
 
 def vedrfolnir():
-    # Northgard Announcements (2026-11-26): Vedrfolnir, the hawk at the top of Yggdrasil, flying over the World Tree's crown,
-    # white-headed and brown like the eagle of the Wastelands tile, but drawn here
-    im, d = badge((52, 92, 128), (32, 60, 88))
-    # a low sun glow behind the tree crown
-    d.ellipse((290, 520, 734, 964), fill=(92, 132, 150))
-    # Yggdrasil's crown across the bottom of the badge, clipped to the inner disc
-    crown = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-    c = ImageDraw.Draw(crown)
-    for x, y, r, col in ((210, 760, 150, (34, 78, 52)), (380, 700, 170, (40, 92, 58)), (560, 690, 180, (34, 84, 54)),
-                         (740, 740, 160, (40, 92, 58)), (300, 860, 170, (28, 66, 44)), (512, 840, 200, (30, 72, 48)),
-                         (720, 870, 170, (28, 66, 44))):
-        c.ellipse((x - r, y - r, x + r, y + r), fill=col)
-    for x, y, r in ((380, 640, 60), (570, 620, 70), (740, 690, 50), (230, 720, 50)):
-        c.ellipse((x - r, y - r, x + r, y + r), fill=(64, 122, 74))
-    mask = Image.new("L", (S, S), 0)
-    ImageDraw.Draw(mask).ellipse((84, 84, S - 84, S - 84), fill=255)
-    im.paste(crown, (0, 0), Image.composite(crown.split()[3], Image.new("L", (S, S), 0), mask))
-    d = ImageDraw.Draw(im)
-    brown, brown_dark, light = (112, 72, 54), (74, 46, 36), (150, 104, 78)
-    cx, cy = 500, 430
-    # wings: a broad arm, then feather fingers at the tips
-    for side in (-1, 1):
-        d.polygon([(cx - 40 * side, cy - 20), (cx - 220 * side, cy - 140), (cx - 300 * side, cy - 150),
-                   (cx - 290 * side, cy - 80), (cx - 180 * side, cy + 40), (cx - 30 * side, cy + 50)], fill=brown)
-        for k in range(5):
-            bx = cx - (270 - 18 * k) * side
-            by = cy - 140 + 46 * k
-            tx = bx - (110 - 6 * k) * side
-            ty = by - 70 + 34 * k
-            d.polygon([(bx, by - 26), (tx, ty), (bx + 10 * side, by + 26)], fill=brown_dark if k % 2 else brown)
-        # the coverts, a lighter band along the arm
-        d.polygon([(cx - 40 * side, cy - 10), (cx - 210 * side, cy - 115), (cx - 235 * side, cy - 85), (cx - 60 * side, cy + 30)], fill=light)
-    # tail fan
-    d.polygon([(cx - 40, cy + 60), (cx - 90, cy + 210), (cx + 90, cy + 210), (cx + 40, cy + 60)], fill=brown_dark)
-    for k in range(-2, 3):
-        d.line((cx + 12 * k, cy + 80, cx + 36 * k, cy + 205), fill=brown, width=8)
-    # body
-    d.ellipse((cx - 70, cy - 70, cx + 70, cy + 110), fill=brown)
-    d.ellipse((cx - 44, cy - 30, cx + 44, cy + 90), fill=light)
-    # head, white like the tile's, turned to the right, with a hooked beak
-    hx, hy = cx + 10, cy - 110
-    d.ellipse((hx - 62, hy - 58, hx + 62, hy + 62), fill=(238, 232, 218))
-    d.polygon([(hx + 50, hy - 18), (hx + 118, hy + 4), (hx + 104, hy + 46), (hx + 82, hy + 24), (hx + 50, hy + 26)], fill=(232, 178, 52))
-    d.polygon([(hx + 104, hy + 46), (hx + 118, hy + 4), (hx + 124, hy + 40)], fill=(150, 104, 30))
-    d.ellipse((hx + 14, hy - 22, hx + 44, hy + 8), fill=INK)
-    d.ellipse((hx + 24, hy - 16, hx + 34, hy - 6), fill=(255, 255, 255))
-    d.line((hx - 4, hy - 34, hx + 54, hy - 24), fill=(170, 150, 120), width=12)
+    # Northgard Announcements (2026-11-26): Vedrfolnir, the hawk at the top of Yggdrasil, as the game itself paints it: the eagle on
+    # the Wastelands tile waste-vedrfolnir, cut out of its sandy ground (the dark browns and the white head kept, the pieces of the
+    # bird and their holes filled) and set on a sky blue badge
+    from PIL import ImageChops, ImageFilter
+    tile = Image.open("haunt-roll-fail/webp2/nort/images/tile/waste-vedrfolnir.webp").convert("RGB")
+    w, h = tile.size
+    cx, cy, r = 0.5 * w, 0.42 * h, 0.16 * w      # the tile's centrepiece (nort/tile-abilities.scala)
+    tile = tile.crop((int(cx - r * 1.3), int(cy - r * 1.3), int(cx + r * 1.3), int(cy + r * 1.3)))
+    m = Image.new("L", tile.size, 0)
+    px, mp = tile.load(), m.load()
+    for y in range(tile.height):
+        for x in range(tile.width):
+            R, G, B = px[x, y]
+            lum = (R * 3 + G * 6 + B) / 10
+            if (lum < 120 and R >= G - 5) or (R > 200 and G > 200 and B > 190 and abs(R - B) < 25):
+                mp[x, y] = 255
+    m = m.filter(ImageFilter.MaxFilter(5)).filter(ImageFilter.MinFilter(5)).filter(ImageFilter.MedianFilter(5))
+    m = m.point(lambda v: 255 if v > 127 else 0)
+    for seed in ((230, 200), (60, 100)):         # the body and the tail
+        if m.getpixel(seed) == 255:
+            ImageDraw.floodfill(m, seed, 128)
+    m = m.point(lambda v: 255 if v == 128 else 0)
+    ImageDraw.floodfill(m, (0, 0), 64)
+    m = m.point(lambda v: 0 if v == 64 else 255)
+    m = m.filter(ImageFilter.MinFilter(3)).filter(ImageFilter.GaussianBlur(0.8))
+    bird = tile.convert("RGBA")
+    bird.putalpha(m)
+    bird = bird.crop(bird.getbbox())
+    k = 780 / bird.width
+    bird = bird.resize((int(bird.width * k), int(bird.height * k)), Image.LANCZOS)
+    im, d = badge((58, 98, 132), (32, 60, 88))
+    layer = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    layer.paste(bird, ((S - bird.width) // 2 - 10, (S - bird.height) // 2 + 10), bird)
+    disc = Image.new("L", (S, S), 0)
+    ImageDraw.Draw(disc).ellipse((84, 84, S - 84, S - 84), fill=255)
+    layer.putalpha(ImageChops.multiply(layer.split()[3], disc))
+    im.alpha_composite(layer)
     save(im, "vedrfolnir.png")
 
 

@@ -1328,8 +1328,8 @@ server. No session can reach the server, and none needs to.
   Discord and the site are `announcements/discord-how-to.md` and `site-how-to.md`.
   Northgard Announcements (2026-11-26, asked for): a second desk, the webhook Vedrfolnir in #ng-announcements, always posting under that
   name: the hawk at the top of Yggdrasil that sees all nine worlds (the Wastelands tile), paired with the heckler Ratatoskr, who runs down
-  that tree with the eagle's insults (`Announce.nort`, `Announce.Desk`; avatar `webp2/lfg/webhooks/vedrfolnir.png`, an original drawing by
-  `announce-avatars.py`). Made by `make-webhook Vedrfolnir | in ng-announcements | avatar vedrfolnir.png | for nort-announcements` (its URL in
+  that tree with the eagle's insults (`Announce.nort`, `Announce.Desk`; avatar `webp2/lfg/webhooks/vedrfolnir.png`, the eagle of the Wastelands tile's art cut
+  out by `announce-avatars.py`; an original drawing looked terrible). Made by `make-webhook Vedrfolnir | in ng-announcements | avatar vedrfolnir.png | for nort-announcements` (its URL in
   `discord-nort-announce-webhook`); `nort-announce <name>` posts `announcements/<name>.md` through it.
 - The bot's `/rule <rule> [game] [private]` (2026-11-22, asked for as a bot "to help cite the rules", not to interpret them): Root's
   rules by their Law of Root number (`4.3.2`, `H.1`, a section lists the rules under it) or name, with the rule's text and the link to
