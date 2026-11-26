@@ -225,7 +225,7 @@ honey()
 strength_sweet()
 sun()
 game_art("root/images/card/deck/informants.webp", (20, 95, 480, 555), "informants.png")
-game_art("pincer/images/card/mustang.webp", (60, 81, 172, 193), "dispatch-rider.png")
+game_art("pincer/images/card/mustang.webp", (66, 84, 178, 196), "dispatch-rider.png")
 game_art("tactics/images/commander/mechanized-company.webp", (86, 96, 250, 260), "signal-corps.png")
 if len(sys.argv) > 1:
     vedrfolnir(sys.argv[1])
