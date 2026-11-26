@@ -1332,6 +1332,15 @@ server. No session can reach the server, and none needs to.
   painting (its GOG page's `eagle614.jpg`), by `announce-avatars.py <painting>`; a drawing, the Wastelands tile's eagle, the clan's emblem and
   a painting of the eagle on Yggdrasil were turned down). Made by `make-webhook Vedrfolnir | in ng-announcements | avatar vedrfolnir.png | for nort-announcements` (its URL in
   `discord-nort-announce-webhook`); `nort-announce <name>` posts `announcements/<name>.md` through it.
+- Game updates go to their game's announcements channel (the owner's standing rule, 2026-11-26): after a deploy that changes something
+  players of a game will notice (a feature, a fix, a rules change), post it there, each through its own webhook and name (`Announce.desks`):
+  Northgard's in #ng-announcements as Vedrfolnir (`nort-announce <name>`), Root's in #root-announcements through Royal Claim, the
+  tournament's webhook, as Informants (`root-announce <name>`), Pincer's in #pincer-announcements as Dispatch Rider (`pincer-announce
+  <name>`), Company of Heroes' in #coh-announcements as Signal Corps (`coh-announce <name>`). Write the post as `announcements/<name>.md` in
+  `hrf-games` and add the change line to a `tournament-changes/<name>.txt` there, after the deploy is live. Never post a game's update through
+  General Announcements (site-wide news only), another game's webhook or a turns webhook; a change to the whole site goes to General.
+  Avatars in `webp2/lfg/webhooks/` (`informants.png` from the Informants card, `dispatch-rider.png` from Pincer's Mustang card,
+  `signal-corps.png` the Mechanized Company commander card's crewman in his radio headset; `announce-avatars.py`).
 - The bot's `/rule <rule> [game] [private]` (2026-11-22, asked for as a bot "to help cite the rules", not to interpret them): Root's
   rules by their Law of Root number (`4.3.2`, `H.1`, a section lists the rules under it) or name, with the rule's text and the link to
   it on the Root Database (`webp2/lfg/rules-root.tsv`, made by `haunt-roll-fail/tools/law-index.py` from the Root Database's copy, kept up
