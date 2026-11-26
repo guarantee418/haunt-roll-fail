@@ -2667,7 +2667,21 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             }) :: BasicOption(" ", "Cancel", Nil, again))
         }
 
-        def show(names : $[String], own : $[String], discord : $[$[String]], ratings : $[(String, $[MetaGame], |[$[Elo.Player]])]) {
+        // a Discord role given or taken (SelfRoles.siteSet on the server)
+        def setRole(name : String, id : String, role : String, on : Boolean) {
+            postF(server + "/discord/role", PlayerKey.get + "\n" + name + "\n" + id + "\n" + on.?("on").|("off")) { r =>
+                r.trim match {
+                    case "ok" => myAccount()
+                    case "notmember" => says("Join the Discord server first: the role can only be given to a member.".txt)
+                    case "notoffered" => says(("@" + role + " can't be picked any more.").txt)
+                    case "nodiscord" => says("Add your Discord username first.".txt)
+                    case "no" => says("Only the device that holds the name can change its roles.".txt)
+                    case _ => says("The role couldn't be changed right now.".txt, |(() => setRole(name, id, role, on)))
+                }
+            } { unreachable() }
+        }
+
+        def show(names : $[String], own : $[String], discord : $[$[String]], ratings : $[(String, $[MetaGame], |[$[Elo.Player]])], roles : Map[String, String] = Map()) {
             def is(a : String, b : String) = a.toLowerCase == b.toLowerCase
             val signed = names.any
 
@@ -2709,6 +2723,27 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     (id.any && digits.not).$(ZOption("Discord".hl, Div((id.hlb ~ " wasn't found on the Discord server yet, so it can't be pinged: tap it above to give it again.").spn, ZBasic.info)))
                 })
 
+            // the roles a member picks for themselves, as /roles does on Discord (2026-11-26)
+            val roleRows : $[ZOption] = signed.??(names./~{ n =>
+                val group = "Discord Roles".hl
+                val sub = (names.num > 1).??(n + " · ")
+                roles.get(n.toLowerCase).toList.flatMap { text =>
+                    val lines = text.split('\n').$.%(_.contains('\t'))./(_.split('\t').$ ++ $("", "", "", ""))
+                    if (lines.any)
+                        $[ZOption](ZOption(group, Div((sub + "Tap a role to take it or leave it. The same roles are in /roles on the Discord server.").txt, ZBasic.info))) ++
+                        lines./{ l =>
+                            val (id, role, on, about) = (l(0), l(1), l(2) == "on", l(3))
+                            val state : Elem = (sub + "@" + role + ": ").txt ~ on.?("On".hlb).|("Off".hh)
+                            ZBasic(group, if (about.nonEmpty) state ~ Break ~ about.spn(xstyles.smaller75) else state, () => setRole(n, id, role, on.not))
+                        }
+                    else text.trim match {
+                        case "notmember" => $(ZOption(group, Div((sub + "Join the Discord server to pick your roles here.").txt, ZBasic.info)))
+                        case "unavailable" => $(ZOption(group, Div((sub + "Your Discord roles can't be shown right now.").txt, ZBasic.info)))
+                        case _ => $[ZOption]()
+                    }
+                }
+            })
+
             val group = "Devices and Codes".hl
             val codeRows : $[ZOption] =
                 signed.$(ZBasic(group, ("Sign in on another device".hh ~ Break ~ "Shows the codes to enter there".spn(xstyles.smaller75)).div($(xlo.fullwidth, xlo.fullheight)), () => otherDevice(names, again))) ++
@@ -2725,6 +2760,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 $(head) ++
                 ratingRows ++
                 discordRows ++
+                roleRows ++
                 codeRows ++
                 leave ++
                 $(ZBasic(" ", "My Online Games".hh, () => dom.document.location.assign("/play/my-games"))) ++
@@ -2739,12 +2775,20 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             ownCodes(names, own => {
                 postF(server + "/discord/mine", PlayerKey.get) { text =>
                     val discord = text.split('\n').$.%(_.nonEmpty)./(_.split('\t').$ ++ $("", "", ""))
-                    def rate(rest : $[(String, $[MetaGame])], done : $[(String, $[MetaGame], |[$[Elo.Player]])]) : Unit = rest match {
-                        case (k, ms) :: more =>
-                            getF(server + "/rankings/" + ms./(_.name).distinct.join(",")) { t => rate(more, done :+ ((k, ms, |(Elo.compute(Elo.parse(t)))))) } { rate(more, done :+ ((k, ms, None))) }
-                        case Nil => show(names, own, discord, done)
+                    // each name with a Discord user ID: its roles (SelfRoles.site)
+                    def roles(rest : $[String], done : Map[String, String], after : Map[String, String] => Unit) : Unit = rest match {
+                        case n :: more => postF(server + "/discord/roles", PlayerKey.get + "\n" + n) { t => roles(more, done + (n.toLowerCase -> t), after) } { roles(more, done, after) }
+                        case Nil => after(done)
                     }
-                    rate(ladders, $)
+                    val withId = names.%(n => discord.exists(r => r(0).toLowerCase == n.toLowerCase && r(3) == "ping"))
+                    roles(withId, Map(), rr => {
+                        def rate(rest : $[(String, $[MetaGame])], done : $[(String, $[MetaGame], |[$[Elo.Player]])]) : Unit = rest match {
+                            case (k, ms) :: more =>
+                                getF(server + "/rankings/" + ms./(_.name).distinct.join(",")) { t => rate(more, done :+ ((k, ms, |(Elo.compute(Elo.parse(t)))))) } { rate(more, done :+ ((k, ms, None))) }
+                            case Nil => show(names, own, discord, done, rr)
+                        }
+                        rate(ladders, $)
+                    })
                 } { unreachable() }
             })
         }
