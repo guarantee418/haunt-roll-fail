@@ -2898,7 +2898,10 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             val turn = myTurn(r)
             // (a finished unranked game in Completed Games says so)
             val sub = turn.?(Span(Text("Your turn"), $(ExternalStyle("hrf-my-turn-tag"))) ~ " · ".txt).|(Empty) ~ ((r(4) == "1" && unranked(r)).??("Unranked · ") + other + "as " + r(3) + against).txt
-            ZOption(group, (Link(HRF.server.get + "/play/" + r(0) + "/" + r(2), r(1).but("")./(_.hh).|(label.hh) ~ overviewOf(r) ~ sub.spn(xstyles.smaller75), $(xstyles.link, xlo.fullwidth, xlo.fullheight)) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough)).div(ZBasic.choice ++ turn.$(ExternalStyle("hrf-my-turn"))))
+            // a finished game's winners, the server's twelfth field, and the thirteenth "1" when the player won (2026-11-25, asked for)
+            val won = r.lift(12).has("1")
+            val winners = (r(4) == "1").??(r.lift(11).|("").trim.some./(w => Div(Span(Text(won.?("🏆 You won").|("🏆 Won by " + w)), $(ExternalStyle("hrf-winner"))) ~ won.??(" · " + w).txt, $(xstyles.smaller75))))
+            ZOption(group, (Link(HRF.server.get + "/play/" + r(0) + "/" + r(2), r(1).but("")./(_.hh).|(label.hh) ~ overviewOf(r) ~ sub.spn(xstyles.smaller75) ~ winners.|(Empty), $(xstyles.link, xlo.fullwidth, xlo.fullheight)) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough)).div(ZBasic.choice ++ turn.$(ExternalStyle("hrf-my-turn"))))
         }
 
         val tourSecrets = tour.|($)./(_(3)).toSet
