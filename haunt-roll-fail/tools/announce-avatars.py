@@ -7,9 +7,16 @@
 #   sweeter-than-honey.png      "Sweeter than Honey": a honeycomb dripping honey
 #   strength-became-sweet.png   "Strength became Sweet": a honeycomb and bees inside a lion's head
 #   stronger-than-a-lion-sun.png "Stronger than a Lion": the sun in its might (Judges 5:31)
+#   informants.png              Root's game updates (Informants): the Informants card's art
+#   dispatch-rider.png          Pincer's (Dispatch Rider): the horse medallion of its Mustang card
+#   signal-corps.png            Company of Heroes' (Signal Corps): the tank crewman in his radio headset, the Mechanized Company
+#                               commander card's portrait
+#   vedrfolnir.png              Northgard Announcements' Vedrfolnir as the Clan of the Eagle's painted eagle (only with its path:
+#                               python3 haunt-roll-fail/tools/announce-avatars.py <painting>)
 # Run from the repository root: python3 haunt-roll-fail/tools/announce-avatars.py
 import math
 import os
+import sys
 from PIL import Image, ImageDraw
 
 S = 1024          # drawn at 4x, saved at 256
@@ -187,8 +194,53 @@ def sun():
     save(im, "stronger-than-a-lion-sun.png")
 
 
+def vedrfolnir(picture):
+    # Northgard Announcements (2026-11-26): Vedrfolnir, shown with the official painting of the eagle with the glowing eye from
+    # Hraesvelg, Clan of the Eagle (Shiro Games' DLC), cropped to the eagle on its branch and set in the gold-ringed badge (the owner
+    # picked it over a drawing, the Wastelands tile's eagle, the clan emblem and a painting of the eagle on Yggdrasil). The painting
+    # isn't in the repository: give its path, downloaded from the DLC's GOG page,
+    # https://items.gog.com/northgard_-_hr%C3%A6svelg,_clan_of_the_eagle/eagle614.jpg (614x345)
+    art = Image.open(picture).convert("RGB").crop((150, 40, 455, 345)).resize((S - 168, S - 168), Image.LANCZOS)
+    im, d = badge((40, 24, 20), (40, 24, 20))
+    disc = Image.new("L", art.size, 0)
+    ImageDraw.Draw(disc).ellipse((0, 0, art.width - 1, art.height - 1), fill=255)
+    im.paste(art, (84, 84), disc)
+    save(im, "vedrfolnir.png")
+
+def game_art(path, box, name):
+    # a game's update webhook avatar (2026-11-26): a square of its own art in the gold-ringed badge
+    art = Image.open("haunt-roll-fail/webp2/" + path).convert("RGBA").crop(box).resize((S - 168, S - 168), Image.LANCZOS)
+    im, d = badge((40, 24, 20), (40, 24, 20))
+    flat = Image.new("RGBA", art.size, (40, 24, 20, 255))
+    flat.alpha_composite(art)
+    disc = Image.new("L", art.size, 0)
+    ImageDraw.Draw(disc).ellipse((0, 0, art.width - 1, art.height - 1), fill=255)
+    im.paste(flat, (84, 84), disc)
+    save(im, name)
+
+def dispatch_rider():
+    # Pincer's Dispatch Rider: the horse of the Mustang card's medallion. The horse is painted right of the medallion's middle, so the
+    # medallion (centre 119,143, radius 57 on the 240x336 card) is lifted onto its own dark brown and the crop is centred on the horse
+    card = Image.open("haunt-roll-fail/webp2/pincer/images/card/mustang.webp").convert("RGB")
+    lifted = Image.new("RGB", card.size, (58, 24, 12))
+    disc = Image.new("L", card.size, 0)
+    ImageDraw.Draw(disc).ellipse((119 - 57, 143 - 57, 119 + 57, 143 + 57), fill=255)
+    lifted.paste(card, (0, 0), disc)
+    art = lifted.crop((128 - 50, 139 - 50, 128 + 50, 139 + 50)).resize((S - 168, S - 168), Image.LANCZOS).convert("RGBA")
+    im, d = badge((40, 24, 20), (40, 24, 20))
+    m = Image.new("L", art.size, 0)
+    ImageDraw.Draw(m).ellipse((0, 0, art.width - 1, art.height - 1), fill=255)
+    im.paste(art, (84, 84), m)
+    save(im, "dispatch-rider.png")
+
+
 scroll()
 eater()
 honey()
 strength_sweet()
 sun()
+game_art("root/images/card/deck/informants.webp", (20, 95, 480, 555), "informants.png")
+dispatch_rider()
+game_art("tactics/images/commander/mechanized-company.webp", (86, 96, 250, 260), "signal-corps.png")
+if len(sys.argv) > 1:
+    vedrfolnir(sys.argv[1])
