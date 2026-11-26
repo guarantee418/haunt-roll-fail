@@ -1657,13 +1657,19 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         // Warriors held prisoner in forests are drawn behind bars
         val caged = currentGame.ui.graveyard.not.??(game.board.forests./~(r => factions.of[CommonAbduct].%(game.states.contains)./~(_.from(Cage(r)).$)./(u => (r : Region, u.faction, u.piece)))).toSet
 
+        // The Knaves' acclaim already activated to craft this turn (Serve) is drawn grayed out until the turn ends, like the flipped
+        // token of the physical game (Discord root-discussion, 2026-11-26); display only, from KnavesPlayer.activated
+        val usedAcclaim = currentGame.ui.graveyard.not.??(factions.of[Knaves].%(game.states.contains)./~(f => f.activated./(c => (c : Region, f : Faction)))).toSet
+
         draws.%(_.piece != Keep).sortBy(d => d.y - (d.piece.is[Token]).??(10000) - (d.piece == FreeBuildingSlot).??(20000) - (d.piece == Keep).??(40000)).foreach { d =>
             val jail = caged.contains((d.region, d.faction, d.piece))
 
             if (jail)
                 drawJail(g, d.rect, false)
 
-            g.drawImage(resources.images.get(d.rect.key), d.rect.x, d.rect.y)
+            val key = (d.piece == Acclaim && usedAcclaim.contains((d.region, d.faction))).?(d.rect.key + "-used").|(d.rect.key)
+
+            g.drawImage(resources.images.get(key), d.rect.x, d.rect.y)
 
             if (jail)
                 drawJail(g, d.rect, true)
