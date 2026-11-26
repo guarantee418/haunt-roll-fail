@@ -6,7 +6,7 @@ import java.nio.file.{Files, Paths}
 // GENERAL ANNOUNCEMENTS (asked for on 2026-11-26): a webhook that posts only to the Discord server's #announcements channel, made by the
 // bot as "General Announcements" with a scroll for its picture (make-webhook General Announcements | in announcements | avatar
 // general-announcements.png | for general). Each announcement goes out under the next of four names from Samson's riddle (Judges 14),
-// each with its own picture, in turn: Eater to Eat, Sweeter than Honey, Strength became Sweet, Stronger than a Lion (pictures in
+// each with its own picture, in turn: Eater to Eat, Sweeter than Honey, Strength became Sweet, Stronger than a Lion, a sun (pictures in
 // webp2/lfg/webhooks/, drawn by haunt-roll-fail/tools/announce-avatars.py, served by /art/). The webhook's own name and scroll show
 // wherever Discord shows the webhook itself.
 //
@@ -24,7 +24,7 @@ object Announce {
         Voice("Eater to Eat", "eater-to-eat.png"),
         Voice("Sweeter than Honey", "sweeter-than-honey.png"),
         Voice("Strength became Sweet", "strength-became-sweet.png"),
-        Voice("Stronger than a Lion", "stronger-than-a-lion.png"))
+        Voice("Stronger than a Lion", "stronger-than-a-lion-sun.png"))
 
     val env = "HRF_DISCORD_GENERAL_WEBHOOK"
     val file = "discord-general-webhook"

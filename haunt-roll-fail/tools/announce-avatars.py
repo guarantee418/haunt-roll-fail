@@ -6,7 +6,7 @@
 #   eater-to-eat.png            "Eater to Eat": a lion's head
 #   sweeter-than-honey.png      "Sweeter than Honey": a honeycomb dripping honey
 #   strength-became-sweet.png   "Strength became Sweet": a honeycomb and bees inside a lion's head
-#   stronger-than-a-lion.png    "Stronger than a Lion": a raised fist
+#   stronger-than-a-lion-sun.png "Stronger than a Lion": the sun in its might (Judges 5:31)
 # Run from the repository root: python3 haunt-roll-fail/tools/announce-avatars.py
 import math
 import os
@@ -169,35 +169,26 @@ def strength_sweet():
     save(im, "strength-became-sweet.png")
 
 
-def fist():
-    im, d = badge((120, 40, 22), (80, 24, 12))
-    skin, skin_dark = (226, 170, 120), (178, 118, 76)
-    # rays behind the fist, like a mane
-    for i in range(16):
-        a = math.radians(i * 22.5)
-        d.polygon([(512 + 170 * math.cos(a - 0.12), 440 + 170 * math.sin(a - 0.12)), (512 + 380 * math.cos(a), 440 + 380 * math.sin(a)),
-                   (512 + 170 * math.cos(a + 0.12), 440 + 170 * math.sin(a + 0.12))], fill=(176, 96, 34) if i % 2 else (150, 70, 24))
-    # forearm and wrist band
-    d.rounded_rectangle((420, 560, 620, 900), radius=40, fill=skin_dark)
-    d.rounded_rectangle((432, 560, 608, 900), radius=36, fill=skin)
-    d.rectangle((420, 600, 620, 660), fill=GOLD)
-    d.line((420, 630, 620, 630), fill=GOLD_DARK, width=10)
-    # the fist: four knuckles, the palm, the thumb across
-    d.rounded_rectangle((330, 330, 700, 600), radius=70, fill=skin_dark)
-    d.rounded_rectangle((342, 342, 688, 590), radius=64, fill=skin)
-    for i in range(4):
-        x = 360 + i * 84
-        d.rounded_rectangle((x, 300, x + 84, 440), radius=40, fill=skin_dark)
-        d.rounded_rectangle((x + 8, 308, x + 76, 432), radius=34, fill=skin)
-        d.arc((x + 18, 380, x + 66, 440), 200, 340, fill=skin_dark, width=8)
-    d.rounded_rectangle((330, 450, 600, 540), radius=45, fill=skin_dark)
-    d.rounded_rectangle((340, 458, 592, 532), radius=38, fill=skin)
-    d.arc((540, 470, 590, 520), 270, 90, fill=skin_dark, width=8)
-    save(im, "stronger-than-a-lion.png")
+def sun():
+    # Judges 5:31, "let them that love him be as the sun when he goeth forth in his might"
+    im, d = badge((40, 70, 140), (24, 44, 96))
+    cx, cy = 512, 512
+    # rays: long straight ones and short flame-shaped ones between them
+    for i in range(24):
+        a = math.radians(i * 15)
+        long_ray = i % 2 == 0
+        r0, r1, w = 200, (360 if long_ray else 300), (0.10 if long_ray else 0.13)
+        d.polygon([(cx + r0 * math.cos(a - w), cy + r0 * math.sin(a - w)), (cx + r1 * math.cos(a), cy + r1 * math.sin(a)),
+                   (cx + r0 * math.cos(a + w), cy + r0 * math.sin(a + w))], fill=(250, 196, 40) if long_ray else (244, 150, 30))
+    # the disc, with a warm glow ring
+    d.ellipse((cx - 215, cy - 215, cx + 215, cy + 215), fill=(240, 140, 26))
+    d.ellipse((cx - 195, cy - 195, cx + 195, cy + 195), fill=(252, 200, 50))
+    d.ellipse((cx - 150, cy - 160, cx + 110, cy + 90), fill=(255, 224, 110))
+    save(im, "stronger-than-a-lion-sun.png")
 
 
 scroll()
 eater()
 honey()
 strength_sweet()
-fist()
+sun()
