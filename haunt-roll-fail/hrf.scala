@@ -49,11 +49,12 @@ object HRF {
     val imageCache = new CachedBlobImageLoader("hrf-image-cache-" + imageDataVersion)
 
     // Drop the image caches of older versions (Cache Storage is only there in secure contexts)
-    dom.window.caches.toOption.foreach { caches =>
-        caches.keys().`then`[Null]({ names : scalajs.js.Array[String] =>
+    // (a webview whose Cache Storage throws or never answers mustn't stop the page: hrf.loader.CacheGuard)
+    scala.util.Try(dom.window.caches.toOption).toOption.flatten.foreach { caches =>
+        scala.util.Try(caches.keys().`then`[Null]({ names : scalajs.js.Array[String] =>
             names.filter(n => n.startsWith("hrf-image-cache-") && n != "hrf-image-cache-" + imageDataVersion).foreach(n => caches.delete(n))
             null
-        } : scalajs.js.Function1[scalajs.js.Array[String], scalajs.js.|[Null, scalajs.js.Thenable[Null]]])
+        } : scalajs.js.Function1[scalajs.js.Array[String], scalajs.js.|[Null, scalajs.js.Thenable[Null]]], hrf.loader.CacheGuard.reject(())))
     }
     val stringCache = new CachedStringLoader("hrf-page-cache")
     val stringLoader = StringLoader
