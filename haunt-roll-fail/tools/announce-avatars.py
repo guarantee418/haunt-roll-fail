@@ -7,10 +7,12 @@
 #   sweeter-than-honey.png      "Sweeter than Honey": a honeycomb dripping honey
 #   strength-became-sweet.png   "Strength became Sweet": a honeycomb and bees inside a lion's head
 #   stronger-than-a-lion-sun.png "Stronger than a Lion": the sun in its might (Judges 5:31)
-#   vedrfolnir.png              Northgard Announcements' Vedrfolnir: the eagle of the Wastelands tile, cut out, on a sky badge
+#   vedrfolnir.png              Northgard Announcements' Vedrfolnir: the Clan of the Eagle's emblem (only with the header's path:
+#                               python3 haunt-roll-fail/tools/announce-avatars.py <header.jpg>)
 # Run from the repository root: python3 haunt-roll-fail/tools/announce-avatars.py
 import math
 import os
+import sys
 from PIL import Image, ImageDraw
 
 S = 1024          # drawn at 4x, saved at 256
@@ -188,44 +190,16 @@ def sun():
     save(im, "stronger-than-a-lion-sun.png")
 
 
-def vedrfolnir():
-    # Northgard Announcements (2026-11-26): Vedrfolnir, the hawk at the top of Yggdrasil, as the game itself paints it: the eagle on
-    # the Wastelands tile waste-vedrfolnir, cut out of its sandy ground (the dark browns and the white head kept, the pieces of the
-    # bird and their holes filled) and set on a sky blue badge
-    from PIL import ImageChops, ImageFilter
-    tile = Image.open("haunt-roll-fail/webp2/nort/images/tile/waste-vedrfolnir.webp").convert("RGB")
-    w, h = tile.size
-    cx, cy, r = 0.5 * w, 0.42 * h, 0.16 * w      # the tile's centrepiece (nort/tile-abilities.scala)
-    tile = tile.crop((int(cx - r * 1.3), int(cy - r * 1.3), int(cx + r * 1.3), int(cy + r * 1.3)))
-    m = Image.new("L", tile.size, 0)
-    px, mp = tile.load(), m.load()
-    for y in range(tile.height):
-        for x in range(tile.width):
-            R, G, B = px[x, y]
-            lum = (R * 3 + G * 6 + B) / 10
-            if (lum < 120 and R >= G - 5) or (R > 200 and G > 200 and B > 190 and abs(R - B) < 25):
-                mp[x, y] = 255
-    m = m.filter(ImageFilter.MaxFilter(5)).filter(ImageFilter.MinFilter(5)).filter(ImageFilter.MedianFilter(5))
-    m = m.point(lambda v: 255 if v > 127 else 0)
-    for seed in ((230, 200), (60, 100)):         # the body and the tail
-        if m.getpixel(seed) == 255:
-            ImageDraw.floodfill(m, seed, 128)
-    m = m.point(lambda v: 255 if v == 128 else 0)
-    ImageDraw.floodfill(m, (0, 0), 64)
-    m = m.point(lambda v: 0 if v == 64 else 255)
-    m = m.filter(ImageFilter.MinFilter(3)).filter(ImageFilter.GaussianBlur(0.8))
-    bird = tile.convert("RGBA")
-    bird.putalpha(m)
-    bird = bird.crop(bird.getbbox())
-    k = 780 / bird.width
-    bird = bird.resize((int(bird.width * k), int(bird.height * k)), Image.LANCZOS)
-    im, d = badge((58, 98, 132), (32, 60, 88))
-    layer = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-    layer.paste(bird, ((S - bird.width) // 2 - 10, (S - bird.height) // 2 + 10), bird)
-    disc = Image.new("L", (S, S), 0)
-    ImageDraw.Draw(disc).ellipse((84, 84, S - 84, S - 84), fill=255)
-    layer.putalpha(ImageChops.multiply(layer.split()[3], disc))
-    im.alpha_composite(layer)
+def vedrfolnir(header):
+    # Northgard Announcements (2026-11-26): Vedrfolnir, shown with the video game's official eagle, the emblem of Hraesvelg, Clan of
+    # the Eagle (Shiro Games' DLC, Steam app 2138500), cut from its Steam store header and set in the gold-ringed badge. The header
+    # isn't in the repository: give its path, downloaded from
+    # https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2138500/header.jpg (460x215; the emblem's disc is 158-302, 30-174)
+    art = Image.open(header).convert("RGB").crop((158, 30, 302, 174)).resize((S - 168, S - 168), Image.LANCZOS)
+    im, d = badge((40, 24, 20), (40, 24, 20))
+    disc = Image.new("L", art.size, 0)
+    ImageDraw.Draw(disc).ellipse((0, 0, art.width - 1, art.height - 1), fill=255)
+    im.paste(art, (84, 84), disc)
     save(im, "vedrfolnir.png")
 
 
@@ -234,4 +208,5 @@ eater()
 honey()
 strength_sweet()
 sun()
-vedrfolnir()
+if len(sys.argv) > 1:
+    vedrfolnir(sys.argv[1])
