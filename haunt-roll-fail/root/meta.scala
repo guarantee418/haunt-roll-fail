@@ -4512,6 +4512,7 @@ object Meta extends MetaGame {
         ImageAsset("nw-skunk-x5"         ) ::
         ImageAsset("nw-skunk-x5-empty"   ) ::
         ImageAsset("nw-acclaim"          ) ::
+        ImageAsset("nw-acclaim-used"     ) ::
         ImageAsset("nw-captain-empty"    , "kd-captain-empty" ) ::
         $("birdsong", "daylight", "evening", "gladiator", "cheat", "jailor", "harrier", "ronin", "adventurer", "scoundrel", "arbiter", "vagrant", "ranger", "tinker", "thief", "bard", "barkeep", "berserker", "blacksmith", "swindler", "zealot")./(k => ImageAsset("nw-captain-" + k, "kd-captain-" + k))
     ) ::
@@ -4959,6 +4960,7 @@ object Meta extends MetaGame {
         ImageAsset("kd-captain-zealot"     ) ::
 
         ImageAsset("kd-acclaim"          ) ::
+        ImageAsset("kd-acclaim-used"     ) ::
     $) ::
     // Faction boards shown when a faction's status is tapped (boardImage in ui.scala),
     // from the Tabletop Simulator mod "Root - Ultimate Collection" (Steam workshop 2516434159)
