@@ -26,30 +26,51 @@ import java.nio.file.{Files, Paths}
 // for nort-announcements (its URL in discord-nort-announce-webhook, or HRF_DISCORD_NORT_ANNOUNCE_WEBHOOK); the texts are
 // announcements/<name>.md in hrf-games too, posted by
 //   nort-announce <name>   as announce does, through Vedrfolnir
+//
+// GAME UPDATES (2026-11-26, asked for): each game's updates go to its own announcements channel, each through a webhook posting under one
+// name: Northgard's Vedrfolnir above; Root's through Royal Claim, the tournament's webhook in #root-announcements (Tournament.webhook),
+// as Informants (root-announce <name>); Pincer's Dispatch Rider in #pincer-announcements (pincer-announce <name>, make-webhook ... | for
+// pincer-announcements); Company of Heroes' Signal Corps in #coh-announcements (coh-announce <name>, make-webhook ... | for
+// coh-announcements). Avatars in webp2/lfg/webhooks/: the Informants card's art, Pincer's Mustang card medallion, the US Forces emblem
+// (announce-avatars.py).
 object Announce {
     case class Voice(name : String, avatar : String)
 
-    // an announcements webhook: where its URL is kept, the names its posts take in turn, and where the next one's number is kept
-    case class Desk(name : String, title : String, env : String, file : String, voices : List[Voice], counter : String) {
+    // an announcements webhook: the change that posts through it, where its URL is kept, the names its posts take in turn, and where the
+    // next one's number is kept
+    case class Desk(name : String, word : String, title : String, env : String, file : String, voices : List[Voice], counter : String) {
         def hook = Tournament.hook(env, file)
         def next = Tournament.dir.resolve(counter)
     }
 
-    val general = Desk("general", "general announcements", "HRF_DISCORD_GENERAL_WEBHOOK", "discord-general-webhook", List(
+    val general = Desk("general", "announce", "general announcements", "HRF_DISCORD_GENERAL_WEBHOOK", "discord-general-webhook", List(
         Voice("Eater to Eat", "eater-to-eat.png"),
         Voice("Sweeter than Honey", "sweeter-than-honey.png"),
         Voice("Strength became Sweet", "strength-became-sweet.png"),
         Voice("Stronger than a Lion", "stronger-than-a-lion-sun.png")), "announce-voice.tsv")
 
-    val nort = Desk("nort-announcements", "Northgard announcements", "HRF_DISCORD_NORT_ANNOUNCE_WEBHOOK", "discord-nort-announce-webhook", List(
+    val nort = Desk("nort-announcements", "nort-announce", "Northgard announcements", "HRF_DISCORD_NORT_ANNOUNCE_WEBHOOK", "discord-nort-announce-webhook", List(
         Voice("Vedrfolnir", "vedrfolnir.png")), "nort-announce-voice.tsv")
 
-    val desks = List(general, nort)
+    // Root's game updates go through the tournament's announcements webhook (Royal Claim, in #root-announcements: Tournament.webhook),
+    // posting as Informants; set it with the tournament change "webhook <url>", not make-webhook
+    val root = Desk("root-announcements", "root-announce", "Root announcements", "HRF_DISCORD_WEBHOOK", "discord-webhook", List(
+        Voice("Informants", "informants.png")), "root-announce-voice.tsv")
 
-    // make-webhook's "for": general, nort-announcements (or nort)
+    val pincer = Desk("pincer-announcements", "pincer-announce", "Pincer announcements", "HRF_DISCORD_PINCER_ANNOUNCE_WEBHOOK", "discord-pincer-announce-webhook", List(
+        Voice("Dispatch Rider", "dispatch-rider.png")), "pincer-announce-voice.tsv")
+
+    val tactics = Desk("coh-announcements", "coh-announce", "Company of Heroes announcements", "HRF_DISCORD_COH_ANNOUNCE_WEBHOOK", "discord-coh-announce-webhook", List(
+        Voice("Signal Corps", "signal-corps.png")), "coh-announce-voice.tsv")
+
+    val desks = List(general, nort, root, pincer, tactics)
+
+    // make-webhook's "for": a desk's name, or nort, root, pincer, coh (root only through the tournament change "webhook")
     def desk(s : String) : Option[Desk] = s.trim.toLowerCase match {
         case "nort" | "northgard" => Some(nort)
-        case n => desks.find(_.name == n)
+        case "pincer" => Some(pincer)
+        case "coh" | "tactics" | "tactics-announcements" => Some(tactics)
+        case n => desks.find(_.name == n).filter(_ != root)
     }
 
     // the desk a webhook is set as, by the ID in the URL kept
@@ -146,8 +167,7 @@ object Announce {
     }
 
     def change(word : String, rest : String) : String = word match {
-        case "announce" => announce(general, rest)
-        case "nort-announce" => announce(nort, rest)
+        case w if desks.exists(_.word == w) => announce(desks.find(_.word == w).get, rest)
         case "announce-voices" => desks.map { k =>
             k.title + ": next " + k.voices(nextIndex(k) % k.voices.size).name +
                 (if (k.voices.size > 1) "; in turn: " + k.voices.map(_.name).mkString(", ") else "") +
@@ -156,5 +176,5 @@ object Announce {
         case _ => "not done"
     }
 
-    val words = Set("announce", "nort-announce", "announce-voices")
+    val words = desks.map(_.word).toSet + "announce-voices"
 }

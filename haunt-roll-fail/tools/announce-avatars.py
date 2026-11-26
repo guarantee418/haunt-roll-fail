@@ -7,6 +7,9 @@
 #   sweeter-than-honey.png      "Sweeter than Honey": a honeycomb dripping honey
 #   strength-became-sweet.png   "Strength became Sweet": a honeycomb and bees inside a lion's head
 #   stronger-than-a-lion-sun.png "Stronger than a Lion": the sun in its might (Judges 5:31)
+#   informants.png              Root's game updates (Informants): the Informants card's art
+#   dispatch-rider.png          Pincer's (Dispatch Rider): the horse medallion of its Mustang card
+#   signal-corps.png            Company of Heroes' (Signal Corps): the US Forces emblem
 #   vedrfolnir.png              Northgard Announcements' Vedrfolnir as the Clan of the Eagle's painted eagle (only with its path:
 #                               python3 haunt-roll-fail/tools/announce-avatars.py <painting>)
 # Run from the repository root: python3 haunt-roll-fail/tools/announce-avatars.py
@@ -203,11 +206,25 @@ def vedrfolnir(picture):
     im.paste(art, (84, 84), disc)
     save(im, "vedrfolnir.png")
 
+def game_art(path, box, name):
+    # a game's update webhook avatar (2026-11-26): a square of its own art in the gold-ringed badge
+    art = Image.open("haunt-roll-fail/webp2/" + path).convert("RGBA").crop(box).resize((S - 168, S - 168), Image.LANCZOS)
+    im, d = badge((40, 24, 20), (40, 24, 20))
+    flat = Image.new("RGBA", art.size, (40, 24, 20, 255))
+    flat.alpha_composite(art)
+    disc = Image.new("L", art.size, 0)
+    ImageDraw.Draw(disc).ellipse((0, 0, art.width - 1, art.height - 1), fill=255)
+    im.paste(flat, (84, 84), disc)
+    save(im, name)
+
 
 scroll()
 eater()
 honey()
 strength_sweet()
 sun()
+game_art("root/images/card/deck/informants.webp", (10, 70, 500, 560), "informants.png")
+game_art("pincer/images/card/mustang.webp", (44, 74, 196, 226), "dispatch-rider.png")
+game_art("tactics/images/emblem/us.webp", (0, 0, 160, 160), "signal-corps.png")
 if len(sys.argv) > 1:
     vedrfolnir(sys.argv[1])
