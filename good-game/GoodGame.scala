@@ -524,6 +524,25 @@ object GoodGame {
                     }
                 }
             } ~
+            // the Discord roles a name may pick for itself (SelfRoles; My Account), and giving or taking one
+            (post & path("discord" / "roles")) {
+                decodeRequest {
+                    entity(as[String]) { body =>
+                        val l = body.split('\n').toList
+                        if (l.size < 2) complete(StatusCodes.Forbidden, "")
+                        else plain(SelfRoles.site(l(0).trim.ascii, l(1).trim.safeplus))
+                    }
+                }
+            } ~
+            (post & path("discord" / "role")) {
+                decodeRequest {
+                    entity(as[String]) { body =>
+                        val l = body.split('\n').toList
+                        if (l.size < 4) complete(StatusCodes.Forbidden, "")
+                        else plain(SelfRoles.siteSet(l(0).trim.ascii, l(1).trim.safeplus, l(2).trim.filter(_.isDigit), l(3).trim == "on"))
+                    }
+                }
+            } ~
             (post & path("tournament" / "withdraw")) {
                 decodeRequest {
                     entity(as[String]) { body =>

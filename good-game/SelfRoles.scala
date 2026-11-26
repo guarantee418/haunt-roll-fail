@@ -15,7 +15,9 @@ import java.nio.file.Files
 //
 // A role goes on the list only if it gives no server permission at all, isn't a bot's or integration's, isn't @everyone and sits under
 // the bot's own role, and every one is checked again each time a member picks: a role given a permission since is never handed out.
-// So Manager, or any role that moderates, can't be self-assigned even by mistake. Discord's menus hold 25 options, so the list does too.
+// So Manager, or any role that moderates, can't be self-assigned even by mistake.
+// The site's My Account page offers the same roles (2026-11-26, asked for): /discord/roles lists them for a name the device's player code
+// holds, with that name's Discord ticked or not (site), and /discord/role gives or takes one (siteSet), with the same checks. Discord's menus hold 25 options, so the list does too.
 object SelfRoles extends BotCommand {
     val name = "roles"
     val file = Tournament.dir.resolve("self-roles.tsv")
@@ -111,6 +113,45 @@ object SelfRoles extends BotCommand {
             case _ => Lfg.privately("That isn't something I know.")
         }
     }
+
+    // what each role is for, on the site
+    def about(r : DiscordServer.Role) : String = r.name.toLowerCase match {
+        case "root-lfg" => "Pinged when a Root game looks for players"
+        case "ng-lfg" => "Pinged when a Northgard game looks for players"
+        case "pincer" => "Pinged when a Pincer game looks for players"
+        case "coh" => "Pinged when a Company of Heroes game looks for players"
+        case "spectator" => "See the game channels without being pinged for games"
+        case n if Heckler.roleName.exists(_.equalsIgnoreCase(n)) => "Your turn pings come from the game's heckler, who mocks your play"
+        case _ => ""
+    }
+
+    // the user ID behind a name the code holds, or why there is none
+    def userOf(key : String, name : String) : Either[String, String] = {
+        val k = Ranking.clean(name).toLowerCase
+        if (!Tournament.ownedKeys(key).contains(k)) Left("no")
+        else Tournament.storedId(k).toRight("nodiscord")
+    }
+
+    // the roles for the site: "id\tname\ton|off\tabout" lines, or one word: no, nodiscord, notmember, unavailable
+    def site(key : String, name : String) : String = (for {
+        uid <- userOf(key, name)
+        g <- DiscordBot.guild.toRight("unavailable")
+        rr <- offered(g).left.map(_ => "unavailable")
+        have <- DiscordServer.call("GET", "/guilds/" + g + "/members/" + uid) match {
+            case Left(e) if e.contains("404") || e.contains("Unknown Member") => Left("notmember")
+            case Left(e) => println("Roles: " + e) ; Left("unavailable")
+            case Right(b) => Right(DiscordServer.obj(b).get("roles").collect { case l : List[_] => l.collect { case s : String => s } }.getOrElse(Nil))
+        }
+    } yield rr.map(r => List(r.id, r.name, if (have.contains(r.id)) "on" else "off", about(r)).map(_.replace('\t', ' ').replace('\n', ' ')).mkString("\t")).mkString("\n")).fold(x => x, x => if (x.isEmpty) "none" else x)
+
+    // give or take one role on offer: "ok", or why not
+    def siteSet(key : String, name : String, role : String, on : Boolean) : String = (for {
+        uid <- userOf(key, name)
+        g <- DiscordBot.guild.toRight("unavailable")
+        rr <- offered(g).left.map(_ => "unavailable")
+        r <- rr.find(_.id == role).toRight("notoffered")
+        _ <- DiscordServer.call(if (on) "PUT" else "DELETE", "/guilds/" + g + "/members/" + uid + "/roles/" + r.id).left.map { e => println("Roles: @" + r.name + " for " + uid + ": " + e) ; if (e.contains("404") || e.contains("Unknown Member")) "notmember" else "unavailable" }
+    } yield "ok").fold(x => x, x => x)
 
     // the tournament changes
     def change(word : String, rest : String) : String = (DiscordBot.guild match {
