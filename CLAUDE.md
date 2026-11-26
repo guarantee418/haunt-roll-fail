@@ -1310,7 +1310,7 @@ server. No session can reach the server, and none needs to.
   congratulates it.
 - General Announcements (2026-11-26, asked for): a webhook in the server's #announcements channel (General category, above #welcome), named
   "General Announcements" with a scroll picture, that posts each announcement under the next of four names from Samson's riddle, in turn, each
-  with its own picture: Eater to Eat, Sweeter than Honey, Strength became Sweet, Stronger than a Lion (`good-game/Announce.scala`; pictures
+  with its own picture: Eater to Eat, Sweeter than Honey, Strength became Sweet, Stronger than a Lion (a sun, Judges 5:31; a fist before 2026-11-26) (`good-game/Announce.scala`; pictures
   `webp2/lfg/webhooks/general-announcements.png` and the four, drawn by `haunt-roll-fail/tools/announce-avatars.py`, served by `/art/`). Made
   by the tournament change `make-webhook General Announcements | in announcements | avatar general-announcements.png | for general` (its URL
   in `discord-general-webhook`); the texts are `announcements/<name>.md` in `hrf-games`, posted by the change `announce <name>` (a line of
