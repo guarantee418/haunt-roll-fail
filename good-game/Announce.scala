@@ -21,8 +21,8 @@ import java.nio.file.{Files, Paths}
 //
 // NORTHGARD ANNOUNCEMENTS (2026-11-26, asked for): a second desk, a webhook in the Northgard announcements channel that always posts as
 // Vedrfolnir, the hawk at the top of Yggdrasil that sees all nine worlds (the Wastelands tile waste-vedrfolnir; the Northgard heckler,
-// Ratatoskr, carries the eagle's insults down that tree, so the two are a pair). Avatar webp2/lfg/webhooks/vedrfolnir.png, drawn by
-// haunt-roll-fail/tools/announce-avatars.py. Made by make-webhook Vedrfolnir | in northgard-announcements | avatar vedrfolnir.png |
+// Ratatoskr, carries the eagle's insults down that tree, so the two are a pair). Avatar webp2/lfg/webhooks/vedrfolnir.png, the Clan of the
+// Eagle's painted eagle, made by haunt-roll-fail/tools/announce-avatars.py. Made by make-webhook Vedrfolnir | in northgard-announcements | avatar vedrfolnir.png |
 // for nort-announcements (its URL in discord-nort-announce-webhook, or HRF_DISCORD_NORT_ANNOUNCE_WEBHOOK); the texts are
 // announcements/<name>.md in hrf-games too, posted by
 //   nort-announce <name>   as announce does, through Vedrfolnir
