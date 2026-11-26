@@ -1163,6 +1163,9 @@ trait Gaming extends Timelines {
         def describeActionForUndo(a : ExternalAction, self : |[F]) : $[UndoDescriptor]
         def rewind(n : Int, actions : $[ExternalAction], speed : |[Int], latest : () => Unit, undoTo : (Int, Int) => Unit, playback : Int => Unit) : Unit = {}
         def stopRewind() : Unit = {}
+        // the player moves among the recorded actions from..to that left a line in the log, still standing (set by the runner);
+        // the undo texts count these, not every recorded entry (automatic steps too), which made "undid 35 actions" of five lines
+        var movesIn : (Int, Int) => Int = (from, to) => to - from
     }
 
     trait UndoDescriptor extends GoodMatch {

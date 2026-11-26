@@ -1223,11 +1223,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 val z = 220
                 val (x, y) = freeSpot(t, z / T / 2, taken, |(board.point(t.anchor)), 0.5)
                 pieces.add(Sprite($(at(c.token, z)), $(Rectangle(-z / 2, -z / 2, z, z)), tag :+ c))(sx(x), sy(y))
-                // its place in the creature line (1 moves first), a square badge at the top left corner
-                // (nort/tools/order-badges.py; asked for on Discord on 2026-11-23)
+                // its place in the creature line (1 moves first), a square badge at the bottom left corner
+                // (nort/tools/order-badges.py; asked for on Discord on 2026-11-23; moved from the top left on 2026-11-26,
+                // as it hid the creature's picture there)
                 val n = game.creatureLine.indexOf(c) + 1
                 if (n >= 1 && n <= 30)
-                    pieces.add(Sprite($(at("ui-order-" + n, 110)), $))(sx(x) - 80, sy(y) - 80)
+                    pieces.add(Sprite($(at("ui-order-" + n, 110)), $))(sx(x) - 80, sy(y) + 80)
                 taken :+= ((x, y, z / T / 2))
             }
 
