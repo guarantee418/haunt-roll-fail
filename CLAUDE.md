@@ -1314,7 +1314,7 @@ server. No session can reach the server, and none needs to.
   `webp2/lfg/webhooks/general-announcements.png` and the four, drawn by `haunt-roll-fail/tools/announce-avatars.py`, served by `/art/`). Made
   by the tournament change `make-webhook General Announcements | in announcements | avatar general-announcements.png | for general` (its URL
   in `discord-general-webhook`); the texts are `announcements/<name>.md` in `hrf-games`, posted by the change `announce <name>` (a line of
-  `---` starts a new message, longer ones split at blank lines, nobody pinged); `announce-voices` says which name is next. The how-tos for the
+  `---` starts a new message, longer ones split at blank lines; a message pings only when it says @everyone or @here); `announce-voices` says which name is next. The how-tos for the
   Discord and the site are `announcements/discord-how-to.md` and `site-how-to.md`.
 - The bot's `/rule <rule> [game] [private]` (2026-11-22, asked for as a bot "to help cite the rules", not to interpret them): Root's
   rules by their Law of Root number (`4.3.2`, `H.1`, a section lists the rules under it) or name, with the rule's text and the link to

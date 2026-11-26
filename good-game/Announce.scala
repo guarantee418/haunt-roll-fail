@@ -12,8 +12,9 @@ import java.nio.file.{Files, Paths}
 //
 // The texts are files in hrf-games, announcements/<name>.md (Backup.directory), posted by the tournament changes:
 //   announce <name>        posts announcements/<name>.md; a line of only "---" starts a new message, and a message longer than Discord's
-//                          2000 characters is split at blank lines. Every message of one announcement takes the same name; no one is
-//                          pinged (allowed_mentions is empty).
+//                          2000 characters is split at blank lines. Every message of one announcement takes the same name; a message
+//                          pings only when its text says @everyone or @here (both allowed then, 2026-11-26, asked for); nobody else
+//                          is ever pinged.
 //   announce-voices        says which name the next announcement takes
 // The webhook's URL is kept in the file discord-general-webhook (or HRF_DISCORD_GENERAL_WEBHOOK), set by make-webhook's "for general"; the
 // next name's number in tournament/announce-voice.tsv.
@@ -80,7 +81,8 @@ object Announce {
             (if (Tournament.site.nonEmpty) ",\"avatar_url\":" + Tournament.json(Tournament.site + "/art/lfg/webhooks/" + v.avatar) else "")
 
     def send(url : String, text : String, v : Voice) : Either[String, Unit] = {
-        val body = "{\"content\":" + Tournament.json(text) + ",\"allowed_mentions\":{\"parse\":[]}" + persona(v) + "}"
+        val everyone = text.contains("@everyone") || text.contains("@here")
+        val body = "{\"content\":" + Tournament.json(text) + ",\"allowed_mentions\":{\"parse\":[" + (if (everyone) "\"everyone\"" else "") + "]}" + persona(v) + "}"
         val request = java.net.http.HttpRequest.newBuilder(java.net.URI.create(url + "?wait=true")).timeout(java.time.Duration.ofSeconds(15))
             .header("Content-Type", "application/json").POST(java.net.http.HttpRequest.BodyPublishers.ofString(body, UTF_8)).build()
         try {
