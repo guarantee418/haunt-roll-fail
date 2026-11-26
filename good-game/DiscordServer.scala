@@ -44,7 +44,8 @@ import java.nio.charset.StandardCharsets.UTF_8
 //                                             there; avatar is a picture in webp2/lfg/webhooks/ (made by tools/webhook-avatars.py:
 //                                             drum-and-fife.png, field-wireless.png); for sets it as turns, nort-turns, pincer-turns or
 //                                             tactics-turns, as that change would (only a webhook Discord gives the bot the token of), or
-//                                             general, the General Announcements webhook (Announce.scala)
+//                                             general, the General Announcements webhook, or nort-announcements, Northgard's
+//                                             Vedrfolnir (Announce.scala)
 //   rename-webhook <name> -> <new name>       (in any channel; its ID works in place of its name)
 //   test-ping <turns channel> [| role <role>] [| text <text>]
 //                                             posts a new thread, "Test ping", through that turns channel's webhook, mentioning the
@@ -415,7 +416,7 @@ object DiscordServer {
         w.name + " (" + w.id + ") in " + cc.find(_.id == w.channel).map(_.name).getOrElse(w.channel) +
             (if (w.application == bot) ", made by the bot" else "") +
             slotUsing(w.id).map(", set as " + _).mkString +
-            (if (Announce.hook.exists(_.split('/').contains(w.id))) ", set as general" else "")
+            Announce.using(w.id).map(", set as " + _).mkString
     }.mkString("\n") match { case "" => "no webhooks" ; case t => t }
 
     // the picture a webhook's avatar is made from, as Discord takes it
@@ -433,10 +434,10 @@ object DiscordServer {
         for {
             _ <- if (name.isEmpty || name.length > 80 || norm(name).contains("discord") || norm(name).contains("clyde")) Left("a webhook's name is 1 to 80 characters, without \"discord\" or \"clyde\"") else Right(())
             in <- opt("in").toRight("which channel? make-webhook <name> | in <channel>")
-            general = opt("for").exists(_.trim.toLowerCase == "general")
-            target <- opt("for").filter(_ => !general) match {
+            desk = opt("for").flatMap(Announce.desk)
+            target <- opt("for").filter(_ => desk.isEmpty) match {
                 case None => Right(None)
-                case Some(s) => TurnPings.slot(s.trim).map(Some(_)).toRight("for takes general, " + TurnPings.slots.map(_.name).mkString(", "))
+                case Some(s) => TurnPings.slot(s.trim).map(Some(_)).toRight("for takes " + (Announce.desks.map(_.name) ++ TurnPings.slots.map(_.name)).mkString(", "))
             }
             picture <- opt("avatar") match { case None => Right(None) ; case Some(f) => avatar(f.trim).map(Some(_)) }
             cc <- channels(g)
@@ -453,7 +454,7 @@ object DiscordServer {
             what + " " + w.name + " (" + w.id + ") in " + c.name + (if (picture.nonEmpty) ", with its avatar" else "") + target.map { s =>
                 if (w.token.isEmpty) "; not set as " + s.name + ": Discord didn't give the bot its URL (make one with another name)"
                 else "; " + s.name + ": " + TurnPings.setHook(s, w.url)
-            }.getOrElse("") + (if (!general) "" else if (w.token.isEmpty) "; not set as general: Discord didn't give the bot its URL" else "; " + Announce.setHook(w.url))
+            }.getOrElse("") + desk.map { k => if (w.token.isEmpty) "; not set as " + k.name + ": Discord didn't give the bot its URL" else "; " + Announce.setHook(k, w.url) }.getOrElse("")
         }
     }
 

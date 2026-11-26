@@ -18,35 +18,57 @@ import java.nio.file.{Files, Paths}
 //   announce-voices        says which name the next announcement takes
 // The webhook's URL is kept in the file discord-general-webhook (or HRF_DISCORD_GENERAL_WEBHOOK), set by make-webhook's "for general"; the
 // next name's number in tournament/announce-voice.tsv.
+//
+// NORTHGARD ANNOUNCEMENTS (2026-11-26, asked for): a second desk, a webhook in the Northgard announcements channel that always posts as
+// Vedrfolnir, the hawk at the top of Yggdrasil that sees all nine worlds (the Wastelands tile waste-vedrfolnir; the Northgard heckler,
+// Ratatoskr, carries the eagle's insults down that tree, so the two are a pair). Avatar webp2/lfg/webhooks/vedrfolnir.png, drawn by
+// haunt-roll-fail/tools/announce-avatars.py. Made by make-webhook Vedrfolnir | in northgard-announcements | avatar vedrfolnir.png |
+// for nort-announcements (its URL in discord-nort-announce-webhook, or HRF_DISCORD_NORT_ANNOUNCE_WEBHOOK); the texts are
+// announcements/<name>.md in hrf-games too, posted by
+//   nort-announce <name>   as announce does, through Vedrfolnir
 object Announce {
     case class Voice(name : String, avatar : String)
 
-    val voices = List(
+    // an announcements webhook: where its URL is kept, the names its posts take in turn, and where the next one's number is kept
+    case class Desk(name : String, title : String, env : String, file : String, voices : List[Voice], counter : String) {
+        def hook = Tournament.hook(env, file)
+        def next = Tournament.dir.resolve(counter)
+    }
+
+    val general = Desk("general", "general announcements", "HRF_DISCORD_GENERAL_WEBHOOK", "discord-general-webhook", List(
         Voice("Eater to Eat", "eater-to-eat.png"),
         Voice("Sweeter than Honey", "sweeter-than-honey.png"),
         Voice("Strength became Sweet", "strength-became-sweet.png"),
-        Voice("Stronger than a Lion", "stronger-than-a-lion-sun.png"))
+        Voice("Stronger than a Lion", "stronger-than-a-lion-sun.png")), "announce-voice.tsv")
 
-    val env = "HRF_DISCORD_GENERAL_WEBHOOK"
-    val file = "discord-general-webhook"
-    val next = Tournament.dir.resolve("announce-voice.tsv")
+    val nort = Desk("nort-announcements", "Northgard announcements", "HRF_DISCORD_NORT_ANNOUNCE_WEBHOOK", "discord-nort-announce-webhook", List(
+        Voice("Vedrfolnir", "vedrfolnir.png")), "nort-announce-voice.tsv")
 
-    def hook = Tournament.hook(env, file)
+    val desks = List(general, nort)
 
-    def setHook(url : String) : String =
+    // make-webhook's "for": general, nort-announcements (or nort)
+    def desk(s : String) : Option[Desk] = s.trim.toLowerCase match {
+        case "nort" | "northgard" => Some(nort)
+        case n => desks.find(_.name == n)
+    }
+
+    // the desk a webhook is set as, by the ID in the URL kept
+    def using(id : String) : List[String] = desks.filter(_.hook.exists(_.split('/').contains(id))).map(_.name)
+
+    def setHook(k : Desk, url : String) : String =
         if (url.startsWith("https://discord.com/api/webhooks/") || url.startsWith("https://discordapp.com/api/webhooks/")) {
-            Files.write(Paths.get(file), (url + "\n").getBytes(UTF_8))
-            "set as the general announcements webhook"
+            Files.write(Paths.get(k.file), (url + "\n").getBytes(UTF_8))
+            "set as the " + k.title + " webhook"
         }
         else "not set: not a Discord webhook URL"
 
-    def nextIndex : Int = try {
-        if (Files.exists(next)) new String(Files.readAllBytes(next), UTF_8).trim.toIntOption.getOrElse(0) else 0
+    def nextIndex(k : Desk) : Int = try {
+        if (Files.exists(k.next)) new String(Files.readAllBytes(k.next), UTF_8).trim.toIntOption.getOrElse(0) else 0
     } catch { case _ : Exception => 0 }
 
-    def advance(i : Int) {
-        Files.createDirectories(next.getParent)
-        Files.write(next, ((i + 1) % voices.size).toString.getBytes(UTF_8))
+    def advance(k : Desk, i : Int) {
+        Files.createDirectories(k.next.getParent)
+        Files.write(k.next, ((i + 1) % k.voices.size).toString.getBytes(UTF_8))
     }
 
     // the messages of a text: split at "---" lines, then at blank lines to keep each under Discord's limit
@@ -99,22 +121,22 @@ object Announce {
         catch { case e : Exception => Left("Discord couldn't be asked: " + e.getMessage) }
     }
 
-    def announce(name : String) : String = {
+    def announce(k : Desk, name : String) : String = {
         val clean = name.trim.stripSuffix(".md")
         if (!clean.matches("[A-Za-z0-9._-]+")) "not done: an announcement is a file name in announcements/ (letters, digits, - and _)"
-        else hook match {
-            case None => "not done: no general announcements webhook (make-webhook ... | for general)"
+        else k.hook match {
+            case None => "not done: no " + k.title + " webhook (make-webhook ... | for " + k.name + ")"
             case Some(url) => Backup.directory.map(_.resolve("announcements").resolve(clean + ".md")) match {
                 case None => "not done: no hrf-games copy (backup-dir)"
                 case Some(p) if !Files.isRegularFile(p) => "not done: no announcements/" + clean + ".md"
                 case Some(p) =>
                     val mm = messages(new String(Files.readAllBytes(p), UTF_8))
-                    val i = nextIndex
-                    val v = voices(i % voices.size)
+                    val i = nextIndex(k)
+                    val v = k.voices(i % k.voices.size)
                     var sent = 0
                     var failed : Option[String] = None
                     mm.foreach { m => if (failed.isEmpty) send(url, m, v) match { case Right(_) => sent += 1 ; case Left(e) => failed = Some(e) } }
-                    if (sent > 0) advance(i)
+                    if (sent > 0) advance(k, i)
                     failed match {
                         case None => "posted " + clean + " as " + v.name + " (" + sent + " message" + (if (sent == 1) "" else "s") + ")"
                         case Some(e) => "posted " + sent + " of " + mm.size + " messages of " + clean + " as " + v.name + ", then " + e
@@ -124,11 +146,15 @@ object Announce {
     }
 
     def change(word : String, rest : String) : String = word match {
-        case "announce" => announce(rest)
-        case "announce-voices" => "next: " + voices(nextIndex % voices.size).name + "; in turn: " + voices.map(_.name).mkString(", ") +
-            "; webhook " + (if (hook.nonEmpty) "set" else "not set")
+        case "announce" => announce(general, rest)
+        case "nort-announce" => announce(nort, rest)
+        case "announce-voices" => desks.map { k =>
+            k.title + ": next " + k.voices(nextIndex(k) % k.voices.size).name +
+                (if (k.voices.size > 1) "; in turn: " + k.voices.map(_.name).mkString(", ") else "") +
+                "; webhook " + (if (k.hook.nonEmpty) "set" else "not set")
+        }.mkString("\n")
         case _ => "not done"
     }
 
-    val words = Set("announce", "announce-voices")
+    val words = Set("announce", "nort-announce", "announce-voices")
 }
