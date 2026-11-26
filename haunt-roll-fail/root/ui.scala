@@ -7004,9 +7004,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         drawMap()
 
         // a tap's choice opened this one: the choice about the same clearing, if it alone is
+        // (or the one choice that names it and opens more, as "Move from" with one clearing left to move from)
         follow.foreach { c =>
-            tapKeys.%(_._2.has(c)) match {
-                case List((a, _, _)) => scalajs.js.timers.setTimeout(0) { if (lastActions.has(a)) takeFromMap(a, c) }
+            tapKeys.%(_._2.has(c))./(_._1).some.|(mapChoices.%(a => a.isSoft && ownClearings(a)._1.has(c))) match {
+                case List(a) => scalajs.js.timers.setTimeout(0) { if (lastActions.has(a)) takeFromMap(a, c) }
                 case _ =>
             }
         }
