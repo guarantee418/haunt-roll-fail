@@ -7,7 +7,7 @@
 #   sweeter-than-honey.png      "Sweeter than Honey": a honeycomb dripping honey
 #   strength-became-sweet.png   "Strength became Sweet": a honeycomb and bees inside a lion's head
 #   stronger-than-a-lion-sun.png "Stronger than a Lion": the sun in its might (Judges 5:31)
-#   vedrfolnir.png              Northgard Announcements' Vedrfolnir on the eagle's head, from a painting (only with its path:
+#   vedrfolnir.png              Northgard Announcements' Vedrfolnir as the Clan of the Eagle's painted eagle (only with its path:
 #                               python3 haunt-roll-fail/tools/announce-avatars.py <painting>)
 # Run from the repository root: python3 haunt-roll-fail/tools/announce-avatars.py
 import math
@@ -191,14 +191,12 @@ def sun():
 
 
 def vedrfolnir(picture):
-    # Northgard Announcements (2026-11-26): Vedrfolnir, the hawk sitting on the eagle's head at the top of Yggdrasil, from a painting of
-    # the eagle on the World Tree (with Ratatoskr below) that the owner gave (550x557; not in the repository: give its path). Cropped to
-    # the eagle's head and the hawk on it, sharpened a little, and set in the gold-ringed badge. Turned down before it: a drawing, the
-    # Wastelands tile's eagle ("looks dead") and the Clan of the Eagle's emblem.
-    from PIL import ImageEnhance, ImageFilter
-    art = Image.open(picture).convert("RGB").crop((120, 15, 430, 325)).resize((S - 168, S - 168), Image.LANCZOS)
-    art = art.filter(ImageFilter.UnsharpMask(3, 90, 2))
-    art = ImageEnhance.Color(ImageEnhance.Contrast(art).enhance(1.08)).enhance(1.1)
+    # Northgard Announcements (2026-11-26): Vedrfolnir, shown with the official painting of the eagle with the glowing eye from
+    # Hraesvelg, Clan of the Eagle (Shiro Games' DLC), cropped to the eagle on its branch and set in the gold-ringed badge (the owner
+    # picked it over a drawing, the Wastelands tile's eagle, the clan emblem and a painting of the eagle on Yggdrasil). The painting
+    # isn't in the repository: give its path, downloaded from the DLC's GOG page,
+    # https://items.gog.com/northgard_-_hr%C3%A6svelg,_clan_of_the_eagle/eagle614.jpg (614x345)
+    art = Image.open(picture).convert("RGB").crop((150, 40, 455, 345)).resize((S - 168, S - 168), Image.LANCZOS)
     im, d = badge((40, 24, 20), (40, 24, 20))
     disc = Image.new("L", art.size, 0)
     ImageDraw.Draw(disc).ellipse((0, 0, art.width - 1, art.height - 1), fill=255)
