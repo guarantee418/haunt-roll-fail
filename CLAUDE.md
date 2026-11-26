@@ -1113,6 +1113,10 @@ server. No session can reach the server, and none needs to.
   to the acclaims, so that pick has no Cancel (`CraftAction(f : Knaves, ...)` in `root/faction-knaves.scala`): the generic one's
   Cancel after a recorded move threw "cancel on non-soft external action", and Wind of Victory stopped loading on 2026-10-30 when
   the Knaves served Bake Sale (two rabbits) with frog, rabbit and rabbit-or-frog acclaim. Only takes away a choice that threw.
+- The Knaves' acclaim already activated to craft this turn with Serve is drawn grayed out on the map until the end of the
+  Knaves' turn, like the physical token flipped to its other side (`usedAcclaim` in `drawMap`, `root/ui.scala`, from
+  `KnavesPlayer.activated`; images `kd-acclaim-used`, `nw-acclaim-used`; Discord root-discussion, 2026-11-26: players took the
+  used acclaim for a bug). Display only, so no game records change.
 - The Knaves' captain list (player panel and info overlay) says "(retired)" for a captain the Knaves retired, "(removed)" for one
   an enemy removed from the map, and "(retired, removed)" for both (`status` in `KnavesPlayer`, `root/faction-knaves.scala`;
   "removed" is a captain that has been on the map, `placed`, and isn't now). Asked for on Discord on 2026-11-03 (Glory through
