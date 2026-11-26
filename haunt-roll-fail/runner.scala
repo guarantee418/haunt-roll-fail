@@ -263,6 +263,14 @@ object Runner {
             result
         }
 
+        // the recorded actions among ii that wrote a line to the log (shown struck once undone), what a player sees as moves
+        def loggedMoves(ii : $[Int]) : Int = {
+            val s = ii.toSet
+            lines.%(l => l.temp.not && s.contains(l.action - 1))./(_.action).distinct.num
+        }
+
+        ui.movesIn = (from, to) => loggedMoves(from.until(to).$.diff(striken(to)))
+
         var current : Int = 0
         var line : Int = 0
 
@@ -939,10 +947,12 @@ object Runner {
                     }
 
                 case UIPerform(UndoAction(ff, n, t), aa) =>
-                    val l = ff.single./(f => ui.factionElem(f)).|("Players".hl) ~ " undid " ~ n.hl ~ " "
-
                     val st = striken(t + n - 1)
                     val ds = t.to(t + n - 1).$.diff(st)
+
+                    val m = loggedMoves(ds).max(1)
+
+                    val l = ff.single./(f => ui.factionElem(f)).|("Players".hl) ~ " undid " ~ m.hl ~ " "
 
                     game = hrf.web.timed(0)("generateGameVoid(" + t + ")") { generateGameVoid(t) }
 
@@ -951,7 +961,7 @@ object Runner {
                     ui.currentGame = game
 
                     val dd = ds./(i => actions(i))./~(ui.describeActionForUndo(_, ff.single))
-                    val ee = (dd.distinct.num > 1 || (dd.num == 1 && n > 1)).?("action" + (n > 1).??("s") + ", including ").|("").spn ~ dd.distinct./(d => (dd.count(d) > 3).?("multple ".spn) ~ d.elem(dd.count(d))).join(", ")
+                    val ee = (dd.distinct.num > 1 || (dd.num == 1 && m > 1)).?("action" + (m > 1).??("s") + ", including ").|("").spn ~ dd.distinct./(d => (dd.count(d) > 3).?("multiple ".spn) ~ d.elem(dd.count(d))).join(", ")
 
                     UIContinue(Log(l ~ ee, LogKind.Normal, game.continue.unwrap), aa)
 

@@ -576,10 +576,11 @@ trait GreyUI { gui : Gaming =>
                     }),
                     undoBlocked(n, actions)./(reason => ZBasic(g, reason.div)).|(ZBasic(g, "Undo to here".styled(xstyles.warning), () => {
                         val dd = actions.drop(n)./~(describeActionForUndo(_, None))
-                        val ee = (dd.distinct.num > 1).?(", including ").|((dd.distinct.num > 0).?(", namely ").|("")).spn ~ dd.distinct./(d => (dd.count(d) > 3).?("multple ".spn) ~ d.elem(dd.count(d))).join(", ")
+                        val m = movesIn(n, actions.num).max(1)
+                        val ee = (dd.distinct.num > 1).?(", including ").|((dd.distinct.num > 0).?(", namely ").|("")).spn ~ dd.distinct./(d => (dd.count(d) > 3).?("multiple ".spn) ~ d.elem(dd.count(d))).join(", ")
 
                         undoAsker.zask(
-                            $(ZBasic(("Undo " ~ (actions.num - n).hl ~ " action".s(actions.num - n) ~ ee).div, "Confirm".styled(xstyles.error), () => {
+                            $(ZBasic(("Undo " ~ m.hl ~ " action".s(m) ~ ee).div, "Confirm".styled(xstyles.error), () => {
                                 undoPane.invis()
                                 actionPane.vis()
                                 undoing()
