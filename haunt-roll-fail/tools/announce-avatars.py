@@ -7,9 +7,12 @@
 #   sweeter-than-honey.png      "Sweeter than Honey": a honeycomb dripping honey
 #   strength-became-sweet.png   "Strength became Sweet": a honeycomb and bees inside a lion's head
 #   stronger-than-a-lion-sun.png "Stronger than a Lion": the sun in its might (Judges 5:31)
+#   vedrfolnir.png              Northgard Announcements' Vedrfolnir as the Clan of the Eagle's painted eagle (only with its path:
+#                               python3 haunt-roll-fail/tools/announce-avatars.py <painting>)
 # Run from the repository root: python3 haunt-roll-fail/tools/announce-avatars.py
 import math
 import os
+import sys
 from PIL import Image, ImageDraw
 
 S = 1024          # drawn at 4x, saved at 256
@@ -187,8 +190,24 @@ def sun():
     save(im, "stronger-than-a-lion-sun.png")
 
 
+def vedrfolnir(picture):
+    # Northgard Announcements (2026-11-26): Vedrfolnir, shown with the official painting of the eagle with the glowing eye from
+    # Hraesvelg, Clan of the Eagle (Shiro Games' DLC), cropped to the eagle on its branch and set in the gold-ringed badge (the owner
+    # picked it over a drawing, the Wastelands tile's eagle, the clan emblem and a painting of the eagle on Yggdrasil). The painting
+    # isn't in the repository: give its path, downloaded from the DLC's GOG page,
+    # https://items.gog.com/northgard_-_hr%C3%A6svelg,_clan_of_the_eagle/eagle614.jpg (614x345)
+    art = Image.open(picture).convert("RGB").crop((150, 40, 455, 345)).resize((S - 168, S - 168), Image.LANCZOS)
+    im, d = badge((40, 24, 20), (40, 24, 20))
+    disc = Image.new("L", art.size, 0)
+    ImageDraw.Draw(disc).ellipse((0, 0, art.width - 1, art.height - 1), fill=255)
+    im.paste(art, (84, 84), disc)
+    save(im, "vedrfolnir.png")
+
+
 scroll()
 eater()
 honey()
 strength_sweet()
 sun()
+if len(sys.argv) > 1:
+    vedrfolnir(sys.argv[1])
