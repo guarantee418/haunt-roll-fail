@@ -886,6 +886,70 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         cells(t).some./(_.minBy { case (x, y) => score(x, y) }).|(game.board.unitPoint(t.anchor))
     })
 
+    // Creature Moves, the arrows toggled by the button under the action pane; this page's view only
+    var showCreatureMoves = false
+
+    // An arrow from a to b in scene units, gold with a dark rim, its tail held back from a by near and its head 70 short of b,
+    // dashed for a tie; made once each (a few at a time, small canvases)
+    val arrowImages = scala.collection.mutable.Map[(Int, Int, Int, Int, Int, Boolean), (hrf.ui.sprites.Image, Rectangle)]()
+
+    def moveArrow(a : (Double, Double), b : (Double, Double), near : Double, dashed : Boolean) : (hrf.ui.sprites.Image, Rectangle) = {
+        val key = (a._1.round.toInt, a._2.round.toInt, b._1.round.toInt, b._2.round.toInt, near.round.toInt, dashed)
+
+        if (arrowImages.size > 60)
+            arrowImages.clear()
+
+        arrowImages.getOrElseUpdate(key, {
+            val (dx, dy) = (b._1 - a._1, b._2 - a._2)
+            val d = math.sqrt(dx * dx + dy * dy).max(1.0)
+            val (ux, uy) = (dx / d, dy / d)
+            val (ax, ay) = (a._1 + ux * near.min(d / 3), a._2 + uy * near.min(d / 3))
+            val (bx, by) = (b._1 - ux * 70.0.min(d / 3), b._2 - uy * 70.0.min(d / 3))
+
+            val head = 70.0
+            val margin = 60.0
+            val x0 = ax.min(bx) - margin
+            val y0 = ay.min(by) - margin
+            val k = 0.5
+
+            val canvas = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
+            canvas.width = (((ax.max(bx) + margin) - x0) * k).ceil.toInt.max(1)
+            canvas.height = (((ay.max(by) + margin) - y0) * k).ceil.toInt.max(1)
+
+            val c = new CanvasImage(canvas)
+            val g = c.context
+            g.scale(k, k)
+            g.translate(-x0, -y0)
+            g.lineCap = "round"
+            g.lineJoin = "round"
+
+            // the shaft stops where the head starts
+            val (sx1, sy1) = (bx - ux * head * 0.8, by - uy * head * 0.8)
+
+            $(("rgba(30,20,0,0.85)", 34.0), ("#ffd21f", 20.0)).foreach { case (stroke, width) =>
+                g.setLineDash(dashed.?(scalajs.js.Array[Double](40, 36)).|(scalajs.js.Array[Double]()))
+                g.strokeStyle = stroke
+                g.lineWidth = width
+                g.beginPath()
+                g.moveTo(ax, ay)
+                g.lineTo(sx1, sy1)
+                g.stroke()
+
+                g.setLineDash(scalajs.js.Array[Double]())
+                g.fillStyle = stroke
+                val grow = (width - 20.0) / 2
+                g.beginPath()
+                g.moveTo(bx + ux * grow, by + uy * grow)
+                g.lineTo(bx - ux * (head + grow) - uy * (head * 0.6 + grow), by - uy * (head + grow) + ux * (head * 0.6 + grow))
+                g.lineTo(bx - ux * (head + grow) + uy * (head * 0.6 + grow), by - uy * (head + grow) - ux * (head * 0.6 + grow))
+                g.closePath()
+                g.fill()
+            }
+
+            (c, Rectangle(x0, y0, canvas.width / k, canvas.height / k))
+        })
+    }
+
     def makeScene() : |[Scene] = {
         // Adset: the map shows from the central tile on, before any clan is drafted
         if ((game.states.none && game.adset.not) || game.board.placements.none)
@@ -1053,6 +1117,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         // Territory numbers on every area of the territory, highlighted when it can be chosen; units at its first area
         // (PC version: nothing in the fog)
+        // Where each creature is drawn, for the Creature Moves arrows
+        val creatureSpots = scala.collection.mutable.Map[Creature, (Double, Double)]()
+
         board.territories.zipWithIndex.%((t, _) => fogged.contains(t).not).foreach { case (t, i) =>
             val tag = $(t.anchor)
             val box = $(Rectangle(-70, -70, 140, 140))
@@ -1223,6 +1290,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 val z = 220
                 val (x, y) = freeSpot(t, z / T / 2, taken, |(board.point(t.anchor)), 0.5)
                 pieces.add(Sprite($(at(c.token, z)), $(Rectangle(-z / 2, -z / 2, z, z)), tag :+ c))(sx(x), sy(y))
+                creatureSpots += c -> ((sx(x), sy(y)))
                 // its place in the creature line (1 moves first), a square badge at the bottom left corner
                 // (nort/tools/order-badges.py; asked for on Discord on 2026-11-23; moved from the top left on 2026-11-26,
                 // as it hid the creature's picture there)
@@ -1243,6 +1311,31 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 taken :+= ((x, y, z / T / 2))
             }
         }
+
+        // "Creature Moves" (a button under the action pane that shows and hides them; Discord northgard-feedback, 2026-11-26): an arrow from each creature
+        // to where the Creature phase would move it as things stand, dashed to each territory of a tie the first player breaks, a
+        // Myrkalf's second step on from its first; none into or out of the fog of war
+        if (showCreatureMoves && game.isOver.not)
+            CreatureForecast.all.foreach { fc =>
+                creatureSpots.get(fc.c).foreach { start =>
+                    var from = start
+                    var near = 125.0
+
+                    fc.steps.foreach { l =>
+                        val tie = l.num > 1
+                        l.%(a => fogged.contains(board.territory(a)).not).foreach { a =>
+                            val (x, y) = board.point(a)
+                            val (i, rect) = moveArrow(from, (sx(x), sy(y)), near, tie)
+                            pieces.add(Sprite($(ImageRect(i, rect, 1.0)), $))(0, 0)
+                        }
+                        l.headOption.foreach { a =>
+                            val (x, y) = board.point(a)
+                            from = (sx(x), sy(y))
+                            near = 40.0
+                        }
+                    }
+                }
+            }
 
         // Wastelands: Jötunn Blainn waiting at his camp and Naströnd's wood not yet taken, in the impassable middle of their tiles
         if (game.has(Wastelands)) {
@@ -3245,6 +3338,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 def b(t : String, click : () => Unit) = ZBasic(Break ~ Break, t.spn, click, row).copy(clear = false)
                 tutorial.$(b("Tutorial Lessons", () => onClick(TutorialLessonView(0)))) ++
                 (tutorial && tutorialTipsHidden && currentGame.isOver.not).$(b("Show tutorial tips", () => hideTutorialTips(false))) ++
+                (game.creatureLine.any && currentGame.isOver.not).$(b("Creature Moves", () => {
+                    showCreatureMoves = showCreatureMoves.not
+                    updateStatus()
+                })) ++
                 $(b("Interface", () => { callbacks.editSettings { updateStatus() } })) ++
                 $(b("Report a Bug", () => { callbacks.reportBug() })).%(_ => callbacks.canReportBug) ++
                 $(b("Main Menu", () => { callbacks.returnToTitle() })).%(_ => callbacks.canReturnToTitle) ++
