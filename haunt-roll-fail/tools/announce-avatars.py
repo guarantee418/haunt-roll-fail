@@ -218,6 +218,21 @@ def game_art(path, box, name):
     im.paste(flat, (84, 84), disc)
     save(im, name)
 
+def dispatch_rider():
+    # Pincer's Dispatch Rider: the horse of the Mustang card's medallion. The horse is painted right of the medallion's middle, so the
+    # medallion (centre 119,143, radius 57 on the 240x336 card) is lifted onto its own dark brown and the crop is centred on the horse
+    card = Image.open("haunt-roll-fail/webp2/pincer/images/card/mustang.webp").convert("RGB")
+    lifted = Image.new("RGB", card.size, (58, 24, 12))
+    disc = Image.new("L", card.size, 0)
+    ImageDraw.Draw(disc).ellipse((119 - 57, 143 - 57, 119 + 57, 143 + 57), fill=255)
+    lifted.paste(card, (0, 0), disc)
+    art = lifted.crop((128 - 50, 139 - 50, 128 + 50, 139 + 50)).resize((S - 168, S - 168), Image.LANCZOS).convert("RGBA")
+    im, d = badge((40, 24, 20), (40, 24, 20))
+    m = Image.new("L", art.size, 0)
+    ImageDraw.Draw(m).ellipse((0, 0, art.width - 1, art.height - 1), fill=255)
+    im.paste(art, (84, 84), m)
+    save(im, "dispatch-rider.png")
+
 
 scroll()
 eater()
@@ -225,7 +240,7 @@ honey()
 strength_sweet()
 sun()
 game_art("root/images/card/deck/informants.webp", (20, 95, 480, 555), "informants.png")
-game_art("pincer/images/card/mustang.webp", (66, 84, 178, 196), "dispatch-rider.png")
+dispatch_rider()
 game_art("tactics/images/commander/mechanized-company.webp", (86, 96, 250, 260), "signal-corps.png")
 if len(sys.argv) > 1:
     vedrfolnir(sys.argv[1])
