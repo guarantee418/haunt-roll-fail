@@ -1313,7 +1313,7 @@ server. No session can reach the server, and none needs to.
   at least one pick, in place of a yes/no question per game): the tournament changes `onboarding` (lists the questions) and
   `onboarding-question <title> | <answer> = <role> [= <emoji> [= <description>]] | ... [| single] [| optional]` (`DiscordServer.scala`; the emoji Unicode, a server emoji's name, `clan:Wolf` or `faction:MC`, the Root cat),
   which puts that question first, several picks and required by default, and drops the questions whose answers give only roles among
-  its own; roles with server permissions or a bot's are refused, as in `SelfRoles`. The bot needs Manage Server and Manage Roles.
+  its own (or roles since deleted), and `onboarding-remove <title>` takes a question out; roles with server permissions or a bot's are refused, as in `SelfRoles`. The bot needs Manage Server and Manage Roles.
 - Members give and take the game and ping roles themselves (2026-11-24, asked for): `/roles`, or the "Pick my roles" button under the
   bot's role picker post, opens a menu only they see with their roles ticked (`good-game/SelfRoles.scala`, a `BotCommand`; its button and
   menu go through `Lfg.interaction`). Only the roles the owner lists are offered (`tournament/self-roles.tsv`, set by the tournament changes
