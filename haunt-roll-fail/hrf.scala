@@ -2888,7 +2888,8 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             // Discord LFG games (good-game/Lfg.scala): the options this version of the site gives them, once a page load
             if (HRF.lfgSent.not) {
                 HRF.lfgSent = true
-                HRF.metas.%(_.lfgOptions.any).foreach { m =>
+                // (and for a game with no options, Pincer, its version: an empty third line; 2026-11-27)
+                HRF.metas.%(m => m.lfgOptions.any || m.lfgPlayers.any).foreach { m =>
                     postF(HRF.server.get + "/lfg/template", m.name + "\n" + HRF.version + "\n" + m.lfgOptions./(o => m.writeOption(o)).join(" "))(_ => ())(())
                 }
                 // and every setup option, for the Discord setup panel, when the server's copy differs from this version's
