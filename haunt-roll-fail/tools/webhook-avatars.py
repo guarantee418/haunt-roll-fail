@@ -9,6 +9,9 @@
 #                       for the gold badge's
 #   heckler-tactics.png the Assault Specialist's (Company of Heroes' Roast Me heckler, good-game/Heckler.scala; 2026-11-27, asked for):
 #                       the Urban Assault Company commander card's rifleman (webp2/tactics/images/commander/urban-assault.webp)
+#   herald-of-olympus.png  Cyclades' turn pings (2026-11-27): Zeus from his god tile (webp2/cyclades/images/god/zeus.webp)
+#   oracle-of-delphi.png   Cyclades' announcements (good-game/Announce.scala): Apollo from his god tile
+#   heckler-cyclades.png   the Satyr, Cyclades' Roast Me heckler: the Satyr Creature card's (webp2/cyclades/images/creature/satyr.webp)
 # Run from the repository root: python3 haunt-roll-fail/tools/webhook-avatars.py
 import math
 import os
@@ -131,7 +134,25 @@ def sergeant():
     save(im, "heckler-tactics.png")
 
 
+
+def portrait(src, box, bg, name):
+    im, d = badge(*bg)
+    face = Image.open(src).convert("RGBA").crop(box).resize((S - 168, S - 168), Image.LANCZOS)
+    mask = Image.new("L", face.size, 0)
+    ImageDraw.Draw(mask).ellipse((0, 0, face.size[0] - 1, face.size[1] - 1), fill=255)
+    im.paste(face, (84, 84), mask)
+    save(im, name)
+
+
+def cyclades():
+    g = "haunt-roll-fail/webp2/cyclades/images/"
+    portrait(g + "god/zeus.webp", (24, 24, 250, 250), ((60, 70, 130), (40, 46, 90)), "herald-of-olympus.png")
+    portrait(g + "god/apollo.webp", (16, 0, 212, 196), ((150, 120, 40), (100, 80, 26)), "oracle-of-delphi.png")
+    portrait(g + "creature/satyr.webp", (64, 44, 240, 220), ((40, 90, 50), (26, 60, 34)), "heckler-cyclades.png")
+
+
 drum()
 radio()
 major()
 sergeant()
+cyclades()

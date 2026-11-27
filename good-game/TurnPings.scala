@@ -54,6 +54,9 @@ import scala.concurrent.duration.Duration
 // threads-tactics.tsv. The bot can make those webhooks itself, with a name and avatar of their own, and set them in one go: the
 // change "make-webhook <name> | in <channel> | avatar <file> | for pincer-turns" (DiscordServer.scala). Their clients give no
 // reasons yet, so their pings say "it's your turn", led by the game's own emoji (a drum, a field radio).
+//
+// CYCLADES (2026-11-27): the same in #cyclades-games, through HRF_DISCORD_CYCLADES_TURNS_WEBHOOK or discord-cyclades-turns-webhook (the change
+// "cyclades-turns <url>", or make-webhook ... | for cyclades-turns), threads in threads-cyclades.tsv, its pings led by a temple.
 object TurnPings {
     import GoodGame._
     import Backup.{rows, row}
@@ -67,7 +70,7 @@ object TurnPings {
 
     // the games that get a thread and pings
     val metas = Map("root" -> "Root", "root-adset" -> "Root Advanced Setup", "nort" -> "Northgard", "nort-adset" -> "Northgard Adset",
-        "pincer" -> "Pincer", "tactics" -> "Company of Heroes")
+        "pincer" -> "Pincer", "tactics" -> "Company of Heroes", "cyclades" -> "Cyclades")
 
     val rootMetas = Set("root", "root-adset")
     val nortMetas = Set("nort", "nort-adset")
@@ -80,7 +83,8 @@ object TurnPings {
         Slot("turns", "HRF_DISCORD_TURNS_WEBHOOK", "discord-turns-webhook", threads),
         Slot("nort-turns", "HRF_DISCORD_NORT_TURNS_WEBHOOK", "discord-nort-turns-webhook", nortThreads),
         Slot("pincer-turns", "HRF_DISCORD_PINCER_TURNS_WEBHOOK", "discord-pincer-turns-webhook", dir.resolve("threads-pincer.tsv")),
-        Slot("tactics-turns", "HRF_DISCORD_TACTICS_TURNS_WEBHOOK", "discord-tactics-turns-webhook", dir.resolve("threads-tactics.tsv")))
+        Slot("tactics-turns", "HRF_DISCORD_TACTICS_TURNS_WEBHOOK", "discord-tactics-turns-webhook", dir.resolve("threads-tactics.tsv")),
+        Slot("cyclades-turns", "HRF_DISCORD_CYCLADES_TURNS_WEBHOOK", "discord-cyclades-turns-webhook", dir.resolve("threads-cyclades.tsv")))
 
     def slot(name : String) : Option[Slot] = slots.find(_.name == name)
 
@@ -88,6 +92,7 @@ object TurnPings {
         case m if nortMetas.contains(m) => "nort-turns"
         case "pincer" => "pincer-turns"
         case "tactics" => "tactics-turns"
+        case "cyclades" => "cyclades-turns"
         case _ => "turns"
     }).get
 
@@ -113,7 +118,7 @@ object TurnPings {
             "not done: " + s.name + " <https://discord.com/api/webhooks/...> or " + s.name + " off"
 
     // the emoji a game with no faction emojis leads its pings with
-    val gameIcon = Map("pincer" -> "🥁 ", "tactics" -> "🎖️ ")
+    val gameIcon = Map("pincer" -> "🥁 ", "tactics" -> "🎖️ ", "cyclades" -> "🏛️ ")
 
     // 10 seconds for every wait (owner, 2026-11-24): it was a minute, and 30 seconds for a battle on another's turn (Tournament 1
     // Table A: the Duchy answered an ambush before the bot's ping, due 60 to 90 seconds in, came)

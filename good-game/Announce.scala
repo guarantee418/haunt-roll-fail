@@ -63,13 +63,18 @@ object Announce {
     val tactics = Desk("coh-announcements", "coh-announce", "Company of Heroes announcements", "HRF_DISCORD_COH_ANNOUNCE_WEBHOOK", "discord-coh-announce-webhook", List(
         Voice("Signal Corps", "signal-corps.png")), "coh-announce-voice.tsv")
 
-    val desks = List(general, nort, root, pincer, tactics)
+    // Cyclades' (2026-11-27): the Oracle of Delphi, in #cyclades-announcements (cyclades-announce <name>)
+    val cyclades = Desk("cyclades-announcements", "cyclades-announce", "Cyclades announcements", "HRF_DISCORD_CYCLADES_ANNOUNCE_WEBHOOK", "discord-cyclades-announce-webhook", List(
+        Voice("Oracle of Delphi", "oracle-of-delphi.png")), "cyclades-announce-voice.tsv")
+
+    val desks = List(general, nort, root, pincer, tactics, cyclades)
 
     // make-webhook's "for": a desk's name, or nort, root, pincer, coh (root only through the tournament change "webhook")
     def desk(s : String) : Option[Desk] = s.trim.toLowerCase match {
         case "nort" | "northgard" => Some(nort)
         case "pincer" => Some(pincer)
         case "coh" | "tactics" | "tactics-announcements" => Some(tactics)
+        case "cyclades" => Some(cyclades)
         case n => desks.find(_.name == n).filter(_ != root)
     }
 

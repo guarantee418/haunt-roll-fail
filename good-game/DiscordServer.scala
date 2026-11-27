@@ -42,10 +42,10 @@ import java.nio.charset.StandardCharsets.UTF_8
 //   make-webhook <name> | in <channel> [| avatar <file>] [| for <turns channel>]
 //                                             makes the channel's webhook, or renames and gives the avatar to the one of that name
 //                                             there; avatar is a picture in webp2/lfg/webhooks/ (made by tools/webhook-avatars.py:
-//                                             drum-and-fife.png, field-wireless.png, the-major.png); for sets it as turns, nort-turns, pincer-turns or
-//                                             tactics-turns, as that change would (only a webhook Discord gives the bot the token of), or
+//                                             drum-and-fife.png, field-wireless.png, the-major.png, herald-of-olympus.png); for sets it as turns, nort-turns,
+//                                             pincer-turns, tactics-turns or cyclades-turns, as that change would (only a webhook Discord gives the bot the token of), or
 //                                             general, the General Announcements webhook, or nort-announcements, pincer-announcements,
-//                                             coh-announcements, a game's update webhook (Announce.scala)
+//                                             coh-announcements, cyclades-announcements, a game's update webhook (Announce.scala)
 //   rename-webhook <name> -> <new name> [| avatar <file>]
 //                                             (in any channel; its ID works in place of its name)
 //   test-ping <turns channel> [| role <role>] [| text <text>]
