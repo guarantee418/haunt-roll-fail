@@ -505,6 +505,7 @@ object Elo {
         def lastChange = history.last.after - history.last.before
     }
 
+    // the default start; a ladder's own is MetaGame.rankingStart (Root's 1100), passed to compute
     val start = 1000.0
     val K = 32.0
     val provisional = 5
@@ -530,7 +531,7 @@ object Elo {
         }
     }.sortBy(_.time)
 
-    def compute(results : $[Result]) : $[Player] = {
+    def compute(results : $[Result], start : Double = Elo.start) : $[Player] = {
         var rating = Map[String, Double]()
         var display = Map[String, String]()
         var history = Map[String, $[Change]]()
@@ -1240,7 +1241,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     def showRatings(note : Elem => Unit) {
                         val metas = HRF.metas.%(m => m.ranking.any && m.ranking == meta.ranking)./(_.name).distinct.join(",")
                         getF(HRF.server.get + "/rankings/" + metas) { text =>
-                            val changes = Elo.compute(Elo.parse(text))./~(_.history).%(_.result.game == server.get)
+                            val changes = Elo.compute(Elo.parse(text), meta.rankingStart)./~(_.history).%(_.result.game == server.get)
                             def signed(d : Double) = { val r = d.round ; (r >= 0).?("+" + r).|(r.toString) }
                             if (changes.any)
                                 note("Rankings: ".hl ~ changes.sortBy(c => -c.after)./(c => c.entry.name.hlb ~ " " ~ c.after.round.toString.hl ~ " (" ~ signed(c.after - c.before) ~ ")").join(", "))
@@ -1686,6 +1687,8 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         // the faction glyphs, before the game's assets load (the same paths as the game's)
         // the metas on this ladder: Advanced Setup's factions are seats, so a seat's faction is looked up in all of them (Root's)
         val ladderMetas = (meta +: HRF.metas.%(m => m.ranking.any && m.ranking == meta.ranking)).distinct
+        // where a new player's rating starts (Root's 1100 since 2026-11-27)
+        val start = meta.rankingStart
         // (each meta names its own: Root's "<faction>-glyph", Northgard's "clan-<clan>")
         val glyphSources = ladderMetas./~{ m =>
             val names = (m.factions./~(f => m.glyph(f)) ++ m.rankingTiers./~(_.icon))./(_.toLowerCase).toSet
@@ -1780,9 +1783,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         def bar(x : Double, expected : |[Double], colours : $[Style]) : Elem =
             Span(tag(Empty, "rk-fill", "rk-w" + width(x)) ~ expected./(e => tag(Empty, "rk-exp", "rk-x" + width(e)) : Elem).|(Empty), colours ++ css("rk-track") ++ colours.any.$(ExternalStyle("rk-has-colour")))
 
-        // a rating as a badge, its ring by band: 1100 and up, 1000 and up, under 1000; a provisional rating has a dashed ring
+        // a rating as a badge, its ring by band: 100 over the start and up, the start and up, under the start; a provisional rating has a dashed ring
         def badge(p : Elo.Player, large : Boolean = false) =
-            tag(num(p.rating.round.toString) ~ p.provisional.?(tag(Text("?"), "rk-q")).|(Empty), "rk-badge", large.?("rk-badge-large").|("rk-badge-small"), (p.rating >= 1100).?("rk-t3").|((p.rating >= 1000).?("rk-t2").|("rk-t1")), p.provisional.?("rk-prov").|("rk-firm"))
+            tag(num(p.rating.round.toString) ~ p.provisional.?(tag(Text("?"), "rk-q")).|(Empty), "rk-badge", large.?("rk-badge-large").|("rk-badge-small"), (p.rating >= start + 100).?("rk-t3").|((p.rating >= start).?("rk-t2").|("rk-t1")), p.provisional.?("rk-prov").|("rk-firm"))
 
         def delta(d : Double) = { val r = d.round ; tag(Text(signed(d)), "rk-num", "rk-delta", (r > 0).?("rk-up").|((r < 0).?("rk-down").|("rk-even"))) }
 
@@ -2099,7 +2102,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             () => player(p, all), css("rk-row", (i < 3 && p.provisional.not).?("rk-row-top").|("rk-row-plain")) ++ yours.$(ExternalStyle("rk-row-yours")) ++ $(xlo.pointer))
         }
 
-        def explainRatings : Elem = "Elo ratings from finished online games with people on two sides or more (teams count as one side; bots and local games don't count). Everyone starts at " ~ Elo.start.round.toString.hl ~ "; a " ~ "?".hl ~ " marks fewer than " ~ Elo.provisional.hl ~ " games." ~ meta.ranking.has("root").??(" Root ratings count the games played from 2026-11-18.") ~ (meta.ranking.has("root") || meta.ranking.has("nort")).?(" Games with content not approved for ranked play (" ~ meta.ranking.has("root").?("fan, playtest or mirror factions, and fan maps, decks, hirelings or scenarios but Tidal Flats, Tundra, Gloom and Dawn and Dusk").|("the fan clans") ~ ") and games picked as Unranked don't count in the ratings; the stats count them.").|(" Games picked as Unranked don't count in the ratings; the stats count them.")
+        def explainRatings : Elem = "Elo ratings from finished online games with people on two sides or more (teams count as one side; bots and local games don't count). Everyone starts at " ~ start.round.toString.hl ~ meta.ranking.has("root").??(" (1000 before 2026-11-27, when every rating was raised 100)") ~ "; a " ~ "?".hl ~ " marks fewer than " ~ Elo.provisional.hl ~ " games." ~ meta.ranking.has("root").??(" Root ratings count the games played from 2026-11-18.") ~ (meta.ranking.has("root") || meta.ranking.has("nort")).?(" Games with content not approved for ranked play (" ~ meta.ranking.has("root").?("fan, playtest or mirror factions, and fan maps, decks, hirelings or scenarios but Tidal Flats, Tundra, Gloom and Dawn and Dusk").|("the fan clans") ~ ") and games picked as Unranked don't count in the ratings; the stats count them.").|(" Games picked as Unranked don't count in the ratings; the stats count them.")
 
         // Root's page, after rootelo: Leaderboard, Top Tables, Player's Journey, the stats and the Codex, as tabs
         def tabs(current : String, all : $[Elo.Player]) =
@@ -2165,7 +2168,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         })
 
         def showTiered(everyone : $[Elo.Player]) {
-            val all = mode.filter(_ => modes)./(m => Elo.compute(results.%(r => modeOf(r) == m))).|(everyone)
+            val all = mode.filter(_ => modes)./(m => Elo.compute(results.%(r => modeOf(r) == m), start)).|(everyone)
             val you = mine.any.?("Your name" ~ (mine.num > 1).??("s") ~ " on this device: " ~ mine./(_.hlb).join(", ")).|("Names you type when joining an online game are claimed for this device. Play on another device with your player code.".txt)
             val ranked = all.%(_.provisional.not)
             val provisional = all.%(_.provisional)
@@ -2243,8 +2246,8 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             val worst = p.history.%(_.won.not)./~(c => opponents(c, false)).sortBy(o => o.before).headOption
 
             val points = p.history./(_.after)
-            val lo = (points :+ Elo.start).min
-            val hi = (points :+ Elo.start).max
+            val lo = (points :+ start).min
+            val hi = (points :+ start).max
             def height(v : Double) = (hi - lo < 1).?(50).|(math.round(10 + 90 * (v - lo) / (hi - lo)).toInt)
             val chart = box(
                 box(tag(num(hi.round.toString), "rk-chart-max") ~ tag(num(lo.round.toString), "rk-chart-min"), "rk-chart-axis") ~
@@ -2267,7 +2270,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 $(counts(all)) ++
                 tabs("Codex", all) ++
                 tiers./(t => ZOption(heading(tierWord + "s"), box(tierPill(t) ~ tag(num(tierRange(t)), "rk-tier-min") ~ tag(Text(t.note), "rk-sub"), "rk-tier-row"))) ++
-                $(note(heading(tierWord + "s"), modes.?("A league comes after " ~ Elo.provisional.hl ~ " rated games; until then a rating is provisional and shows a " ~ "?".hl ~ ". The leagues are the game's ranked leagues; here they follow the rating, not Glory Points, 100 apart, with everyone starting in Stone at " ~ Elo.start.round.toString.hl ~ ", as the game starts everyone in Stone.").|("A tier comes after " ~ Elo.provisional.hl ~ " rated games; until then a rating is provisional and shows a " ~ "?".hl ~ ". The tiers follow the rootelo ladder's, each 200 lower, as ratings here start at " ~ Elo.start.round.toString.hl ~ " (rootelo's start at 1200)."))) ++
+                $(note(heading(tierWord + "s"), modes.?("A league comes after " ~ Elo.provisional.hl ~ " rated games; until then a rating is provisional and shows a " ~ "?".hl ~ ". The leagues are the game's ranked leagues; here they follow the rating, not Glory Points, 100 apart, with everyone starting in Stone at " ~ start.round.toString.hl ~ ", as the game starts everyone in Stone.").|("A tier comes after " ~ Elo.provisional.hl ~ " rated games; until then a rating is provisional and shows a " ~ "?".hl ~ ". The tiers follow the rootelo ladder's, each 200 lower (rootelo starts at 1200); ratings here start at " ~ start.round.toString.hl ~ "."))) ++
                 titles./{ case (t, w) => ZOption(heading("Ranks · by wins"), box(tag(Text(t), "rk-title", "rk-title-big") ~ tag(num((w == 0).?("start").|(w + "+")), "rk-tier-min") ~ tag(Text((w == 0).?("Where everyone starts").|(plural(w, "win") + " in any mode, with any clan")), "rk-sub"), "rk-tier-row")) } ++
                 modes.$(note(heading("Modes"), "1v1".hl ~ ": two players. " ~ "2v2".hl ~ ": two teams of two. " ~ "FFA".hl ~ ": three players or more, each on their own. " ~ "Teams".hl ~ ": any other teams. The ladder counts every mode together; pick a mode to see a ladder of its games only.")) ++
                 $(note(heading("How the rankings work"), explainRatings)) ++
@@ -2321,7 +2324,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             def rankings() =
                 getF(server + "/rankings/" + metas) { text =>
                     results = Elo.parse(text)
-                    show(Elo.compute(results))
+                    show(Elo.compute(results, start))
                 } {
                     ui.action.asker.zask($(ZOption(title, Div("The server can't be reached.", ZBasic.info)), back))
                 }
@@ -2833,7 +2836,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     roles(withId, Map(), rr => {
                         def rate(rest : $[(String, $[MetaGame])], done : $[(String, $[MetaGame], |[$[Elo.Player]])]) : Unit = rest match {
                             case (k, ms) :: more =>
-                                getF(server + "/rankings/" + ms./(_.name).distinct.join(",")) { t => rate(more, done :+ ((k, ms, |(Elo.compute(Elo.parse(t)))))) } { rate(more, done :+ ((k, ms, None))) }
+                                getF(server + "/rankings/" + ms./(_.name).distinct.join(",")) { t => rate(more, done :+ ((k, ms, |(Elo.compute(Elo.parse(t), ms.headOption./(_.rankingStart).|(Elo.start)))))) } { rate(more, done :+ ((k, ms, None))) }
                             case Nil => show(names, own, discord, done, rr)
                         }
                         rate(ladders, $)

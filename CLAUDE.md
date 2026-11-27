@@ -335,6 +335,7 @@ and the 4-player board of the two halves (`Layouts` in `cyclades/board.scala`, i
 column), offerings with outbidding, the five gods, battles and retreats, the 17 Creatures and their figures, Metropolises. GP are
 public. `cyclades/RULES.md` has the rules as played and the readings, `cyclades/HANDOFF.md` the state, files and testing
 (`cyclades.Host`, `cyclades.Check`, `cyclades.LogDump`; `CYCLADES_RANDOM=0.4` mixes in random choices to reach every rule).
+`/cyclades` in the LFG channel (2026-11-27) posts a game like `/pincer`: 2 to 5 players picking a color on Join (or a random one), no options and so no setup panel, pinging the `cyclades` role (or `cyclades-lfg`; `Lfg.cyclades`, `cycladesPicks`, `lfgPlayers` in `cyclades/meta.scala`).
 Its Discord section (2026-11-27, asked for): the `cyclades` role and category with #cyclades-announcements, -discussion, -lfg, -games,
 -feedback and -results, like Pincer's; turn pings in #cyclades-games through the bot-made "Herald of Olympus" (Zeus from his god tile;
 `cyclades-turns` in `TurnPings.slots`, led by 🏛️), game updates in #cyclades-announcements as the "Oracle of Delphi" (Apollo; `cyclades-announce
@@ -392,7 +393,7 @@ cd haunt-roll-fail && sbt fullOptJS
   the game is opened. The first client to reach a game's end (`onOver` in `Runner.run`) posts its sides (`Meta.rankingSides`: a team
   or a clan; people only, by seat user) to `/report-result`, and the server keeps one report per game. "Rankings" on the Northgard menu
   (`rankingsMenu`, URL `/play/nort/rankings`) gets every result (`/rankings/nort,nort-adset`, names resolved: the seat's claimed name,
-  else the name typed for it) and works out Elo there (`Elo` in `hrf.scala`: start 1000, K 32 split over the other sides, a winning
+  else the name typed for it) and works out Elo there (`Elo` in `hrf.scala`: start 1000, Root's 1100 since 2026-11-27, which raised every Root rating by 100, as Elo moves only by rating differences (`MetaGame.rankingStart`; Root's tiers kept where they were), K 32 split over the other sides, a winning
   side beats each losing side, sides rated by their people's average; fewer than 5 games is "provisional", shown with "?"), only
   games with people on two sides or more, and never a game with a bot in it, in ratings or stats (its lobby's `bot` line, checked by `Ranking.list` on the server, so games already reported drop out too; owner, 2026-11-21). The games that ended before are in `good-game/ranking-seed.tsv` (found with
   `LiveCheck <hrf-games> ranking`; their times only keep the order).
@@ -1304,6 +1305,11 @@ server. No session can reach the server, and none needs to.
   changes the one of that name if there is one. On purpose nothing is deleted, nobody kicked or banned, and a role is never given
   server permissions; every request carries the audit log reason "HRF server change". The bot needs Manage Roles and Manage Channels,
   and its role above the roles it manages.
+- Discord's Onboarding, the questions a new member answers on joining (2026-11-27, asked for: one question, every game, Spectator sixth,
+  at least one pick, in place of a yes/no question per game): the tournament changes `onboarding` (lists the questions) and
+  `onboarding-question <title> | <answer> = <role> [= <emoji> [= <description>]] | ... [| single] [| optional]` (`DiscordServer.scala`; the emoji Unicode, a server emoji's name, `clan:Wolf` or `faction:MC`, the Root cat),
+  which puts that question first, several picks and required by default, and drops the questions whose answers give only roles among
+  its own; roles with server permissions or a bot's are refused, as in `SelfRoles`. The bot needs Manage Server and Manage Roles.
 - Members give and take the game and ping roles themselves (2026-11-24, asked for): `/roles`, or the "Pick my roles" button under the
   bot's role picker post, opens a menu only they see with their roles ticked (`good-game/SelfRoles.scala`, a `BotCommand`; its button and
   menu go through `Lfg.interaction`). Only the roles the owner lists are offered (`tournament/self-roles.tsv`, set by the tournament changes
@@ -1467,7 +1473,8 @@ server. No session can reach the server, and none needs to.
   Riverboats, Boat Builders, Riversteads, the water hirelings, the Ferry); water that is only scenery (the sea on some maps) says so
   (`waterAt`, `"view-water"` in `root/ui.scala`; asked for on 2026-10-30). Where the water is comes from the masks
   `<map>/map-water.webp` (a quarter of the map's size, red for river or lake, blue for scenery), traced by hand in
-  `root/tools/water-masks.py`; flooded clearings are tested against their flood images.
+  `root/tools/water-masks.py`; flooded clearings are tested against their flood images. A tap on a clearing (within `clearingAt`'s reach) never
+  shows it, even when no choice is about that clearing (2026-11-27: a river clearing tapped for an action brought up the river's info).
 - Tapping the Tundra map's blizzard, or one of the snowflakes marking the spots it may move to, says what it does: it blocks the
   way (path or river) between its two clearings, which aren't adjacent while it is there, and after every round it moves at random
   to one of its six spots, maybe the same (`"view-blizzard"` in `root/ui.scala`; asked for on 2026-10-31).

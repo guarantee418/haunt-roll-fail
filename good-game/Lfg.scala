@@ -22,7 +22,8 @@ import java.nio.file.{Files, Path, Paths}
 //
 // PINCER AND COMPANY OF HEROES (2026-11-27): /pincer and /coh, pinging pincer-lfg and coh-lfg, their posts and pings in their own
 // turns channels. Their players pick a side on Join, as Northgard's pick a clan (Picks: Pincer's colors, Company of Heroes' factions);
-// Pincer has no options and so no panel. A game whose sides can't play together (Company of Heroes' teams) isn't created (Picks.check).
+// Pincer has no options and so no panel. CYCLADES (2026-11-27, the same): /cyclades, 2 to 5, its players picking a color, pinging the
+// cyclades role (or cyclades-lfg); no options, no panel. A game whose sides can't play together (Company of Heroes' teams) isn't created (Picks.check).
 //
 // Discord sends the slash command and the button presses to POST /discord/interactions, signed with the application's public key
 // (HRF_DISCORD_PUBLIC_KEY, or the file discord-public-key, set by the tournament change "lfg-key <key>"); /root is registered in
@@ -104,6 +105,10 @@ object Lfg {
             else if (ss.size > 2 && (!ss.exists(allies.contains) || !ss.exists(axis.contains))) Some("With three players or more the game is Allies (US, British, Soviet) against Axis (Wehrmacht, OKW, DAK): someone has to play the other side.")
             else None)
 
+    // CYCLADES (2026-11-27): its players are its colors, 2 to 5
+    val cycladesPicks = Picks("color", "Pick a color", List(Side("Red", "Red", "🔴"), Side("Yellow", "Yellow", "🟡"), Side("Blue", "Blue", "🔵"), Side("Black", "Black", "⚫"), Side("Green", "Green", "🟢")),
+        List(("Random", "Random color", List("Red", "Yellow", "Blue", "Black", "Green"))))
+
     val root = Kind("root-adset", "Root: Advanced Setup", "Root", "root", "Look for players for an online Root game (Advanced Setup) on the site", List("root-lfg"), "title")
     val nortStd = Kind("nort", "Northgard", "Northgard", "northgard", "Look for players for an online Northgard game (standard, or Adset with a clan draft) on the site", List("ng-lfg", "northgard-lfg"), "title-nort", picks = Some(nortPicks))
     val nort = Kind("nort-adset", "Northgard: Adset", "Northgard", "northgard", "Look for players for an online Northgard game (standard, or Adset with a clan draft) on the site", List("ng-lfg", "northgard-lfg"), "title-nort")
@@ -112,7 +117,9 @@ object Lfg {
     val coh = Kind("tactics", "Company of Heroes", "Company of Heroes", "coh", "Look for players for an online Company of Heroes game on the site", List("coh-lfg", "tactics-lfg", "coh"), "title-tactics", maxSeats = 5, picks = Some(cohPicks), size = 2)
 
     // (a command with several kinds picks one with its "mode" option, the first by default)
-    val kinds = List(root, nortStd, nort, pincer, coh)
+    val cyclades = Kind("cyclades", "Cyclades", "Cyclades", "cyclades", "Look for players for an online game of Cyclades on the site", List("cyclades-lfg", "cyclades"), "title-cyclades", maxSeats = 5, picks = Some(cycladesPicks), panel = false, size = 2)
+
+    val kinds = List(root, nortStd, nort, pincer, coh, cyclades)
 
     def kindsOf(command : String) = kinds.filter(_.command == command)
 
