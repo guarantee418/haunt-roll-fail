@@ -432,8 +432,11 @@ object LfgSetup {
     // the rules; the panel lists the Commanders, the Lost Brigades and the map options. Several sections in one command option are
     // joined with "|"
     def isTactics(meta : String) = meta == Lfg.coh.meta
-    val tacticsMaps = List("Map: Core missions", "Map: Skirmishes", "Map: Core panels, 3 panels", "Map: Large Map Pack, 2 panels")
-    val tacticsCommand = List(("ranked", "Ranked or unranked (ranked if not given)", rankingSection), ("map", "The map (skirmishes are for two players)", tacticsMaps.mkString("|")), ("length", "The game's length", "Game length"), ("rules", "Full or First Game Rules", "Rules"))
+    // (two options, as a menu lists 25 at most: the core missions, skirmishes and 3-panel maps, which a 3v3 needs; the 2-panel Large Map Pack)
+    val tacticsMaps = List("Map: Core missions", "Map: Skirmishes", "Map: Core panels, 3 panels", "Map: Large Map Pack, 3 panels")
+    val tacticsLargeMaps = List("Map: Large Map Pack, 2 panels")
+    val tacticsCommand = List(("ranked", "Ranked or unranked (ranked if not given)", rankingSection), ("map", "The map (skirmishes for two; a 3v3 needs a 3-panel map)", tacticsMaps.mkString("|")),
+        ("large_map", "Or a Large Map Pack 2-panel map (up to five players)", tacticsLargeMaps.mkString("|")), ("length", "The game's length", "Game length"), ("rules", "Full or First Game Rules", "Rules"))
     val tacticsPanel = List("Commanders", "Lost Brigades", "Map: options")
 
     // the panel's sections, for a game whose panel lists sections by name (Root's has its own pages)

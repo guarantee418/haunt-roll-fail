@@ -56,7 +56,7 @@ object Meta extends MetaGame { mmm =>
 
     // Discord LFG games (good-game/Lfg.scala, /coh; 2026-11-27): the site's defaults, two to five players, each picking a faction on Join
     override def lfgOptions : $[O] = (mandatoryFor(2, factions.take(2)) ++ completeSaved(2, factions.take(2), defaultsFor(2, factions.take(2)))).distinct
-    override def lfgPlayers = $(2, 3, 4, 5)
+    override def lfgPlayers = $(2, 3, 4, 5, 6)
 
     // Rankings, turn ping reasons and the Assault Specialist's jests (online.scala; 2026-11-27): a ladder of its own, a team one side,
     // its Victory Points the score; the games list shows the map, then each player's faction
