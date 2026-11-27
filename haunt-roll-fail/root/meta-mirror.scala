@@ -124,6 +124,7 @@ object MetaMirror extends MetaGame {
 
     // Rankings: the Root ladder
     override def ranking = Meta.ranking
+    override def rankingStart = Meta.rankingStart
     override def rankingSides(g : G, winners : $[Any]) = Meta.rankSides(g, winners)
     override def rankingSeat(g : G, f : F) = Meta.rankSeat(g, f)
     override def rankingFan(g : G) = Meta.rankFan(g)

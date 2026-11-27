@@ -2338,8 +2338,8 @@ object Meta extends MetaGame {
 
     override def glyph(g : G) : |[String] = g.current.but(Neutral)./(_.style + "-glyph")
     override def glyph(f : F) : |[String] = |(f.style + "-glyph")
-    // The rankings' tiers, after the rootelo ladder's (asked for on 2026-11-19), 200 lower as ratings here start at 1000
-    // not 1200; the suits' card icons for the four suited tiers
+    // The rankings' tiers, after the rootelo ladder's (asked for on 2026-11-19), 200 lower as ratings here started at 1000
+    // not 1200 (1100 since 2026-11-27, the tiers kept); the suits' card icons for the four suited tiers
     override def rankingTiers = $(
         RankingTier("Stag", |(1400), "Legend of the woods", None),
         RankingTier("Bird", |(1300), "Rules the canopy", |("card-suit-bird-gray")),
@@ -2354,6 +2354,8 @@ object Meta extends MetaGame {
     // Rankings (asked for on 2026-11-18): every Root game (the standard setup, Advanced Setup and Mirror) goes to one ladder; each
     // faction is a side, so a Vagabond in a coalition wins beside its ally
     override def ranking = |("root")
+    // ratings start at 1100 (owner, 2026-11-27: everyone raised 100 points, new players at 1100)
+    override def rankingStart = 1100.0
 
     // the tournament's tables are Advanced Setup games with the tournament draft (root/tournament.scala)
     override def tournament = |("root-adset")
