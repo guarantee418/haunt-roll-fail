@@ -340,6 +340,12 @@ Its Discord section (2026-11-27, asked for): the `cyclades` role and category wi
 `cyclades-turns` in `TurnPings.slots`, led by 🏛️), game updates in #cyclades-announcements as the "Oracle of Delphi" (Apollo; `cyclades-announce
 <name>`, `Announce.cyclades`), the Roast Me heckler the Satyr (`Heckler.satyr`, the Satyr card's art), avatars by `tools/webhook-avatars.py`.
 
+Brass: Pittsburgh (Gavan Brown, Roxley Games, 2026; asked for on 2026-11-27 by the owner, who reviews it for Roxley) is parked until
+the other games are done: `haunt-roll-fail/brass/RULES.md` has the rules from Roxley's rulebook v2026.01 with the readings and open
+questions, `brass/HANDOFF.md` the data still missing (card list, player mat, tile pools, art), a first reading of the board and the plan.
+Nothing is built and the folder isn't in `common.sbt`. When built, keep it unlisted (not in `HRF.menuMetas`, no Discord section) until
+Roxley says it may be public.
+
 ## Building
 
 ```
