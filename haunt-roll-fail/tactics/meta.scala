@@ -68,7 +68,7 @@ object Meta extends MetaGame { mmm =>
 
     override def howToPlay = $[(Elem, $[Elem])](
         ("The rules".txt, $[Elem](
-            "This site doesn't teach the rules: they are Bad Crow Games', in the Rulebook linked above (the First Game Rules first, then the Full Game Rules). The site keeps to them for you, offering only the moves the rules allow.",
+            "The rules are Bad Crow Games', in the Rulebook linked above (the First Game Rules first, then the Full Game Rules). " ~ "Tutorial".hh ~ " on this menu teaches both, with a practice game for each. The site keeps to them for you, offering only the moves the rules allow.",
             "Played here: any two of the five factions against each other, or team games of three to five players, Allies (US, British, Soviet) against Axis (Wehrmacht, OKW), on the ten core missions (two of them 1-panel skirmishes for two players, two 3-panel maps for teams) and all 53 Large Map Pack missions on 2, 3 and 4 panels, in a row or square (Hill 331, Trois Ponts, Stalingrad and Monastery panels), four of them free-for-alls for three to five players. " ~ "Optional Modular Bunkers".hh ~ " adds the bunkers some missions mark. The setup's " ~ "Rules".hh ~ " choice picks the Full Game Rules or the First Game Rules, " ~ "Commanders".hh ~ " whether they are drawn, " ~ "Map".hh ~ " the mission.",
             "In a team game teammates share their VPs (the game ends at 3 more), their sight and their Control Points; each starts with 2 Infantry, the missions being 2-panel ones. Teams alternate turns and purchases; teammates, who play at the same time in the rulebook, take theirs one after another.",
         )),

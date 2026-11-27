@@ -113,7 +113,7 @@ object TurnPings {
             "not done: " + s.name + " <https://discord.com/api/webhooks/...> or " + s.name + " off"
 
     // the emoji a game with no faction emojis leads its pings with
-    val gameIcon = Map("pincer" -> "🥁 ", "tactics" -> "📻 ")
+    val gameIcon = Map("pincer" -> "🥁 ", "tactics" -> "🎖️ ")
 
     // 10 seconds for every wait (owner, 2026-11-24): it was a minute, and 30 seconds for a battle on another's turn (Tournament 1
     // Table A: the Duchy answered an ambush before the bot's ping, due 60 to 90 seconds in, came)
