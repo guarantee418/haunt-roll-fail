@@ -32,11 +32,12 @@ object Meta extends MetaGame { mmm =>
     // hidden rules fixes every new game gets, so games made before keep their rules
     override def hiddenOptions = $[O](TeamRetreatPoints, TutorialOption)
 
-    // The main menu's "Tutorial" (tutorial.scala): lessons on the First Game Rules as the US Forces, then a practice game against
-    // the Wehrmacht's Easy bot with a tip for every choice
+    // The main menu's "Tutorial" (tutorial.scala): lessons on the First Game Rules as the US Forces, then on the Full Game Rules,
+    // each part with a practice game against the Wehrmacht's Easy bot with a tip for every choice
     override def tutorialAbout = Tutorial.about
     override def tutorialLessons = Tutorial.lessons
-    override def tutorialGame = |((Tutorial.seating, Tutorial.bots, Tutorial.options))
+    override def tutorialGames = Tutorial.games
+    override def tutorialLessonGroup(i : Int) = Tutorial.groupOf(i)
 
     override def mandatoryFor(n : Int, l : $[F]) = $[O](TeamRetreatPoints)
 
