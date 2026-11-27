@@ -7,7 +7,7 @@
 #   the-major.png       Company of Heroes' "The Major" (2026-11-27, asked for in place of Field Wireless, with his art): the US
 #                       Major's portrait from his unit token (webp2/tactics/images/token/major-us.webp), its green ring swapped
 #                       for the gold badge's
-#   heckler-tactics.png the Sergeant Major's (Company of Heroes' Roast Me heckler, good-game/Heckler.scala; 2026-11-27, asked for):
+#   heckler-tactics.png the Assault Specialist's (Company of Heroes' Roast Me heckler, good-game/Heckler.scala; 2026-11-27, asked for):
 #                       the Urban Assault Company commander card's rifleman (webp2/tactics/images/commander/urban-assault.webp)
 # Run from the repository root: python3 haunt-roll-fail/tools/webhook-avatars.py
 import math
