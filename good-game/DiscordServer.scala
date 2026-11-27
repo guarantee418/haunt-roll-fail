@@ -51,6 +51,17 @@ import java.nio.charset.StandardCharsets.UTF_8
 //   test-ping <turns channel> [| role <role>] [| text <text>]
 //                                             posts a new thread, "Test ping", through that turns channel's webhook, mentioning the
 //                                             role (2026-11-24, asked for to try the new webhooks); a forum's thread, else the channel
+//
+// ONBOARDING (2026-11-27, asked for: "add all of the games ... so new members are asked about every game ... not 5 yes/nos ... pick
+// what games/roles they would like ... spectator ... required to select at least one thing"): Discord's own Onboarding questions, which a
+// new member answers on joining (Server Settings, Onboarding). Needs Manage Server and Manage Roles.
+//   onboarding                                lists the questions: title, whether one pick or several, required, and each answer's
+//                                             roles and channels; then the default channels, and whether onboarding is on
+//   onboarding-question <title> | <answer> = <role>[, <role>] [= <emoji> [= <description>]] | ... [| single] [| optional]
+//                                             puts that question first among the onboarding questions (several picks and required,
+//                                             unless single or optional), its answers giving those roles; the emoji a Unicode one or the
+//                                             name of one of the server's; it takes the place of a question of that title, and of every
+//                                             question whose answers give only roles among its own (the yes/no question for each game)
 object DiscordServer {
     def api = sys.props.getOrElse("hrf.discord.api", "https://discord.com/api/v10")
 
@@ -191,6 +202,8 @@ object DiscordServer {
             case "rename-channel" => arrow(rest).flatMap { case (a, b) => channels(g).flatMap(findChannel(_, a)).flatMap(c =>
                 call("PATCH", "/channels/" + c.id, "{\"name\":" + Tournament.json(b) + "}").map(_ => "renamed")) }
             case "order" => order(g, rest)
+            case "onboarding" => listOnboarding(g)
+            case "onboarding-question" => onboardingQuestion(g, rest)
             case "webhooks" => listWebhooks(g)
             case "make-webhook" => makeWebhook(g, rest)
             case "test-ping" => testPing(g, rest)
@@ -491,5 +504,94 @@ object DiscordServer {
     }
 
     val words = Set("roles", "role", "rename-role", "merge-role", "give-role", "take-role", "channels", "category", "channel", "rename-channel", "move-channel", "order",
-        "webhooks", "make-webhook", "rename-webhook", "test-ping")
+        "webhooks", "make-webhook", "rename-webhook", "test-ping", "onboarding", "onboarding-question")
+
+    // ONBOARDING: Discord's onboarding as read (GET /guilds/<g>/onboarding), written back whole (PUT), as the API takes only the whole
+    case class Answer(id : String, title : String, description : String, roleIds : List[String], channelIds : List[String], emojiId : String, emojiName : String, animated : Boolean)
+    case class Question(id : String, kind : Int, title : String, single : Boolean, required : Boolean, inOnboarding : Boolean, answers : List[Answer])
+    case class Onboarding(questions : List[Question], defaults : List[String], enabled : Boolean, mode : Int)
+
+    def strs(m : Map[String, Any], k : String) = m.get(k).collect { case l : List[_] => l.collect { case s : String => s } }.getOrElse(Nil)
+    def maps(m : Map[String, Any], k : String) = m.get(k).collect { case l : List[_] => l.collect { case o : Map[_, _] => o.asInstanceOf[Map[String, Any]] } }.getOrElse(Nil)
+
+    def onboarding(g : String) : Either[String, Onboarding] = call("GET", "/guilds/" + g + "/onboarding").map { b =>
+        val m = obj(b)
+        Onboarding(maps(m, "prompts").map { q =>
+            Question(str(q, "id"), num(q, "type").toInt, str(q, "title"), bool(q, "single_select"), bool(q, "required"), q.get("in_onboarding").forall(_ == true),
+                maps(q, "options").map { o =>
+                    val e = o.get("emoji").collect { case x : Map[_, _] => x.asInstanceOf[Map[String, Any]] }.getOrElse(Map())
+                    Answer(str(o, "id"), str(o, "title"), str(o, "description"), strs(o, "role_ids"), strs(o, "channel_ids"), str(e, "id"), str(e, "name"), bool(e, "animated"))
+                })
+        }, strs(m, "default_channel_ids"), bool(m, "enabled"), num(m, "mode").toInt)
+    }
+
+    def writeOnboarding(o : Onboarding) : String = {
+        def ids(l : List[String]) = l.map(Tournament.json).mkString("[", ",", "]")
+        def answer(a : Answer) = "{\"id\":" + Tournament.json(a.id) + ",\"title\":" + Tournament.json(a.title) +
+            (if (a.description.nonEmpty) ",\"description\":" + Tournament.json(a.description) else "") +
+            ",\"role_ids\":" + ids(a.roleIds) + ",\"channel_ids\":" + ids(a.channelIds) +
+            (if (a.emojiId.nonEmpty) ",\"emoji_id\":" + Tournament.json(a.emojiId) + ",\"emoji_animated\":" + a.animated else "") +
+            (if (a.emojiName.nonEmpty) ",\"emoji_name\":" + Tournament.json(a.emojiName) else "") + "}"
+        def question(q : Question) = "{\"id\":" + Tournament.json(q.id) + ",\"type\":" + q.kind + ",\"title\":" + Tournament.json(q.title) +
+            ",\"single_select\":" + q.single + ",\"required\":" + q.required + ",\"in_onboarding\":" + q.inOnboarding +
+            ",\"options\":" + q.answers.map(answer).mkString("[", ",", "]") + "}"
+        "{\"prompts\":" + o.questions.map(question).mkString("[", ",", "]") + ",\"default_channel_ids\":" + ids(o.defaults) +
+            ",\"enabled\":" + o.enabled + ",\"mode\":" + o.mode + "}"
+    }
+
+    def listOnboarding(g : String) : Either[String, String] = for {
+        o <- onboarding(g)
+        rr <- roles(g)
+        cc <- channels(g)
+    } yield {
+        def role(id : String) = rr.find(_.id == id).map("@" + _.name).getOrElse(id)
+        def chan(id : String) = cc.find(_.id == id).map("#" + _.name).getOrElse(id)
+        (o.questions.map { q =>
+            q.title + " (" + (if (q.single) "one pick" else "several picks") + (if (q.required) ", required" else ", optional") + (if (q.inOnboarding) "" else ", not in onboarding") + ")" +
+                q.answers.map(a => "\n    " + (if (a.emojiName.nonEmpty) a.emojiName + " " else "") + a.title + ": " + (a.roleIds.map(role) ++ a.channelIds.map(chan)).mkString(", ")).mkString
+        } ++ List("default channels: " + o.defaults.map(chan).mkString(", "), "onboarding " + (if (o.enabled) "on" else "off"))).mkString("\n", "\n", "")
+    }
+
+    // new ids, as Discord's client makes them: snowflakes from the time
+    var lastId = 0L
+    def snowflake() : String = synchronized {
+        lastId = ((System.currentTimeMillis - 1420070400000L) << 22).max(lastId + 1)
+        lastId.toString
+    }
+
+    def onboardingQuestion(g : String, rest : String) : Either[String, String] = {
+        val parts = rest.split("\\|").toList.map(_.trim).filter(_.nonEmpty)
+        val title = parts.headOption.getOrElse("")
+        val flags = parts.drop(1).filterNot(_.contains("=")).map(norm)
+        val lines = parts.drop(1).filter(_.contains("="))
+        if (title.isEmpty || lines.isEmpty) Left("onboarding-question <title> | <answer> = <role> [= <emoji> [= <description>]] | ...")
+        else flags.find(f => !Set("single", "optional", "multiple", "required").contains(f)).map(f => Left("what is " + f + "?")).getOrElse {
+            for {
+                rr <- roles(g)
+                emojis <- call("GET", "/guilds/" + g + "/emojis").map(list)
+                o <- onboarding(g)
+                answers <- lines.foldLeft[Either[String, List[Answer]]](Right(Nil)) { (acc, line) => acc.flatMap { l =>
+                    line.split("=", 4).toList.map(_.trim) match {
+                        case label :: rs :: more =>
+                            val emoji = more.headOption.getOrElse("")
+                            val described = more.drop(1).headOption.getOrElse("")
+                            names(rs).foldLeft[Either[String, List[Role]]](Right(Nil))((a, n) => a.flatMap(x => findRole(rr, n).map(x :+ _))).flatMap { found =>
+                                found.find(r => r.permissions != 0 || r.managed || r.name == "@everyone").map(r => Left("@" + r.name + " has server permissions or is a bot's: never handed out")).getOrElse {
+                                    val custom = emojis.find(e => norm(str(e, "name")) == norm(emoji.stripPrefix(":").stripSuffix(":")))
+                                    val old = o.questions.flatMap(_.answers).find(a => norm(a.title) == norm(label))
+                                    Right(l :+ Answer(old.map(_.id).getOrElse(snowflake()), label, described, found.map(_.id), Nil,
+                                        custom.map(str(_, "id")).getOrElse(""), custom.map(str(_, "name")).getOrElse(if (emoji.exists(_.isLetterOrDigit)) "" else emoji), custom.exists(bool(_, "animated"))))
+                                }
+                            }
+                        case _ => Left("an answer is <answer> = <role>")
+                    }
+                } }
+                ids = answers.flatMap(_.roleIds).toSet
+                // the questions it takes the place of: its own title, and those whose answers give only roles among its own
+                replaced = o.questions.filter(q => norm(q.title) == norm(title) || (q.answers.flatMap(_.roleIds).nonEmpty && q.answers.flatMap(_.roleIds).forall(ids.contains) && q.answers.forall(_.channelIds.isEmpty)))
+                question = Question(replaced.find(q => norm(q.title) == norm(title)).map(_.id).getOrElse(snowflake()), 0, title, flags.contains("single"), !flags.contains("optional"), true, answers)
+                _ <- call("PUT", "/guilds/" + g + "/onboarding", writeOnboarding(o.copy(questions = question :: o.questions.filterNot(replaced.contains))))
+            } yield "set: " + title + " (" + answers.map(_.title).mkString(", ") + ")" + (if (replaced.nonEmpty) "; in place of: " + replaced.map(_.title).mkString("; ") else "")
+        }
+    }
 }
