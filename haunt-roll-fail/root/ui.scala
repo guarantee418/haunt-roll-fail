@@ -1017,14 +1017,18 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         val x = ((e.clientX - rect.left) * k - tx) / sc - dw
         val y = ((e.clientY - rect.top) * k - ty) / sc - dh
 
-        // Tapping a card pile, a landmark or a hireling's piece first, then a clearing, then the water: a tap on a
-        // clearing never shows the water's info, even with no choice about it, as the river runs through its clearings
-        // (2026-11-27: a river clearing tapped for an action brought up "river" instead)
+        // Tapping a card pile, a landmark or a hireling's piece first, then a clearing, then a forest a choice is about,
+        // then the water: a tap on a clearing never shows the water's info, even with no choice about it, as the river runs
+        // through its clearings (2026-11-27: a river clearing tapped for an action brought up "river" instead), and a forest
+        // that can be tapped is under the water's info too (2026-11-27: a Knaves move into Witchwood, by the river, couldn't be tapped)
         pileTargets.find { case (px, py, pw, ph, _) => x >= px && x < px + pw && y >= py && y < py + ph }./ { case (_, _, _, _, target) => target } match {
             case Some(target) => onClick(target)
             case None => clearingAt(x, y) match {
                 case Some(c) => tapClearing(c)
-                case None => waterAt(x, y).foreach(onClick)
+                case None => forestAt(x, y).%(tappable.has) match {
+                    case Some(f) => tapClearing(f)
+                    case None => waterAt(x, y).foreach(onClick)
+                }
             }
         }
     }
@@ -1036,7 +1040,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         val x = ((e.clientX - rect.left) * k - tx) / sc - dw
         val y = ((e.clientY - rect.top) * k - ty) / sc - dh
 
-        map.node.style.cursor = clearingAt(x, y).exists(tappable.has).?("pointer").|("default")
+        map.node.style.cursor = clearingAt(x, y).orElse(forestAt(x, y)).exists(tappable.has).?("pointer").|("default")
     }
 
     // Clearings on the map choose (asked for on 2026-11-26): a clearing a current choice is about is outlined, and tapping it
@@ -1049,16 +1053,31 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         game.clearings.but(LegendSpace)./(c => c -> center(c)).%{ case (_, (cx, cy)) => (cx - x) * (cx - x) + (cy - y) * (cy - y) < 230 * 230 }
             .sortBy { case (_, (cx, cy)) => (cx - x) * (cx - x) + (cy - y) * (cy - y) }.headOption./(_._1)
 
-    // A choice's own clearings: those it names one by one, and those in its lists
-    def ownClearings(a : Any) : ($[Clearing], $[Clearing]) = a match {
+    // The forest at (x, y) on the map: the region of the map-regions image its centre is in
+    def forestAt(x : Double, y : Double) : |[Forest] = {
+        val px = x.toInt
+        val py = y.toInt
+        if (px < 0 || py < 0 || px >= place.length || py >= place(0).length)
+            None
+        else
+            game.board.forests.find { f =>
+                val (cx, cy) = center(f)
+                cx >= 0 && cy >= 0 && cx < place.length && cy < place(0).length && place(cx)(cy) == place(px)(py)
+            }
+    }
+
+    // A choice's own clearings (and forests, which a move can go to): those it names one by one, and those in its lists
+    def ownClearings(a : Any) : ($[Region], $[Region]) = a match {
         case p : Product =>
             val ff = p.productIterator.$
             (ff./~{
                 case c : Clearing => $(c)
+                case f : Forest => $(f)
                 case Some(c : Clearing) => $(c)
+                case Some(f : Forest) => $(f)
                 case _ => $()
             }, ff./~{
-                case l : List[_] => l.collect { case c : Clearing => c }
+                case l : List[_] => l.collect { case c : Clearing => c : Region; case f : Forest => f : Region }
                 case _ => $()
             })
         case _ => ($, $)
@@ -1073,7 +1092,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
     // Each choice with the clearings that pick it: the ones it names, less those every choice names (how many to move from
     // one clearing to another is left to the buttons, as is a choice alone in naming a clearing, an ambush card beside Skip),
     // and the ones in its lists (a menu's "where")
-    def tapKeys : $[(UserAction, $[Clearing], $[Clearing])] = {
+    def tapKeys : $[(UserAction, $[Region], $[Region])] = {
         val l = mapChoices./{ a =>
             val (s, ll) = ownClearings(a)
             if (s.any || ll.any) (a, s, ll) else ownClearings(a.unwrap).use { case (s, ll) => (a, s, ll) }
@@ -1088,27 +1107,27 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         keys
     }
 
-    def tapChoices(c : Clearing) : $[UserAction] = {
+    def tapChoices(c : Region) : $[UserAction] = {
         val k = tapKeys
         k.%(_._2.has(c))./(_._1).some.|(k.%(_._3.has(c))./(_._1))
     }
 
-    def tappable : $[Clearing] = {
+    def tappable : $[Region] = {
         val k = tapKeys
         k./~(_._2).distinct.some.|(k./~(_._3).distinct)
     }
 
     // After a tap took a choice that opens more choices (Move, Battle, Build), the next one about the same clearing is taken too
-    var tapFollow : |[Clearing] = None
+    var tapFollow : |[Region] = None
 
     // The clearing tapped when several choices are about it (Battle or Move there): marked on the map, and the button
     // pressed next carries on with it, so it isn't tapped twice. No list over the map: the buttons are the list
-    var tapMarked : |[Clearing] = None
+    var tapMarked : |[Region] = None
 
     // A tap takes a choice at once only where every choice asks the same question (where to move, which clearing to
     // place in); in a menu of different actions (Battle, Build Sawmill, Recruit) it only marks the clearing, so a tap
     // never spends anything by itself
-    def tapClearing(c : Clearing) {
+    def tapClearing(c : Region) {
         val same = tapKeys.%(k => k._2.any || k._3.any)./(_._1.question(game).text).distinct.num == 1
 
         tapChoices(c) match {
@@ -1123,7 +1142,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
     }
 
     // As if its button were pressed
-    def takeFromMap(a : UserAction, c : Clearing) {
+    def takeFromMap(a : UserAction, c : Region) {
         val then = lastThen
 
         if (then == null || lastActions.has(a).not)

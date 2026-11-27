@@ -836,7 +836,8 @@ server. No session can reach the server, and none needs to.
   (`nameOverTrack`). The in-game "Board Trackers" setting (`ShowBoardTrackers`, the
   default, or `HideBoardTrackers`) hides both trackers and their markers. Tapping a clearing on the map picks the
   choice about it (`tapKeys`, `tapClearing` in `root/ui.scala`; 2026-11-26), a choice alone on offer too (Battle in
-  Fen beside Cancel; 2026-11-27); the rings around the tappable clearings are drawn only with the in-game "Tappable
+  Fen beside Cancel; 2026-11-27), and a forest the same way (a Knaves move into a forest; `forestAt`, the
+  `map-regions` area its centre is in; 2026-11-27), a tappable forest coming before the water's info; the rings around the tappable clearings are drawn only with the in-game "Tappable
   Clearings" setting `ShowTapRings` (`HideTapRings`, the default since 2026-11-27, as most players disliked them). Official VP marker art (`webp2/root/images/vp/`, `officialVP` in
   `root/ui.scala`) exists for the Homeland Twilight Council, Knaves and
   Lilypad Diaspora, cut from page 17 of `root-factions/`. The ten other Leder
