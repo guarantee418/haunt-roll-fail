@@ -29,6 +29,9 @@ object Meta extends MetaGame { mmm =>
 
     val options = $[O]() ++ hiddenOptions
 
+    // Discord LFG games (good-game/Lfg.scala, /pincer; 2026-11-27): no options, two to four players, each picking a color on Join
+    override def lfgPlayers = $(2, 3, 4)
+
     // the Tutorial's practice game (tutorial.scala)
     override def hiddenOptions = $[O](TutorialOption)
 
