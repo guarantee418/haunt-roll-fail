@@ -15,6 +15,10 @@ RULES.md has the rules as played and the readings.
   attacker's units off the board until it ends).
 - `bot.scala`: `BotXX`, the Easy bot; `BotRandom` for the tests.
 - `ui.scala`, `meta.scala`, `styles.scala`.
+- `tutorial.scala`: the Tutorial on the menu (2026-11-27; the core `tutorialMenu`, URL `/play/cyclades/tutorial`): nine lessons
+  (`Tutorial.lessons`, all the text in one place), then a practice game as Blue against the Red and Green Easy bots (three players,
+  so one offering each and two Metropolises win; hidden `TutorialOption`), with a "Tutorial tip" above each choice (`Tutorial.tip`,
+  `preinfo` in `ui.scala`), "Hide tips" (`cyclades.tutorial-tips-hidden`) and "Tutorial Lessons" under the action pane.
 - `host.scala` (JVM only): `Host` (bot games), `Check` (the layouts' data), `LogDump` (one game's log as text).
 - `tools/cyclades-art.py`: makes `webp2/cyclades/images/` from the Tabletop Simulator mods' images; its header lists them.
 
@@ -32,11 +36,14 @@ In a JVM project with the sources (see Pincer's HANDOFF.md, the same setup with 
     CYCLADES_GAMES=30 CYCLADES_RANDOM=0.4 sbt "runMain cyclades.Host"   # 2-5 bots, 40% of the choices at random
     CYCLADES_RANDOM=0.4 sbt "runMain cyclades.LogDump 5"
 
+`CYCLADES_TUTORIAL=1` plays the Tutorial's practice game and prints each kind of choice Blue was offered, with a tip or without
+("NO TIP": add one to `Tutorial.tip`).
+
 `CYCLADES_RANDOM` reaches every Creature, battles and retreats; the Easy bot alone rarely fights.
 
 ## Next
 
-- A Tutorial, rankings, Discord pings (`TurnPings.slots`), as the other games have.
+- Rankings, Discord pings (`TurnPings.slots`), as the other games have.
 - Hidden GP (behind screens) for online games.
 - A better bot: it rarely fights or calls Creatures.
 - The expansions.
