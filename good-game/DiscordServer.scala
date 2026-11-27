@@ -62,7 +62,9 @@ import java.nio.charset.StandardCharsets.UTF_8
 //                                             unless single or optional), its answers giving those roles; the emoji a Unicode one, the
 //                                             name of one of the server's, clan:<clan> (the clan's emoji, as the LFG posts find it) or
 //                                             faction:<short name> (a Root faction's, as the turn pings find it: faction:MC the cat); it takes the place of a question of that title, and of every
-//                                             question whose answers give only roles among its own (the yes/no question for each game)
+//                                             question whose answers give only roles among its own or roles since deleted (the yes/no
+//                                             question for each game)
+//   onboarding-remove <title>                 takes that question out of onboarding
 object DiscordServer {
     def api = sys.props.getOrElse("hrf.discord.api", "https://discord.com/api/v10")
 
@@ -205,6 +207,12 @@ object DiscordServer {
             case "order" => order(g, rest)
             case "onboarding" => listOnboarding(g)
             case "onboarding-question" => onboardingQuestion(g, rest)
+            case "onboarding-remove" => onboarding(g).flatMap { o =>
+                o.questions.filter(q => norm(q.title) == norm(rest)) match {
+                    case Nil => Left("no onboarding question called " + rest)
+                    case l => call("PUT", "/guilds/" + g + "/onboarding", writeOnboarding(o.copy(questions = o.questions.filterNot(l.contains)))).map(_ => "removed")
+                }
+            }
             case "webhooks" => listWebhooks(g)
             case "make-webhook" => makeWebhook(g, rest)
             case "test-ping" => testPing(g, rest)
@@ -505,7 +513,7 @@ object DiscordServer {
     }
 
     val words = Set("roles", "role", "rename-role", "merge-role", "give-role", "take-role", "channels", "category", "channel", "rename-channel", "move-channel", "order",
-        "webhooks", "make-webhook", "rename-webhook", "test-ping", "onboarding", "onboarding-question")
+        "webhooks", "make-webhook", "rename-webhook", "test-ping", "onboarding", "onboarding-question", "onboarding-remove")
 
     // ONBOARDING: Discord's onboarding as read (GET /guilds/<g>/onboarding), written back whole (PUT), as the API takes only the whole
     case class Answer(id : String, title : String, description : String, roleIds : List[String], channelIds : List[String], emojiId : String, emojiName : String, animated : Boolean)
@@ -598,7 +606,9 @@ object DiscordServer {
                 } }
                 ids = answers.flatMap(_.roleIds).toSet
                 // the questions it takes the place of: its own title, and those whose answers give only roles among its own
-                replaced = o.questions.filter(q => norm(q.title) == norm(title) || (q.answers.flatMap(_.roleIds).nonEmpty && q.answers.flatMap(_.roleIds).forall(ids.contains) && q.answers.forall(_.channelIds.isEmpty)))
+                // (a role since deleted counts as among them: the Northgard question's "no" gave the merged ng-spectator; 2026-11-27)
+                replaced = o.questions.filter(q => norm(q.title) == norm(title) || (q.answers.flatMap(_.roleIds).nonEmpty &&
+                    q.answers.flatMap(_.roleIds).forall(id => ids.contains(id) || !rr.exists(_.id == id)) && q.answers.flatMap(_.roleIds).exists(ids.contains) && q.answers.forall(_.channelIds.isEmpty)))
                 question = Question(replaced.find(q => norm(q.title) == norm(title)).map(_.id).getOrElse(snowflake()), 0, title, flags.contains("single"), !flags.contains("optional"), true, answers)
                 _ <- call("PUT", "/guilds/" + g + "/onboarding", writeOnboarding(o.copy(questions = question :: o.questions.filterNot(replaced.contains))))
             } yield "set: " + title + " (" + answers.map(_.title).mkString(", ") + ")" + (if (replaced.nonEmpty) "; in place of: " + replaced.map(_.title).mkString("; ") else "")
