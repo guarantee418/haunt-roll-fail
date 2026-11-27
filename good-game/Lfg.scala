@@ -113,9 +113,9 @@ object Lfg {
     val cycladesPicks = Picks("color", "Pick a color", List(Side("Red", "Red", "🔴"), Side("Yellow", "Yellow", "🟡"), Side("Blue", "Blue", "🔵"), Side("Black", "Black", "⚫"), Side("Green", "Green", "🟢")),
         List(("Random", "Random color", List("Red", "Yellow", "Blue", "Black", "Green"))))
 
-    val root = Kind("root-adset", "Root: Advanced Setup", "Root", "root", "Look for players for an online Root game (Advanced Setup) on the site", List("root-lfg"), "title")
-    val nortStd = Kind("nort", "Northgard", "Northgard", "northgard", "Look for players for an online Northgard game (standard, or Adset with a clan draft) on the site", List("ng-lfg", "northgard-lfg"), "title-nort", picks = Some(nortPicks))
-    val nort = Kind("nort-adset", "Northgard: Adset", "Northgard", "northgard", "Look for players for an online Northgard game (standard, or Adset with a clan draft) on the site", List("ng-lfg", "northgard-lfg"), "title-nort")
+    val root = Kind("root-adset", "Root: Advanced Setup", "Root", "root", "Look for players for an online Root game (Advanced Setup) on the site", List("root", "root-lfg"), "title")
+    val nortStd = Kind("nort", "Northgard", "Northgard", "northgard", "Look for players for an online Northgard game (standard, or Adset with a clan draft) on the site", List("northgard", "ng-lfg", "northgard-lfg"), "title-nort", picks = Some(nortPicks))
+    val nort = Kind("nort-adset", "Northgard: Adset", "Northgard", "northgard", "Look for players for an online Northgard game (standard, or Adset with a clan draft) on the site", List("northgard", "ng-lfg", "northgard-lfg"), "title-nort")
 
     val pincer = Kind("pincer", "Pincer", "Pincer", "pincer", "Look for players for an online game of Pincer: A Gentleman's War on the site", List("pincer-lfg", "pincer"), "title-pincer", maxSeats = 4, picks = Some(pincerPicks), panel = false, size = 2)
     val coh = Kind("tactics", "Company of Heroes", "Company of Heroes", "coh", "Look for players for an online Company of Heroes game on the site", List("coh-lfg", "tactics-lfg", "coh"), "title-tactics", maxSeats = 6, picks = Some(cohPicks), size = 2)
@@ -496,7 +496,7 @@ object Lfg {
     // posts), once, when it goes up; the post's edits ping no one. Looked up by the bot, for 10 minutes. Every version of the post
     // starts with the role's mention and allows it, so it stays highlighted after a Join or Leave (2026-11-21: the edits dropped it,
     // then kept the text but not the allowance, so nobody saw it highlighted); an edit notifies no one, so only the first one pings.
-    // Root's posts ping root-lfg, Northgard's ng-lfg (Kind.roles)
+    // Root's posts ping root-lfg, Northgard's ng-lfg (Kind.roles; renamed root and northgard on 2026-11-27, the old names kept as fallbacks)
     @volatile var roleCache : (Long, List[(String, String)]) = (0L, Nil)
 
     def role(k : Kind) : Option[String] = {
