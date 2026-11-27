@@ -302,7 +302,7 @@ object LfgSetup {
 
     // the posts' titles by the server's game emojis, when it has no emoji named for the post (2026-11-21: Northgard's showed the
     // Unicode axe beside the server's own :axe-ng:)
-    val titles = Map("title-nort" -> List("northgard", "axeng", "axe"), "title-pincer" -> List("pincer", "drum"), "title-tactics" -> List("coh", "companyofheroes", "medal"))
+    val titles = Map("title-nort" -> List("northgard", "axeng", "axe"), "title-pincer" -> List("pincer", "drum"), "title-tactics" -> List("coh", "companyofheroes", "medal"), "title-cyclades" -> List("cyclades", "temple", "zeus"))
 
     // THE UNICODE EMOJIS of the options and sections with no picture of their own (asked for on 2026-11-21: "use icons/emojis as much as
     // possible"); a section by "#<its name>", which a faction's section finds as that faction's icon (icons.tsv) first
@@ -342,7 +342,7 @@ object LfgSetup {
         // the turn pings' reasons with no picture of their own (TurnPings.reasonOf)
         "turn:trade" -> "⚖️", "turn:winter" -> "❄️",
         // the posts' titles, with no server emoji
-        "title" -> "🌳", "title-nort" -> "🪓", "title-pincer" -> "🥁", "title-tactics" -> "🎖️",
+        "title" -> "🌳", "title-nort" -> "🪓", "title-pincer" -> "🥁", "title-tactics" -> "🎖️", "title-cyclades" -> "🏛️",
         // Company of Heroes (2026-11-27)
         "#Rules" -> "📜", "#Commanders" -> "🎖️", "#Lost Brigades" -> "🪖", "#Map: options" -> "🧱", "#Map: Core missions" -> "🗺️",
         "#Map: Skirmishes" -> "🗺️", "#Map: Core panels, 3 panels" -> "🗺️", "#Map: Large Map Pack, 2 panels" -> "🗺️",
