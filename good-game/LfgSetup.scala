@@ -302,7 +302,7 @@ object LfgSetup {
 
     // the posts' titles by the server's game emojis, when it has no emoji named for the post (2026-11-21: Northgard's showed the
     // Unicode axe beside the server's own :axe-ng:)
-    val titles = Map("title-nort" -> List("northgard", "axeng", "axe"))
+    val titles = Map("title-nort" -> List("northgard", "axeng", "axe"), "title-pincer" -> List("pincer", "drum"), "title-tactics" -> List("coh", "companyofheroes", "medal"))
 
     // THE UNICODE EMOJIS of the options and sections with no picture of their own (asked for on 2026-11-21: "use icons/emojis as much as
     // possible"); a section by "#<its name>", which a faction's section finds as that faction's icon (icons.tsv) first
@@ -342,7 +342,12 @@ object LfgSetup {
         // the turn pings' reasons with no picture of their own (TurnPings.reasonOf)
         "turn:trade" -> "⚖️", "turn:winter" -> "❄️",
         // the posts' titles, with no server emoji
-        "title" -> "🌳", "title-nort" -> "🪓")
+        "title" -> "🌳", "title-nort" -> "🪓", "title-pincer" -> "🥁", "title-tactics" -> "🎖️",
+        // Company of Heroes (2026-11-27)
+        "#Rules" -> "📜", "#Commanders" -> "🎖️", "#Lost Brigades" -> "🪖", "#Map: options" -> "🧱", "#Map: Core missions" -> "🗺️",
+        "#Map: Skirmishes" -> "🗺️", "#Map: Core panels, 3 panels" -> "🗺️", "#Map: Large Map Pack, 2 panels" -> "🗺️",
+        "FullGameRules" -> "📕", "FirstGameRules" -> "📗", "ShortGame" -> "⏱️", "MediumGame" -> "⏳", "LongGame" -> "⌛",
+        "DrawCommanders" -> "🎖️", "ExpansionCommanders" -> "➕", "LostBrigades" -> "🪖", "OptionalMapFeatures" -> "🧱")
 
     // the emoji: the server's or the bot's, else a Unicode one
     def emojiOrUnicode(key : String) : Option[Either[(String, String, Boolean), String]] = emojiOf(key).map(Left(_)).orElse(unicode.get(key).map(Right(_)))
@@ -422,6 +427,18 @@ object LfgSetup {
 
     def isNort(meta : String) = meta == Lfg.nort.meta || meta == Lfg.nortStd.meta
 
+    // COMPANY OF HEROES (2026-11-27): /coh sets the map (the core missions, the skirmishes and the core and Large Map Pack missions on
+    // two or three panels, which any number of players can play; not the free-for-alls, which take a set number), the game length and
+    // the rules; the panel lists the Commanders, the Lost Brigades and the map options. Several sections in one command option are
+    // joined with "|"
+    def isTactics(meta : String) = meta == Lfg.coh.meta
+    val tacticsMaps = List("Map: Core missions", "Map: Skirmishes", "Map: Core panels, 3 panels", "Map: Large Map Pack, 2 panels")
+    val tacticsCommand = List(("map", "The map (skirmishes are for two players)", tacticsMaps.mkString("|")), ("length", "The game's length", "Game length"), ("rules", "Full or First Game Rules", "Rules"))
+    val tacticsPanel = List("Commanders", "Lost Brigades", "Map: options")
+
+    // the panel's sections, for a game whose panel lists sections by name (Root's has its own pages)
+    def panelSections(meta : String) : Option[List[String]] = if (isNort(meta)) Some(nortPanel) else if (isTactics(meta)) Some(tacticsPanel) else None
+
     // the fixed choices of the "@..." sections, and the options each stands for in each mode
     val parts = Map(
         "@wilderness" -> List(("Environment tiles and creatures", "both"), ("Environment tiles only", "tiles"), ("Creatures only", "creatures")),
@@ -453,6 +470,7 @@ object LfgSetup {
     def sections(k : Lfg.Kind) : List[(String, String, String)] =
         if (k == Lfg.nort) nortAdsetCommand
         else if (k == Lfg.nortStd) nortStdCommand
+        else if (k == Lfg.coh) tacticsCommand
         else List(("ranked", "Ranked or unranked (ranked if not given)", rankingSection), ("map", "The map", "#0"), ("deck", "The deck", "#1"), ("clearings", "How the clearings' suits are set", "Clearings"), ("hirelings", "The hirelings", "Hirelings"),
             ("landmarks", "A landmark", "Landmarks"), ("insurgent_lock", "Whether the last insurgent is locked", "Insurgent Lock"))
     // the panel's sections: the hits and ambushes (the section whose name starts so), and the hirelings in their draft, when the
@@ -476,12 +494,12 @@ object LfgSetup {
     // landmarks and the insurgent lock are given with /root (else the site's defaults), so the panel has the hits and ambushes, the
     // factions in the draft (the first section of them: the official ones) and, with hirelings, the hirelings in their draft. The rest
     // (faction rules, fan factions...) keep the site's defaults.
-    def pages(d : Draft) : List[List[Menu]] = if (isNort(d.state.c.meta)) {
-        // Northgard: a menu for each of its panel's sections, of several when it has toggles
+    def pages(d : Draft) : List[List[Menu]] = if (panelSections(d.state.c.meta).nonEmpty) {
+        // Northgard (and Company of Heroes): a menu for each of its panel's sections, of several when it has toggles
         val s = d.state
         def listed(g : List[Opt]) = g.filter(o => !s.mandatory.contains(o.name) && (s.selected.contains(o.name) || s.enabled(o.name)))
         val shown = s.c.options.filter(s.shown)
-        List(nortPanel.map(g => listed(shown.filter(_.group == g)).take(25)).filter(_.nonEmpty).map(oo => Menu(oo.head.group, oo, oo.exists(_.toggle))).take(4))
+        List(panelSections(d.state.c.meta).get.map(g => listed(shown.filter(_.group == g)).take(25)).filter(_.nonEmpty).map(oo => Menu(oo.head.group, oo, oo.exists(_.toggle))).take(4))
     } else {
         val s = d.state
         def listed(g : List[Opt]) = g.filter(o => !s.mandatory.contains(o.name) && (s.selected.contains(o.name) || s.enabled(o.name)))
@@ -547,7 +565,10 @@ object LfgSetup {
             paceLine(s.c, s.actual) +
             summary(s.c, d.picked, s.actual) +
             (if (d.note.nonEmpty) "**" + d.note + "**\n" else "") +
-            (if (isNort(kind.meta))
+            (if (isTactics(kind.meta))
+            "The map, the game length and the rules are as given with /" + kind.command + " (or the site's defaults). Pick the Commanders, the Lost Brigades and the map options, " +
+            "then press **Open the game** to post it here for players to join; each player picks a faction on Join. Only you see this."
+            else if (isNort(kind.meta))
             "Ranked or unranked, the game length, victory conditions, " + (if (kind.clans) "Creatures, " else "the expansion drafted, ") + "Wilderness and Wastelands parts, warchiefs, " + (if (kind.clans) "central tile, " else "") + "fame and undo are as given with /" + kind.command + " (or the site's defaults). " +
             "Pick the Uncharted Horizons modules, the Development cards and any fan content, then press **Open the game** to post it here for players to join. Only you see this."
             else
@@ -578,7 +599,7 @@ object LfgSetup {
         val s = State.defaults(c, 4)
         val main = mainSections(s)
         val shown = c.options.filter(s.shown).filter(o => !s.mandatory.contains(o.name))
-        def section(g : String) = if (g.startsWith("#")) main.lift(g.drop(1).toInt).getOrElse(Nil) else shown.filter(_.group == g).filter(o => !isNort(k.meta) || !o.cond)
+        def section(g : String) = if (g.startsWith("#")) main.lift(g.drop(1).toInt).getOrElse(Nil) else shown.filter(o => g.split('|').contains(o.group)).filter(o => !isNort(k.meta) || !o.cond)
         sections(k).map { case (n, d, g) => (n, d, if (g.startsWith("@")) parts.getOrElse(g, Nil) else section(g).take(25).map(o => (o.label, o.name))) }.filter(_._3.nonEmpty)
     }
 

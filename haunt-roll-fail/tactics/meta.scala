@@ -51,6 +51,10 @@ object Meta extends MetaGame { mmm =>
         p.of[MapChoice].any.?(p).|(p :+ MoroRiverMap)
     }
 
+    // Discord LFG games (good-game/Lfg.scala, /coh; 2026-11-27): the site's defaults, two to five players, each picking a faction on Join
+    override def lfgOptions : $[O] = (mandatoryFor(2, factions.take(2)) ++ completeSaved(2, factions.take(2), defaultsFor(2, factions.take(2)))).distinct
+    override def lfgPlayers = $(2, 3, 4, 5)
+
     val quickMin = 2
     val quickMax = 2
 
