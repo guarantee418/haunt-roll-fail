@@ -16,6 +16,14 @@ playtests; `RULES.md` has the rules as played and the open questions.
   `onClick` in `ui.scala`), and the Build menu lists every building's cost above its choices (`BuildCostInfoAction`, from
   `Game.preinfo`, shown by `UI.preinfo`); asked for on 2026-11-24.
 - On the main `/play` menu since 2026-11-24 (`HRF.menuMetas`, its card in `topMenu` in `hrf.scala`). No ranking.
+- Tutorial (2026-11-27, asked for after Company of Heroes'): "Tutorial" on the Pincer menu (URL `/play/pincer/tutorial`, the core
+  `tutorialMenu`) has nine lessons on the rules as this site plays them, from `RULES.md` (`Tutorial.lessons` in `tutorial.scala`, all
+  the text in one place): how you win, the land and its resources, your turn, building and trading, units, war and combat, the
+  Maneuver cards, the Royal Seals, and playing on this site; then a practice game as Red against the Green Easy bot (hidden
+  `TutorialOption`, saved in the browser, kind `tutorial`). A "Tutorial tip" above the choices explains each kind of choice
+  (`Tutorial.tip`, shown before the game's own notes by `preinfo` in `ui.scala`), "Hide tips" turns them off
+  (`pincer.tutorial-tips-hidden`), and "Tutorial Lessons" under the action pane opens the lessons over the game. How to Play now says
+  the rulebook is the authority and points to the Tutorial. When a rule changes in `game.scala` and `RULES.md`, change the lesson too.
 
 ## Files
 
@@ -24,6 +32,7 @@ playtests; `RULES.md` has the rules as played and the open questions.
 - `game.scala`: cards, pieces, seals, actions and the rules (`Game`).
 - `ui.scala`: the map (pieces placed by hand in each hex, choices highlighted, taps on hexes and units),
   player panels, the Royal Seals overlay.
+- `tutorial.scala`: the Tutorial (`TutorialOption`, `Tutorial`: the lessons, the practice game, the tips).
 - `bot.scala`: the Easy bot (rules of thumb and chance).
 - `host.scala`: headless bot games (`pincer.Host`) and `pincer.Dump` (prints one bot game's moves, to load a
   game in mid-play in the browser).
@@ -44,6 +53,8 @@ A6 and L10, are mountains the colors missed).
   isn't included). `SBT_OPTS="-Xmx6G -Xss4M" sbt "runMain pincer.Host"` (`PINCER_GAMES=n`): on
   2026-11-23 four games of two Easy bots ended with a winner in 1,700 to 3,600 steps, every action
   written and parsed back. With the default 1 GB heap the bots' choice lists run out of memory.
+- Tutorial: `PINCER_TUTORIAL=1` plays the practice game's seating and options and prints each kind of choice Red was offered with a
+  tip ("TIP") or without ("NO TIP"); on 2026-11-27 three games showed none without one.
 - Browser: see "Browser driving" in `nort/HANDOFF.md`. `pincer.Dump <steps> <players>` prints moves that
   can be put in `localStorage` as `pincer.hotseat.game.<time>` (header: version, title, seating) and
   `pincer.hotseat.moves.<time>` to open a game at that point from Local Game.

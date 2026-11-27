@@ -27,7 +27,16 @@ object Meta extends MetaGame { mmm =>
 
     val minPlayers = 2
 
-    val options = $[O]()
+    val options = $[O]() ++ hiddenOptions
+
+    // the Tutorial's practice game (tutorial.scala)
+    override def hiddenOptions = $[O](TutorialOption)
+
+    // The main menu's "Tutorial" (tutorial.scala; 2026-11-27): lessons on the rules as played here and on the site, then a practice game
+    // as Red against the Green Easy bot with a tip for every choice
+    override def tutorialAbout = Tutorial.about
+    override def tutorialLessons = Tutorial.lessons
+    override def tutorialGame = |((Tutorial.seating, Tutorial.bots, Tutorial.options))
 
     val quickMin = 2
     val quickMax = 4
@@ -44,7 +53,7 @@ object Meta extends MetaGame { mmm =>
 
     override def howToPlay = $[(Elem, $[Elem])](
         ("The rules".txt, $[Elem](
-            "This site doesn't teach the rules: they are Julian Birke's, and the rulebook is still a draft. Learn them from the game's own rulebook or from someone who plays it; the site keeps to them for you, offering only the moves the rules allow.",
+            "The rules are Julian Birke's, and the rulebook is still a draft: the game's own rulebook is the authority. " ~ "Tutorial".hh ~ " on this menu teaches them as this site plays them, with a practice game; the site keeps to them for you, offering only the moves the rules allow.",
         )),
         ("Starting a game".txt, $[Elem](
             "Quick Game".hh ~ " starts at once against Easy bots.",
@@ -94,7 +103,9 @@ object Meta extends MetaGame { mmm =>
     override def setupDesign = true
     override def factionsWord = "players"
     override def setupRowsLabel = "Players"
-    override def menuImages = Faction.all./(f => ("menu-" + f.id) -> ("/hrf/webp2/pincer/images/piece/colony-" + f.id + ".webp")).toMap
+    override def menuImages = Faction.all./(f => ("menu-" + f.id) -> ("/hrf/webp2/pincer/images/piece/colony-" + f.id + ".webp")).toMap ++
+        // the resource dice in the Tutorial's lessons, under their game asset names, as the lessons show in the menu and in the game
+        Resource.all./(r => ("die:" + r.id) -> ("/hrf/webp2/pincer/images/die/" + r.id + ".webp")).toMap
     override def factionTile(f : Faction) = |(Div(Image("menu-" + f.id, ExternalStyle("setup-emblem"), "")) ~ Div(f.name.hlb))
     override def factionRowIcon(f : Faction) : Elem = Image("menu-" + f.id, ExternalStyle("setup-row-emblem"), "")
     override def factionChosenElem(f : Faction) = factionRowIcon(f) ~ factionElem(f).spn(xstyles.bold)
