@@ -335,6 +335,10 @@ and the 4-player board of the two halves (`Layouts` in `cyclades/board.scala`, i
 column), offerings with outbidding, the five gods, battles and retreats, the 17 Creatures and their figures, Metropolises. GP are
 public. `cyclades/RULES.md` has the rules as played and the readings, `cyclades/HANDOFF.md` the state, files and testing
 (`cyclades.Host`, `cyclades.Check`, `cyclades.LogDump`; `CYCLADES_RANDOM=0.4` mixes in random choices to reach every rule).
+"Tutorial" on its menu (2026-11-27, asked for; the core `tutorialMenu`, URL `/play/cyclades/tutorial`) teaches the rules in nine lessons
+(`Tutorial.lessons` in `cyclades/tutorial.scala`), then a practice game as Blue against the Red and Green Easy bots (hidden `TutorialOption`)
+with a "Tutorial tip" above each choice (`Tutorial.tip`, `preinfo` in `cyclades/ui.scala`), "Hide tips" and "Tutorial Lessons" as in
+Northgard's; How to Play points to it; `CYCLADES_TUTORIAL=1` in `cyclades.Host` lists the choices with and without a tip.
 `/cyclades` in the LFG channel (2026-11-27) posts a game like `/pincer`: 2 to 5 players picking a color on Join (or a random one), no options and so no setup panel, pinging the `cyclades` role (or `cyclades-lfg`; `Lfg.cyclades`, `cycladesPicks`, `lfgPlayers` in `cyclades/meta.scala`).
 Its Discord section (2026-11-27, asked for): the `cyclades` role and category with #cyclades-announcements, -discussion, -lfg, -games,
 -feedback and -results, like Pincer's; turn pings in #cyclades-games through the bot-made "Herald of Olympus" (Zeus from his god tile;

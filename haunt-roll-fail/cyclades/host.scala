@@ -23,12 +23,26 @@ object Host extends hrf.host.BaseHost {
     // CYCLADES_RANDOM=0.3 makes that share of the choices at random, to reach every rule
     val random = sys.env.get("CYCLADES_RANDOM")./(_.toDouble).|(0.0)
 
-    def askBot(g : G, f : F, actions : $[UserAction]) = (math.random() < random).?(new BotRandom(f) : EvalBot).|(new BotXX(f)).ask(actions, 0)(g)
+    // CYCLADES_TUTORIAL=1 plays the Tutorial's practice game (its seating and options) and prints each kind of choice Blue was offered
+    // with a tip ("TIP") or without ("NO TIP")
+    val tutorial = sys.env.get("CYCLADES_TUTORIAL") == Some("1")
+    var tipsSeen = Set[String]()
+
+    def askBot(g : G, f : F, actions : $[UserAction]) = {
+        if (tutorial && f == Tutorial.side && actions.any) {
+            val kinds = actions./(_.unwrap.getClass.getSimpleName).distinct.sorted.mkString(",")
+            val key = Tutorial.tip(g, f, actions).any.?("TIP ").|("NO TIP ") + kinds
+            if (tipsSeen.contains(key).not) { tipsSeen += key ; println(key) }
+        }
+        askBot0(g, f, actions)
+    }
+
+    def askBot0(g : G, f : F, actions : $[UserAction]) = (math.random() < random).?(new BotRandom(f) : EvalBot).|(new BotXX(f)).ask(actions, 0)(g)
 
     def factions = Faction.all
     def subjects = factions
 
-    def batch = $(() => new G(factions.take(2 + scala.util.Random.nextInt(4)), $))
+    def batch = $(() => tutorial.?(new G(Tutorial.seating, Tutorial.options)).|(new G(factions.take(2 + scala.util.Random.nextInt(4)), $)))
 
     def factionName(f : F) = f.name
     def nameWinner(f : F) = f.name

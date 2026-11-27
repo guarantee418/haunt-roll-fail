@@ -27,7 +27,16 @@ object Meta extends MetaGame { mmm =>
 
     val minPlayers = 2
 
-    val options = $[O]()
+    val options = $[O]() ++ hiddenOptions
+
+    // the Tutorial's practice game (tutorial.scala)
+    override def hiddenOptions = $[O](TutorialOption)
+
+    // The main menu's "Tutorial" (tutorial.scala; 2026-11-27): lessons on the rules and on the site, then a practice game as Blue
+    // against the Red and Green Easy bots with a tip for every choice
+    override def tutorialAbout = Tutorial.about
+    override def tutorialLessons = Tutorial.lessons
+    override def tutorialGame = |((Tutorial.seating, Tutorial.bots, Tutorial.options))
 
     val quickMin = 2
     val quickMax = 5
@@ -47,7 +56,7 @@ object Meta extends MetaGame { mmm =>
 
     override def howToPlay = $[(Elem, $[Elem])](
         ("The rules".txt, $[Elem](
-            "The rules are the game's own rulebook's: this site keeps to them for you, offering only the moves they allow. Where they leave room, the choices made here are in the game's RULES notes.",
+            "The rules are the game's own rulebook's: this site keeps to them for you, offering only the moves they allow. " ~ "Tutorial".hh ~ " on this menu teaches them, with a practice game. Where they leave room, the choices made here are in the game's RULES notes.",
         )),
         ("Starting a game".txt, $[Elem](
             "Quick Game".hh ~ " starts at once against Easy bots.",
@@ -89,7 +98,10 @@ object Meta extends MetaGame { mmm =>
     override def setupDesign = true
     override def factionsWord = "players"
     override def setupRowsLabel = "Players"
-    override def menuImages = Faction.all./(f => ("menu-" + f.id) -> ("/hrf/webp2/cyclades/images/piece/troop-" + f.id + ".webp")).toMap
+    override def menuImages = Faction.all./(f => ("menu-" + f.id) -> ("/hrf/webp2/cyclades/images/piece/troop-" + f.id + ".webp")).toMap ++
+        // the gods' heads and the buildings in the Tutorial's lessons, under their game asset names
+        (God.main :+ Apollo)./(g => ("god:head-" + g.id) -> ("/hrf/webp2/cyclades/images/god/head-" + g.id + ".webp")).toMap ++
+        (Building.all./(_.id) :+ "metropolis")./(b => ("building:" + b) -> ("/hrf/webp2/cyclades/images/building/" + b + ".webp")).toMap
     override def factionTile(f : Faction) = |(Div(Image("menu-" + f.id, ExternalStyle("setup-emblem"), "")) ~ Div(f.name.hlb))
     override def factionRowIcon(f : Faction) : Elem = Image("menu-" + f.id, ExternalStyle("setup-row-emblem"), "")
     override def factionChosenElem(f : Faction) = factionRowIcon(f) ~ factionElem(f).spn(xstyles.bold)
