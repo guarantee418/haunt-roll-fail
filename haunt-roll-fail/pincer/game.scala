@@ -423,6 +423,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     var highlightFaction = $[Faction]()
 
+    // what happened to whom, for the Pamphleteer's jests (display only: online.scala)
+    var jests : $[String] = $
+
     // FIGURES: one unit a hex, but for a frigate's passenger
 
     def at(u : Figure) : Hex = pos(u)
@@ -785,6 +788,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // PIECES
 
     def capture(f : Faction, by : Kind, v : Figure) {
+        if (v.kind == Frigate)
+            Jests.note(this, "captured", v.faction, f, v.kind.name)
         (v +: passenger(v).$).foreach { x =>
             pos -= x
             injured -= x
@@ -810,7 +815,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def claim(s : Seal, f : Faction) {
         if (seals.get(s).has(f).not) {
             seals.get(s) match {
-                case Some(e) => log(f, "took", s, "from", e)
+                case Some(e) =>
+                    log(f, "took", s, "from", e)
+                    Jests.note(this, "seal", e, f, s.name)
                 case None => log(f, "claimed", s)
             }
             seals += s -> f
@@ -1461,6 +1468,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             case DeclareWarAction(f, e, boar) =>
                 f.warCards -= 1
                 wars :+= War(f, e, boar)
+                Jests.note(this, "war", e, f, "")
                 declared :+= e
                 if (boar) {
                     log(f, "declared a", "Boar's War".hl, "on", e)
@@ -1580,7 +1588,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                     SurrenderColoniesAction(f, rest)
                 else
                 if (l.num <= room) {
-                    l.foreach { h => colonies += h -> e ; log(e, "took the Colony in", h) }
+                    l.foreach { h => colonies += h -> e ; log(e, "took the Colony in", h) ; Jests.note(this, "colony", f, e, h.name) }
                     SurrenderColoniesAction(f, rest)
                 }
                 else

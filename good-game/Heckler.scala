@@ -228,9 +228,11 @@ object Heckler {
             }
         }
         if (fresh.nonEmpty && roleName.nonEmpty && DiscordBot.configured)
-            TurnPings.lobbyOf(game).filter(l => TurnPings.rootMetas.contains(l.meta) || TurnPings.nortMetas.contains(l.meta)).foreach { lobby =>
+            TurnPings.lobbyOf(game).filter(l => TurnPings.rootMetas.contains(l.meta) || TurnPings.nortMetas.contains(l.meta) || sideJests.contains(l.meta)).foreach { lobby =>
                 val nort = TurnPings.nortMetas.contains(lobby.meta)
-                val (v, book) = if (nort) (ratatoskr, ratJests) else (crow, crowJests)
+                // Pincer's and Company of Heroes' (2026-11-27): their players named by their color or faction (Lfg.sideOf)
+                val sides = sideJests.contains(lobby.meta)
+                val (v, book) = if (nort) (ratatoskr, ratJests) else if (sides) sideJests(lobby.meta) else (crow, crowJests)
                 val seats = lobby.lines.map(_.split(' ').toList).collect { case "user" :: f :: u :: _ => f -> u }.toMap
                 val table = TurnPings.table(game).nonEmpty
                 fresh.sortBy(_._1).take(3).foreach { case (_, tag :: seat :: rest) =>
@@ -240,7 +242,8 @@ object Heckler {
                         Tournament.poster.execute { () =>
                             try {
                                 if (roasted(id)) {
-                                    val line = pick(id, lines).replace("{name}", "<@" + id + ">").replace("{other}", if (nort) clanName(other) else factionName(other)).replace("{where}", if (where.nonEmpty) where else if (nort) "the North" else "the woods")
+                                    val otherName = if (nort) clanName(other) else if (sides) Lfg.sideOf(lobby.meta, other).map(x => "**" + x.label + "**").getOrElse("someone") else factionName(other)
+                                    val line = pick(id, lines).replace("{name}", "<@" + id + ">").replace("{other}", otherName).replace("{where}", if (where.nonEmpty) where else if (nort) "the North" else if (sides) "the field" else "the woods")
                                     TurnPings.post(game, lobby, line, Nil, persona(v) + gifFor(tag, game, v).getOrElse(""), now = true)
                                 }
                             }
@@ -957,6 +960,41 @@ object Heckler {
         "{hours} hours, {name}. Glaciers have opinions about your pace. Flattering ones, for the glaciers.",
         "Welcome back, {name}! {hours} hours for one turn in {game}. I ran up and down Yggdrasil the whole time.")
 
+    // the jests of the games whose players pick a side (pincer/online.scala, tactics/online.scala; 2026-11-27): the voice and its book
+    lazy val sideJests : Map[String, (Voice, Map[String, List[String]])] = Map("pincer" -> (pamphleteer, pamphleteerJests), "tactics" -> (sergeant, sergeantJests))
+
+    // the Pamphleteer's jests: a unit captured (the what its kind), a Royal Seal lost (the what the seal), war declared, a colony taken
+    // in a surrender (the what the hex)
+    val pamphleteerJests = Map(
+        "captured" -> List(
+            "EXTRA! {name}'s {where} taken prisoner by {other}! Sources say it surrendered with indecent haste.",
+            "{other} has captured {name}'s {where}. The coffee houses report no surprise whatsoever.",
+            "SCANDAL: {name}'s {where} now dines at {other}'s expense. The food is said to be an improvement."),
+        "seal" -> List(
+            "{other} has relieved {name} of the {where}. A spokesman for {name} declined to comment, or to look up.",
+            "The {where} changes hands! {other} rejoices; {name} is reported to be \"reviewing the situation\".",
+            "{name} mislays the {where}. {other} found it. Finders keepers, say our legal correspondents."),
+        "war" -> List(
+            "WAR! {other} declares upon {name}! Gentlemen, place your wagers.",
+            "{other} has declared war on {name}. Our correspondent asks: what took them so long?",
+            "Hostilities! {other} marches on {name}. Readers are advised to watch from a safe distance, as {name}'s generals do."),
+        "colony" -> List(
+            "{name} hands the colony at {where} to {other}, with a bow and very little dignity.",
+            "{other} takes {where} from {name}. The locals are said to be relieved.",
+            "LATE EDITION: {where} is {other}'s now. {name} keeps the map, at least."))
+
+    // the Assault Specialist's jests: a unit destroyed (the what the unit), a Control Point neutralized (the what the hex)
+    val sergeantJests = Map(
+        "destroyed" -> List(
+            "{name}! {other} just turned your {where} into scrap. I want a report on my desk explaining how.",
+            "Your {where} is gone, {name}. {other} sends their regards. I'll be writing to its mother.",
+            "{other} destroyed {name}'s {where}. That's what happens when you stand in the open, soldier!",
+            "Scratch one {where}, {name}. Courtesy of {other}. Learn from it."),
+        "neutralized" -> List(
+            "{other} walked onto your Control Point at {where}, {name}. Walked! Where were you?",
+            "{name}, {where} isn't yours any more. {other} took one look and moved in.",
+            "Control Point {where}, {name}: lost to {other}. Somebody fell asleep on watch, and I think it was you."))
+
     // PINCER: the Pamphleteer, a satirist of the gentleman's war
     val pamphleteer = Voice("The Pamphleteer", "", Map(
         "turn" -> List(
@@ -965,6 +1003,20 @@ object Heckler {
             "{name}, your move. The gentlemen of the coffee house have wagered against you. Heavily.",
             "Your turn, {name}. The press awaits your next blunder with the keenest interest.",
             "{name}, your colonies are in the papers again. Not the good pages."),
+        "defend" -> List(
+            "ATTACK! {name}'s men are set upon! Will they retreat, fortify, or simply fall over? Readers await.",
+            "{name}, you are being attacked. Our sketch artist is standing by for the outcome.",
+            "A skirmish at {name}'s expense! Choose quickly; the presses are already rolling."),
+        "counter" -> List(
+            "{name} may strike back! The editors doubt it, but print the possibility out of fairness.",
+            "A chance for a counter-action, {name}. Do try to make it newsworthy."),
+        "peace" -> List(
+            "{name} is offered PEACE! The coffee houses hold their breath, and their wagers.",
+            "A peace offer for {name}. Accept, and the war correspondents go hungry."),
+        "surrender" -> List(
+            "{name} surrenders! Pick the colony you keep, and we'll pick the headline.",
+            "TERMS OF SURRENDER: {name} keeps one colony. Choose it with what remains of your dignity."),
+        "harvest" -> List("{name}, the harvest awaits your choosing. Our agricultural correspondent expects disappointment."),
         "intro-waiting" -> List("EXTRA! {name} joins the trolls, while {game} has waited on them for {time}. Readers are advised to bring a book."),
         "intro-pings" -> List("EXTRA! {name} needed {n} turn pings in {game}! The editors are considering a weekly column."),
         "intro-lost" -> List("FROM OUR ARCHIVES: {name} lost {game} with {score}. {winner} won with {top}. A reader writes: \"Who could forget?\""),
@@ -981,6 +1033,16 @@ object Heckler {
             "{name}, I've seen better tactics from a ration tin. Your turn. Prove me wrong.",
             "Your turn, {name}. And if I see one more unit stood in the open, I'll be writing to your mother."),
         "asked" -> List("{name}, you're needed on the line. Double time!"),
+        "fire" -> List(
+            "Damage Phase, {name}! Pick your targets. The enemy, ideally.",
+            "{name}! Assign your fire! And try hitting something this time!",
+            "Weapons free, {name}. Make every shot count, or at least one of them."),
+        "brace" -> List("{name}, they're shooting at your emplacements. Brace, or start digging your graves. Your call."),
+        "supply" -> List(
+            "Supply Phase, {name}. Spend it on soldiers, not souvenirs.",
+            "{name}! The quartermaster's waiting. Buy something that shoots."),
+        "ops" -> List("{name}, pick an Operation card. Read it first. I know, revolutionary."),
+        "retreat" -> List("{name}, Final Retreats. Get your boys out before you get them killed. Again."),
         "intro-waiting" -> List("Welcome to the trolls, {name}! {game} has been waiting on you for {time}. On your feet, soldier!"),
         "intro-pings" -> List("{name}! It took {n} radio calls to get you moving in {game}! {n}! Next time I'm sending a runner with a bucket of water."),
         "intro-lost" -> List("At ease, {name}. I read the after-action report on {game}: {score}, while {winner} took it with {top}. We'll be drilling that."),
