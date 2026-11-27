@@ -125,7 +125,12 @@ booklet's pictures (pages 9 and 10). Moro River's first rows had the bridge poin
 - Setup's map picker (2026-11-25): the Map choices sit in one folder, in sections by the booklet's chapters (`MapChoice.sectionOf`),
   each a tile with a thumbnail (`Meta.optionTile`, `optionTileWide`). After adding or changing a map, run `sbt "runMain tactics.MapDump"`
   into a file and `tools/map-thumbs.py <file> webp2/tactics/images` for its thumbnail.
-- Desert Warfare (asked for on 2026-11-27, the owner is getting the files): the Afrika Korps, the desert panels and rules, and 4v4.
-  When DAK is in, 3v3 no longer needs a second seat; keep the seconds (`Faction.seconds`) so games made with them load. The Discord
-  LFG (`/coh`, `Lfg.coh`, `lfgPlayers`) still stops at 5 seats and offers no second seats.
+- Desert Warfare (asked for on 2026-11-27): the source is Bad Crow's "3rd printing balance changes" sheet, a Google Doc the owner shared
+  (doc id `1djH2anwCN1RWDKUn64P5bt_xWIY_CyMDHOX1L2gP6v0`; read it with the Google Docs connector, its 324 pictures from their
+  `contentUri`s). Done: the DAK faction (its boards, units, art). To do, all on the sheet: the DAK's 12 Commanders and 17 Lost Brigade
+  cards; the other factions' new Commanders (Rocket pack, Universal German, Desert Rats, Stuart Honey pack, Stretch Goal box) and Lost
+  Brigades; Planes and the anti-air capability; Troop Transports (boats); Blitz Cubes; the Barricade; the Black Gold and Twin Beaches
+  panels (Fortifications, Anchors, Shorelines, permanent barbed wire) and 17 1v1 scenarios; the 3rd printing's board changes to the five
+  factions (to ask the owner whether they replace the boards played now, as an option for new games). 4v4 isn't on the sheet. Keep the
+  second seats (`Faction.seconds`) so games made with them load. The Discord LFG (`/coh`) stops at 5 seats and offers no second seats.
 - A better bot.

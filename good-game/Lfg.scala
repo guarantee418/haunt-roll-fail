@@ -91,17 +91,17 @@ object Lfg {
     val pincerPicks = Picks("color", "Pick a color", List(Side("R", "Red", "🔴"), Side("G", "Green", "🟢"), Side("B", "Blue", "🔵"), Side("Y", "Yellow", "🟡")),
         List(("Random", "Random color", List("R", "G", "B", "Y"))))
 
-    // COMPANY OF HEROES (2026-11-27): any two factions, or three to five in teams, Allies (US, British, Soviet) against Axis (Wehrmacht,
+    // COMPANY OF HEROES (2026-11-27): any two factions, or three to five in teams (the DAK since the same day), Allies (US, British, Soviet) against Axis (Wehrmacht,
     // OKW), as the setup screen checks (validateFactionSeatingOptions in tactics/meta.scala); the skirmishes are for two
     val allies = List("US", "BR", "SU")
-    val axis = List("WM", "OKW")
+    val axis = List("WM", "OKW", "DAK")
     val skirmishes = List("TheRiverMap", "FrozenPondMap")
     val cohPicks = Picks("faction", "Pick a faction",
-        List(Side("US", "US Forces", "🇺🇸"), Side("BR", "British Forces", "🇬🇧"), Side("SU", "Soviet Forces", "⭐"), Side("WM", "Wehrmacht", "🦅"), Side("OKW", "Oberkommando West", "🛡️")),
+        List(Side("US", "US Forces", "🇺🇸"), Side("BR", "British Forces", "🇬🇧"), Side("SU", "Soviet Forces", "⭐"), Side("WM", "Wehrmacht", "🦅"), Side("OKW", "Oberkommando West", "🛡️"), Side("DAK", "Deutsches Afrikakorps", "🌴")),
         List(("RandomAllies", "Random Allied faction", allies), ("RandomAxis", "Random Axis faction", axis), ("Random", "Random faction", allies ++ axis)),
         check = (ss, options) =>
             if (ss.size != 2 && options.exists(skirmishes.contains)) Some("That map is a skirmish, for two players.")
-            else if (ss.size > 2 && (!ss.exists(allies.contains) || !ss.exists(axis.contains))) Some("With three players or more the game is Allies (US, British, Soviet) against Axis (Wehrmacht, OKW): someone has to play the other side.")
+            else if (ss.size > 2 && (!ss.exists(allies.contains) || !ss.exists(axis.contains))) Some("With three players or more the game is Allies (US, British, Soviet) against Axis (Wehrmacht, OKW, DAK): someone has to play the other side.")
             else None)
 
     val root = Kind("root-adset", "Root: Advanced Setup", "Root", "root", "Look for players for an online Root game (Advanced Setup) on the site", List("root-lfg"), "title")

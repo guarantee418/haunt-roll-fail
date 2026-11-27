@@ -29,14 +29,14 @@ With the Full Game Rules come the twelve core Commanders (**Commanders**, furthe
 ## Team games
 
 Since 2026-11-24, three to five players play in two teams on any mission but the free-for-all (rulebook p. 6, Team Game End Game Conditions, and 11.0, uneven
-teams allowed): the Allies (US Forces, British Forces, Soviet Forces) against the Axis (Wehrmacht, Oberkommando West), so the
+teams allowed): the Allies (US Forces, British Forces, Soviet Forces) against the Axis (Wehrmacht, Oberkommando West, Deutsches Afrikakorps), so the
 setup refuses three players or more on one side (`validateFactionCombination` in `meta.scala`). Two players are two teams as
 before, any two factions, and play as they did (`teamGame` in `game.scala` is false, every helper below gives the old answer).
 
 - The team of the first seat is team 1 (the first Spawn Area); teammates share their team's Spawn Area (`teams`, `team`, `mates`,
   `enemies`, `foe`).
-- **3v3** (2026-11-27, the owner's ask, until the Desert Warfare expansion's Afrika Korps gives the Axis a third faction): six
-  players, three a side, on a map of three panels or more. With only two Axis factions, a faction may take a second seat ("Wehrmacht
+- **3v3** (2026-11-27, the owner's ask): six players, three a side, on a map of three panels or more: Wehrmacht, OKW and the
+  Desert Warfare expansion's DAK against the three Allies, or with a faction taking a second seat ("Wehrmacht
   II", `SecondFaction` in `game.scala`), as the rulebook lets the same faction play twice in a team game: it plays its first's boards,
   units, Commanders, Lost Brigades and art, and its units are marked "II" on the map, with its own health badge colour. A second seat
   needs its first in the game and three players or more (`validateFactionCombination`). The rules are the team rules below: shared
@@ -354,6 +354,18 @@ Range and a Munitions +1 AI, the Churchill only the Defense XP upgrade (no Remov
   up and has a Firing Arc like a Weapon Team; the Raketenwerfer may set up in Buildings; the Sturmtiger's HE is HE Splash and it is Slow.
 - **Left out**: the anti-aircraft symbols and the "treat AP (HE) as AI against aircraft" notes (no aircraft in the core rules played
   here).
+- **Deutsches Afrikakorps** (DAK, 2026-11-27, the Desert Warfare expansion's Axis faction): its three Building Boards are the pictures in
+  Bad Crow's "3rd printing balance changes" sheet, a Google Doc the owner shared (not in the mod; `tactics-art.py factions <dir> <out> dak`
+  cuts them saved as `dak-1.jpg` ... in `<dir>`). DAK Headquarters: Assault Grenadiers (Speed Die; two XP upgrades of +1 Close Range
+  Firepower each, read off the soldier-with-lightning icon), Panzerjaeger (a Wrench), Flakvierling (a Light Vehicle that pins like a
+  machine gun and sets up with a Firing Arc like a Weapon Team). DAK Mechanized Kompanie: the **SdKfz 250 Half-Track** (no attack,
+  Transport, Capture, Reinforce; Infantry spawned into it on the round it spawned cost 2 Manpower less; its Munitions upgrade makes it
+  the Mortar Halftrack: 2 indirect HE, range 2 to 4, sets up with a Firing Arc, no more Transport, its passenger falling back as from the
+  Universal Carrier), the StuG III D (HE Splash, fixed HE and AI), the 8-Rad (a No-Fire Capture mode like the T-70). DAK Panzerarmee
+  Kommand: Panzer III (turreted, Heroic Sacrifice for XP, two +1 AI), the 88mm FLAK 36 (a Light Vehicle that sets up like a Weapon Team,
+  Slow), the **Command Tiger** (one at a time; its XP upgrade lets the DAK, once a round in its Maneuver Phase, put the command marker on one
+  of its Vehicles, which captures that round: the board's "gain Capture for next round" read as the round it is placed). Its Commanders
+  (8 core, 4 Desert Warfare) and Lost Brigades are on the same sheet and not in yet: a DAK player draws none.
 
 ## Commanders
 

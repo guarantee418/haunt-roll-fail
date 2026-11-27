@@ -444,7 +444,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
             val hp = ImageRect(textImage(game.health(u) + "/" + game.maxHealth(u), "#f3eee2", u.faction.color), Rectangle(-size * 0.28, size * 0.22, size * 0.56, size * 0.31), 0.95)
             val st = $[ImageRect]() ++
                 game.pinned.contains(u).$(ImageRect(new RawImage(img("status:pinned")), Rectangle(-size / 2, -size / 2, size * 0.32, size * 0.32), 1.0)) ++
-                (u.utype.setsUp && passenger.not).$(ImageRect(new RawImage(img(game.setUp.contains(u).?("status:setup").|("status:nofire"))), Rectangle(size * 0.18, -size / 2, size * 0.32, size * 0.32), 1.0)) ++
+                (game.setsUp(u) && passenger.not).$(ImageRect(new RawImage(img(game.setUp.contains(u).?("status:setup").|("status:nofire"))), Rectangle(size * 0.18, -size / 2, size * 0.32, size * 0.32), 1.0)) ++
                 game.noFire.contains(u).$(ImageRect(new RawImage(img("status:nofire")), Rectangle(size * 0.18, -size / 2, size * 0.32, size * 0.32), 1.0)) ++
                 game.slowed.get(u).has(game.round).$(ImageRect(new RawImage(img("status:slow")), Rectangle(-size / 2, size * 0.18, size * 0.32, size * 0.32), 1.0)) ++
                 game.retreating.contains(u).$(ImageRect(new RawImage(img("status:retreat")), Rectangle(size * 0.18, size * 0.18, size * 0.32, size * 0.32), 1.0)) ++

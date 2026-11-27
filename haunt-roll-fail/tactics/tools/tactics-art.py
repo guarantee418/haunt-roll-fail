@@ -6,6 +6,7 @@
 #                                       the hash part of their Steam URL
 #   tactics-art.py make <dir> <out>     writes the images into <out> (webp2/tactics/images)
 #   tactics-art.py factions <dir> <out> british ...   only those factions' boards, tokens, emblems, flags and Spawn hexes
+#                                       (dak: from the change sheet's board pictures, see FILES)
 #
 # The map is the two Moro River panels (MR1 and MR2, 6000x9000 each) side by side at a fifth of their size. The unit
 # tokens are the portraits on the Building Boards in a ring of the faction's color (a circle for Infantry, a rounded square
@@ -44,9 +45,14 @@ FILES = {
     'okw-1': 'F11D27745BE7AB692E122C87360F61B1EB44E6E0',
     'okw-2': 'F7C015822C4DA14AF373455AD106470F3614670D',
     'okw-3': 'F20C9C5483E9968B169BC3CC215D9E08579054C5',
+    # the Deutsches Afrikakorps' Building Boards (2026-11-27): not in the mod; the three board pictures of Bad Crow's "3rd printing
+    # balance changes" sheet (a Google Doc the owner shared), saved into <dir> under these names
+    'dak-1': 'dak-1.jpg',
+    'dak-2': 'dak-2.jpg',
+    'dak-3': 'dak-3.jpg',
 }
 
-COLORS = {'us': (111, 154, 62), 'wehrmacht': (201, 66, 59), 'british': (200, 162, 74), 'soviet': (160, 32, 60), 'okw': (93, 122, 153)}
+COLORS = {'us': (111, 154, 62), 'wehrmacht': (201, 66, 59), 'british': (200, 162, 74), 'soviet': (160, 32, 60), 'okw': (93, 122, 153), 'dak': (198, 122, 52)}
 
 # the units on each Building Board, top to bottom, with their kind
 BOARDS = {
@@ -65,6 +71,9 @@ BOARDS = {
     'okw-1': [('sturmpioneers', 'G'), ('volksgrenadiers', 'G'), ('sws-truck', 'Y')],
     'okw-2': [('raketenwerfer', 'G'), ('stuka-halftrack', 'Y'), ('luchs', 'R')],
     'okw-3': [('obersoldaten', 'G'), ('panther', 'R'), ('sturmtiger', 'R')],
+    'dak-1': [('assault-grenadiers', 'G'), ('panzerjaeger', 'G'), ('flakvierling', 'Y')],
+    'dak-2': [('sdkfz250', 'Y'), ('stug-d', 'R'), ('eight-rad', 'Y')],
+    'dak-3': [('panzer-iii', 'R'), ('flak88', 'Y'), ('command-tiger', 'R')],
 }
 
 # tokens cut from elsewhere on a board (1350x1650 coordinates): the Flak Gun drawn in the Sturmpioneers' upgrade, the OKW Tier
