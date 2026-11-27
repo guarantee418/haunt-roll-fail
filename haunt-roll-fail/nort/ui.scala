@@ -1291,12 +1291,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 val (x, y) = freeSpot(t, z / T / 2, taken, |(board.point(t.anchor)), 0.5)
                 pieces.add(Sprite($(at(c.token, z)), $(Rectangle(-z / 2, -z / 2, z, z)), tag :+ c))(sx(x), sy(y))
                 creatureSpots += c -> ((sx(x), sy(y)))
-                // its place in the creature line (1 moves first), a square badge at the bottom left corner
-                // (nort/tools/order-badges.py; asked for on Discord on 2026-11-23; moved from the top left on 2026-11-26,
-                // as it hid the creature's picture there)
-                val n = game.creatureLine.indexOf(c) + 1
-                if (n >= 1 && n <= 30)
-                    pieces.add(Sprite($(at("ui-order-" + n, 110)), $))(sx(x) - 80, sy(y) + 80)
+                // its strength (combat value), the axe and the number at the bottom left corner (nort/tools/strength-badges.py;
+                // Discord northgard-feedback, 2026-11-27: in place of its place in the creature line, now on the Creature Moves arrows)
+                val v = c.kind.value
+                if (v >= 1 && v <= 15)
+                    pieces.add(Sprite($(ImageRect(new RawImage(img("ui-strength-" + v)), Rectangle(-75, -48, 150, 96), 1.0)), $))(sx(x) - 60, sy(y) + 85)
                 taken :+= ((x, y, z / T / 2))
             }
 
@@ -1315,7 +1314,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // "Creature Moves" (a button under the action pane that shows and hides them; Discord northgard-feedback, 2026-11-26): an arrow from each creature
         // to where the Creature phase would move it as things stand, dashed to each territory of a tie the first player breaks, a
         // Myrkalf's second step on from its first; none into or out of the fog of war
-        if (showCreatureMoves && game.isOver.not)
+        // Each creature's place in the creature line (1 moves first) is a square badge on its first arrow, or by the token of one
+        // that stays (nort/tools/order-badges.py; Discord, 2026-11-23, on the token until 2026-11-27, when the token got its strength)
+        if (showCreatureMoves && game.isOver.not) {
+            val badges = scala.collection.mutable.Map[Creature, (Double, Double)]()
+
             CreatureForecast.all.foreach { fc =>
                 creatureSpots.get(fc.c).foreach { start =>
                     var from = start
@@ -1327,6 +1330,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                             val (x, y) = board.point(a)
                             val (i, rect) = moveArrow(from, (sx(x), sy(y)), near, tie)
                             pieces.add(Sprite($(ImageRect(i, rect, 1.0)), $))(0, 0)
+
+                            if (badges.contains(fc.c).not) {
+                                val (dx, dy) = (sx(x) - from._1, sy(y) - from._2)
+                                val d = math.sqrt(dx * dx + dy * dy).max(1.0)
+                                val k = (near + 0.4 * (d - near - 70).max(0)) / d
+                                badges += fc.c -> ((from._1 + dx * k, from._2 + dy * k))
+                            }
                         }
                         l.headOption.foreach { a =>
                             val (x, y) = board.point(a)
@@ -1336,6 +1346,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     }
                 }
             }
+
+            game.creatureLine.zipWithIndex.foreach { case (c, i) =>
+                val n = i + 1
+                if (n <= 30)
+                    badges.get(c).orElse(creatureSpots.get(c)./ { case (x, y) => (x + 80, y + 80) }).foreach { case (x, y) =>
+                        pieces.add(Sprite($(at("ui-order-" + n, 110)), $))(x, y)
+                    }
+            }
+        }
 
         // Wastelands: Jötunn Blainn waiting at his camp and Naströnd's wood not yet taken, in the impassable middle of their tiles
         if (game.has(Wastelands)) {

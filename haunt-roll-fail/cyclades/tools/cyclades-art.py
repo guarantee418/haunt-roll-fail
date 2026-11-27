@@ -57,9 +57,10 @@ for i, n in enumerate(['poseidon', 'zeus', 'athena', 'ares']):
 t = load('titanstate').convert('RGB')
 s = t.width / 380
 save(t.crop((round(40 * s), round(808 * s), round(355 * s), round(882 * s))).resize((1000, 235), Image.LANCZOS), 'god/apollo')
-# round portraits, the first row of the track: Zeus, Athena, Poseidon, Ares
-for n, x in [('zeus', 97), ('athena', 167), ('poseidon', 240), ('ares', 310)]:
-    c = t.crop((round((x - 31) * s), round((372 - 31) * s), round((x + 31) * s), round((372 + 31) * s))).resize((160, 160), Image.LANCZOS).convert('RGBA')
+# round portraits, the first row of the track: Zeus, Athena, Poseidon, Ares; centred on their orange rims
+# (measured 2026-11-27: the old centres sat about 11 units right, showing the next rim on the main menu)
+for n, x in [('zeus', 86.1), ('athena', 156.0), ('poseidon', 226.0), ('ares', 295.9)]:
+    c = t.crop((round((x - 29.8) * s), round((373.4 - 29.8) * s), round((x + 29.8) * s), round((373.4 + 29.8) * s))).resize((160, 160), Image.LANCZOS).convert('RGBA')
     mask = Image.new('L', (160, 160), 0)
     ImageDraw.Draw(mask).ellipse((2, 2, 157, 157), fill=255)
     c.putalpha(mask)

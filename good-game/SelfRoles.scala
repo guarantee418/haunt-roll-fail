@@ -120,6 +120,7 @@ object SelfRoles extends BotCommand {
         case "ng-lfg" => "Pinged when a Northgard game looks for players"
         case "pincer" => "Pinged when a Pincer game looks for players"
         case "coh" => "Pinged when a Company of Heroes game looks for players"
+        case "cyclades" => "Pinged when a Cyclades game looks for players"
         case "spectator" => "See the game channels without being pinged for games"
         case n if Heckler.roleName.exists(_.equalsIgnoreCase(n)) => "Your turn pings come from the game's heckler, who mocks your play"
         case _ => ""
