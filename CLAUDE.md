@@ -1255,10 +1255,10 @@ server. No session can reach the server, and none needs to.
   online games get their posts and turn pings in their own forum (`TurnPings.webhookFor`: `HRF_DISCORD_NORT_TURNS_WEBHOOK` or the file
   `discord-nort-turns-webhook`, set by the tournament change `nort-turns <url>`); with none set they get none. Pincer and Company of Heroes
   (`pincer`, `tactics`) get theirs the same way in their own forums (`pincer-turns <url>`, `tactics-turns <url>`; `TurnPings.slots`;
-  2026-11-24), their pings led by a drum or a field radio emoji, as their clients give no reasons. The bot makes those webhooks itself,
-  with original personas, "Drum and Fife" and "Field Wireless" (avatars in `webp2/lfg/webhooks/`, drawn by
+  2026-11-24), their pings led by a drum or a medal emoji (🎖️, a field radio until 2026-11-27), as their clients give no reasons. The bot makes those webhooks itself,
+  with personas, "Drum and Fife" and "Field Wireless", since 2026-11-27 "The Major" (asked for, with the US Major's portrait from his unit token, `the-major.png`; `rename-webhook Field Wireless -> The Major | avatar the-major.png`) (avatars in `webp2/lfg/webhooks/`, drawn by
   `haunt-roll-fail/tools/webhook-avatars.py`): the tournament changes `webhooks`, `make-webhook <name> | in <channel> | avatar <file> |
-  for <turns channel>` (sets it as that turns channel without anyone copying its URL), `rename-webhook` and `test-ping <turns channel> | role <role>` (a "Test ping" thread through that webhook, mentioning the role) (`DiscordServer.scala`;
+  for <turns channel>` (sets it as that turns channel without anyone copying its URL), `rename-webhook <name> -> <new> [| avatar <file>]` and `test-ping <turns channel> | role <role>` (a "Test ping" thread through that webhook, mentioning the role) (`DiscordServer.scala`;
   the bot needs Manage Webhooks).
 - The bot's `/card <name> [game] [private]` (2026-11-22, asked for as a "bot to call cards and other art"): posts a Root or Northgard card,
   faction or clan board, quest, landmark, hireling or creature with its picture, the name suggested as it is typed (autocomplete). The list
