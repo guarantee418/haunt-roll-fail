@@ -328,6 +328,14 @@ three of their faction's thirteen Lost Brigade Building Extensions (its twelve a
 starting Infantry), and its units need no Tier Building; a brigade gives the matching Commander abilities through `unlocked` (`abilities`
 is Commanders or brigades), at the card's price (`Brigade.price` in `costOf`).
 
+Cyclades (Bruno Cathala and Ludovic Maublanc, Matagot, 2009; asked for on 2026-11-27), the base game for 2 to 5
+players, is in `haunt-roll-fail/cyclades/` (meta `cyclades`, URL `/play/cyclades`, on the main menu since 2026-11-27: `HRF.menuMetas`), with the
+art of the Tabletop Simulator mods (`cyclades/tools/cyclades-art.py`, images in `webp2/cyclades/images/`): the 2-3 side, the 4-5 side
+and the 4-player board of the two halves (`Layouts` in `cyclades/board.scala`, isles named after the Cyclades, sea spaces by row and
+column), offerings with outbidding, the five gods, battles and retreats, the 17 Creatures and their figures, Metropolises. GP are
+public. `cyclades/RULES.md` has the rules as played and the readings, `cyclades/HANDOFF.md` the state, files and testing
+(`cyclades.Host`, `cyclades.Check`, `cyclades.LogDump`; `CYCLADES_RANDOM=0.4` mixes in random choices to reach every rule).
+
 ## Building
 
 ```

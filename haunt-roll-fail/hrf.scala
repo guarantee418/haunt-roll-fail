@@ -128,13 +128,14 @@ object HRF {
         nort.MetaAdset -> nort.UI,
         pincer.Meta -> pincer.UI,
         tactics.Meta -> tactics.UI,
+        cyclades.Meta -> cyclades.UI,
     )
 
     val metas = metaUIs.lefts
 
     val rootMetas = $[MetaGame](root.Meta, root.MetaAdset, root.MetaMirror)
 
-    val menuMetas = $[MetaGame](root.Meta, nort.Meta, pincer.Meta, tactics.Meta)
+    val menuMetas = $[MetaGame](root.Meta, nort.Meta, pincer.Meta, tactics.Meta, cyclades.Meta)
 
     val html = dom.window.location.origin + "/play/"
     val script = dom.document.getElementById("script").asInstanceOf[dom.html.Script].src
@@ -367,6 +368,10 @@ object HRFR {
         "home-sherman" -> "/hrf/webp2/tactics/images/token/sherman-us.webp",
         "home-panzer" -> "/hrf/webp2/tactics/images/token/panzer-iv-wehrmacht.webp",
         "home-wehrmacht" -> "/hrf/webp2/tactics/images/emblem/wehrmacht.webp",
+        "home-poseidon" -> "/hrf/webp2/cyclades/images/god/head-poseidon.webp",
+        "home-ares" -> "/hrf/webp2/cyclades/images/god/head-ares.webp",
+        "home-zeus" -> "/hrf/webp2/cyclades/images/god/head-zeus.webp",
+        "home-athena" -> "/hrf/webp2/cyclades/images/god/head-athena.webp",
 
         "battle" -> "/hrf/webp2/root/images/icon/battle.webp",
         "swap" -> "/hrf/webp2/root/images/icon/swap.webp",
@@ -689,6 +694,8 @@ class HRFUI(implicit resources : Resources) {
                     card(m, $("home-musketeer", "home-cavalry", "home-cannon", "home-frigate"), "Colonial powers trade, build and wage a gentleman's war", () => new HRFMetaUI(this, m, 0)(resources).withMeta())
                 else if (m == tactics.Meta)
                     card(m, $("home-us", "home-sherman", "home-panzer", "home-wehrmacht"), "Squads and armor fight for ground, munitions and fuel", () => new HRFMetaUI(this, m, 0)(resources).withMeta())
+                else if (m == cyclades.Meta)
+                    card(m, $("home-poseidon", "home-ares", "home-zeus", "home-athena"), "Greek cities bid for the gods' favor to raise two Metropolises", () => new HRFMetaUI(this, m, 0)(resources).withMeta())
                 else
                     card(m, $("home-wolf", "home-stag", "home-bear", "home-raven"), "Viking clans explore, build and conquer", () => new HRFMetaUI(this, m, 0)(resources).withMeta())
             ) ++
