@@ -908,6 +908,7 @@ case object LiveGameMode extends GameOption with ToggleOption with FoldedOption 
         &("Everyone plays " ~ "at the same time".hl ~ ", online.") ~ " " ~ &("The game does " ~ "nothing by itself".hl ~ ":") ~ " " ~ &("the other choices here are off."),
         &("Each player picks for themselves under " ~ "Interface".hh ~ ", " ~ "Hits and Ambushes when Online".hh ~ ":") ~ " " ~ &("whether to be asked about " ~ "hits".styled(styles.hit) ~ " with only one way to take them,") ~ " " ~ &("and about an " ~ "ambush".styled(Bird) ~ " with none to play."),
         &("Those settings only act while that player has the game " ~ "open".hl ~ ";") ~ " " ~ &("their " ~ "Off Turn Actions".hh ~ " switches in the game act " ~ "from any open screen".hl ~ "."),
+        &("The map is shown " ~ "as on the table".hl ~ ":") ~ " " ~ &("every warrior, the ruler's faded warrior in each clearing, the board's relic tokens.") ~ " " ~ &("Each player can change that under " ~ "Interface".hh ~ " for this game only."),
     )
 }
 
@@ -1753,6 +1754,21 @@ case object SeparateWarriors extends WarriorsOption {
 }
 
 
+// How the Keepers' relics are drawn on the map (asked for on Discord, 2026-11-27): the board tokens, as JT drew them, or the
+// high-contrast map tokens of 2026-11-24 (an opaque disc with a gold rim, larger), made as face-down relics vanished on the forests
+trait RelicsOption extends hrf.Setting with OneOfGroup {
+    val group = "Relics"
+}
+
+case object ContrastRelics extends RelicsOption {
+    val valueOn = "High Contrast".hlb ~ " (Easier to See)".hl
+}
+
+case object ClassicRelics extends RelicsOption {
+    val valueOn = "Classic".hlb ~ " (The Board Tokens)".hl
+}
+
+
 // Local games with more than one human player: a "Pass to <faction>" screen hides the action pane (hand and
 // choices) whenever the turn goes to another player on the device, until that player taps it (`ask` in root/ui.scala)
 trait PassScreenOption extends hrf.Setting with OneOfGroup {
@@ -1887,11 +1903,15 @@ object Meta extends MetaGame {
     val name = "root"
     val label = "Root"
 
-    override def settingsList = super.settingsList ++ $(PromptAssignHits, AutoAssignHits, PromptAmbush, AutoAmbush, ShowRule, FlagRule, HideRule, StackWarriors, SeparateWarriors, ShowBoardTrackers, HideBoardTrackers, HideTapRings, ShowTapRings, CardPilesInPanel, CardPilesOnMap, NoOutOfTurn, BasicOutOfTurn, DetailedOutOfTurn, HighlightClearings, HighlightNone, ShowPassScreen, NoPassScreen, EnglishLanguage, FrenchLanguage)
+    override def settingsList = super.settingsList ++ $(PromptAssignHits, AutoAssignHits, PromptAmbush, AutoAmbush, ShowRule, FlagRule, HideRule, StackWarriors, SeparateWarriors, ContrastRelics, ClassicRelics, ShowBoardTrackers, HideBoardTrackers, HideTapRings, ShowTapRings, CardPilesInPanel, CardPilesOnMap, NoOutOfTurn, BasicOutOfTurn, DetailedOutOfTurn, HighlightClearings, HighlightNone, ShowPassScreen, NoPassScreen, EnglishLanguage, FrenchLanguage)
     // the card piles on the map are the default (2026-11-24, owner), so the side panel saved while it was the default is moved there once
     override def settingsMoves = $(("card-piles-on-map", CardPilesInPanel.toString, CardPilesOnMap.toString))
 
-    override def settingsDefaults = super.settingsDefaults ++ $(AutoAssignHits, AutoAmbush, FlagRule, StackWarriors, ShowBoardTrackers, HideTapRings, CardPilesOnMap, NoOutOfTurn, HighlightNone, ShowPassScreen, EnglishLanguage)
+    override def settingsDefaults = super.settingsDefaults ++ $(AutoAssignHits, AutoAmbush, FlagRule, StackWarriors, ContrastRelics, ShowBoardTrackers, HideTapRings, CardPilesOnMap, NoOutOfTurn, HighlightNone, ShowPassScreen, EnglishLanguage)
+
+    // a Live Game is shown as JT drew the board (asked for on Discord, 2026-11-27, "a lively feel, faithful to the physical game"):
+    // every warrior, the faded big warrior for the clearing's ruler, the board's relic tokens; each player can change them for the game
+    override def gameSettings(options : $[O]) = options.has(LiveGameMode).$(SeparateWarriors, ShowRule, ClassicRelics)
 
     override def translation(settings : $[hrf.Setting]) =
         if (settings.has(FrenchLanguage))
