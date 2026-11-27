@@ -1309,6 +1309,11 @@ server. No session can reach the server, and none needs to.
   changes the one of that name if there is one. On purpose nothing is deleted, nobody kicked or banned, and a role is never given
   server permissions; every request carries the audit log reason "HRF server change". The bot needs Manage Roles and Manage Channels,
   and its role above the roles it manages.
+- Discord's Onboarding, the questions a new member answers on joining (2026-11-27, asked for: one question, every game, Spectator sixth,
+  at least one pick, in place of a yes/no question per game): the tournament changes `onboarding` (lists the questions) and
+  `onboarding-question <title> | <answer> = <role> [= <emoji> [= <description>]] | ... [| single] [| optional]` (`DiscordServer.scala`; the emoji Unicode, a server emoji's name, `clan:Wolf` or `faction:MC`, the Root cat),
+  which puts that question first, several picks and required by default, and drops the questions whose answers give only roles among
+  its own; roles with server permissions or a bot's are refused, as in `SelfRoles`. The bot needs Manage Server and Manage Roles.
 - Members give and take the game and ping roles themselves (2026-11-24, asked for): `/roles`, or the "Pick my roles" button under the
   bot's role picker post, opens a menu only they see with their roles ticked (`good-game/SelfRoles.scala`, a `BotCommand`; its button and
   menu go through `Lfg.interaction`). Only the roles the owner lists are offered (`tournament/self-roles.tsv`, set by the tournament changes
