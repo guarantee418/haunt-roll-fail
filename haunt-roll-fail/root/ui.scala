@@ -180,6 +180,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
     case class DrawRect(key : String, x : Double, y : Double, width : Double, height : Double)
 
+    def classicRelics = callbacks.settings.has(ClassicRelics)
+
     case class DrawItem(region : Region, faction : Faction, piece : Piece, x : Int, y : Int, scale : Double = 1.0) {
         val pr = faction.but(Neutral).?(_.style + "-")
 
@@ -236,6 +238,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
             case Caravan => { DrawRect(pr + "caravan", -45, -45, 90, 90) }
             case Station => { DrawRect(pr + "station", -50, -50, 100, 100) }
+            // the Relics setting: the board tokens (Classic) or the high-contrast map tokens
+            case OldTablet if classicRelics => { DrawRect(pr + "tablet" + forest.??("-hidden"), -45, -45, 90, 90) }
+            case OldJewel if classicRelics => { DrawRect(pr + "jewel" + forest.??("-hidden"), -45, -45, 90, 90) }
+            case OldIdol if classicRelics => { DrawRect(pr + "idol" + forest.??("-hidden"), -45, -45, 90, 90) }
+            case Relic(r, value) if classicRelics => { DrawRect(pr + r + "-" + value.toString, -45, -45, 90, 90) }
+            case HiddenRelic(r) if classicRelics => { DrawRect(pr + r + "-" + "hidden", -45, -45, 90, 90) }
+
             case OldTablet if forest => { DrawRect(pr + "tablet-hidden-map", -60, -60, 120, 120) }
             case OldTablet => { DrawRect(pr + "tablet-map", -60, -60, 120, 120) }
             case OldJewel if forest => { DrawRect(pr + "jewel-hidden-map", -60, -60, 120, 120) }

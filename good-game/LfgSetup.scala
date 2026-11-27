@@ -54,6 +54,16 @@ object LfgSetup {
         }
         else ""
 
+    // LIVE OR ASYNC (asked for on 2026-11-27): the post says whether the game is played live, everyone online at the same time
+    // (the setup's Live Game, "LiveGameMode", picked in the panel's hits and ambushes), or async; nothing for a game whose catalog
+    // has no Live Game (Northgard's)
+    val live = "LiveGameMode"
+
+    def paceLine(c : Catalog, options : List[String]) : String =
+        if (!c.byName.contains(live)) ""
+        else if (options.contains(live)) "🟢 **Live**: everyone plays at the same time, online together\n"
+        else "🕒 **Async**: players take their turns whenever they can\n"
+
     // the options a game is created with: a ranked one with something not approved for ranked play is unranked
     def rankedOptions(c : Option[Catalog], options : List[String]) : List[String] =
         if (options.contains(ranked) && c.exists(_.unapproved(options).nonEmpty)) options.map(o => if (o == ranked) unranked else o) else options
@@ -534,6 +544,7 @@ object LfgSetup {
         val kind = Lfg.kind(s.c.meta)
         val text = emojiText(kind.emoji) + "**" + kind.label + ": " + d.title + "**, " + d.n + " players\n" +
             rankingLine(s.c, s.actual) +
+            paceLine(s.c, s.actual) +
             summary(s.c, d.picked, s.actual) +
             (if (d.note.nonEmpty) "**" + d.note + "**\n" else "") +
             (if (isNort(kind.meta))

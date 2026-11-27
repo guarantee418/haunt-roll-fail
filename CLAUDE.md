@@ -398,7 +398,7 @@ cd haunt-roll-fail && sbt fullOptJS
   the Dawn and Dusk deck are approved since 2026-11-22, and the Simple Landmarks and the Negabond (a second Vagabond, `approved`) since 2026-11-23 (owner). A ranked game with a bot gets a warning. The Discord bot's `/root` and
   `/northgard` take `ranked` (`LfgSetup.sections`), the catalog's tenth field marks each unapproved option (its menus say "makes the
   game unranked"), the post says Ranked or Unranked and why (`rankingLine`), and a Root Advanced Setup post always lists the factions in the draft by their emojis, picked or left as the defaults (`summary` in `LfgSetup.scala`; 2026-11-25), and a Ranked game with unapproved picks is created
-  Unranked (`rankedOptions`). Names are released or
+  Unranked (`rankedOptions`). The post (and the panel, and the started game's post) also says Live or Async, from the Live Game picked in the panel (`paceLine`, only for a catalog with `LiveGameMode`, so not Northgard's; 2026-11-27). Names are released or
   moved by committing `ranking-changes/<name>.txt` to `hrf-games` (`release <name>`, `rename <name> -> <new>`, `seat <user> <name>`, and `merge <name> -> <into>` for one player under two names, which gives `<into>` the first name's devices and seats and frees it, 2026-11-22;
   `Ranking.change`, applied once each by `Backup`, outcome in `<name>.result`).
   A name can have several player keys (each `names.tsv` row with a hash adds one, a row with an empty hash releases it), and
@@ -1076,6 +1076,14 @@ server. No session can reach the server, and none needs to.
   Auto Assign Hits is on by default and Ambush Bluff Mode off (`defaultsFor`; 2026-11-17), also when a browser's saved setup
   holds none of Auto Assign Hits, Live Game or the hits preset (`Meta.autoHitsOn`, in `completeSaved`): setups saved before the section
   never held Auto Assign Hits, as it was then always on, so it showed off, and held Bluff Mode, then the default.
+- Root's Live Game shows the map as JT drew it (asked for on Discord, 2026-11-27, root-feedback "Root live game options"): every
+  warrior (`SeparateWarriors`), the faded big warrior for a clearing's ruler (`ShowRule`) and the board's relic tokens (`ClassicRelics`),
+  in place of the player's own Warriors, Clearing Rule and Relics settings (`Meta.gameSettings` in `meta.scala`, Root's in
+  `root/meta.scala`; Adset and Mirror use Root's). Each player can change them under Interface for that game only: `GameSettings` in
+  `hrf.scala` keeps those groups' picks as `<settingsKey>.game-settings.<lobby>`, and `editSettings` saves the other groups as the
+  player's own, so their other games keep theirs; "Reset All Settings" clears the game's picks too. The Relics setting itself
+  (`ContrastRelics`, the default, or `ClassicRelics`, in every game) picks the high-contrast map tokens of 2026-11-24 or the board
+  tokens. Display only, so no game records change.
 - Root pass and play (asked for on 2026-10-17): in a local game with more than one human faction
   (`Callbacks.hotseat` in `hrf.scala`: a memory or localStorage journal), each time another human faction is asked
   the action pane shows "Pass to <faction>" and a "Show Hand and Choices" button instead of its hand and choices

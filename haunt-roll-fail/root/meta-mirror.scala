@@ -29,6 +29,7 @@ object MetaMirror extends MetaGame {
 
     override def settingsList = Meta.settingsList
     override def settingsDefaults = Meta.settingsDefaults
+    override def gameSettings(options : $[O]) = Meta.gameSettings(options)
     override def settingsMoves = Meta.settingsMoves
 
     override val about = Meta.about
