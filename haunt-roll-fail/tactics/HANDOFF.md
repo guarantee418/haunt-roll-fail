@@ -127,8 +127,8 @@ booklet's pictures (pages 9 and 10). Moro River's first rows had the bridge poin
   into a file and `tools/map-thumbs.py <file> webp2/tactics/images` for its thumbnail.
 - Desert Warfare (asked for on 2026-11-27): the source is Bad Crow's "3rd printing balance changes" sheet, a Google Doc the owner shared
   (doc id `1djH2anwCN1RWDKUn64P5bt_xWIY_CyMDHOX1L2gP6v0`; read it with the Google Docs connector, its 324 pictures from their
-  `contentUri`s). Done: the DAK faction (its boards, units, art). To do, all on the sheet: the DAK's 12 Commanders and 17 Lost Brigade
-  cards; the other factions' new Commanders (Rocket pack, Universal German, Desert Rats, Stuart Honey pack, Stretch Goal box) and Lost
+  `contentUri`s). Done: the DAK faction (its boards, units, art) and its 12 Commanders (`commanders.scala`, readings in RULES.md). To do, all on the
+  sheet: the DAK's 17 Lost Brigade cards; the other factions' new Commanders (Rocket pack, Universal German, Desert Rats, Stuart Honey pack, Stretch Goal box) and Lost
   Brigades; Planes and the anti-air capability; Troop Transports (boats); Blitz Cubes; the Barricade; the Black Gold and Twin Beaches
   panels (Fortifications, Anchors, Shorelines, permanent barbed wire) and 17 1v1 scenarios; and, when they come, its anti-air notes. The sheet's 15
   new boards for the five core factions are, compared pixel by pixel on 2026-11-27, the very boards the site already plays (the mod
