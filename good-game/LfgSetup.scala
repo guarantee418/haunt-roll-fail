@@ -433,7 +433,7 @@ object LfgSetup {
     // joined with "|"
     def isTactics(meta : String) = meta == Lfg.coh.meta
     val tacticsMaps = List("Map: Core missions", "Map: Skirmishes", "Map: Core panels, 3 panels", "Map: Large Map Pack, 2 panels")
-    val tacticsCommand = List(("map", "The map (skirmishes are for two players)", tacticsMaps.mkString("|")), ("length", "The game's length", "Game length"), ("rules", "Full or First Game Rules", "Rules"))
+    val tacticsCommand = List(("ranked", "Ranked or unranked (ranked if not given)", rankingSection), ("map", "The map (skirmishes are for two players)", tacticsMaps.mkString("|")), ("length", "The game's length", "Game length"), ("rules", "Full or First Game Rules", "Rules"))
     val tacticsPanel = List("Commanders", "Lost Brigades", "Map: options")
 
     // the panel's sections, for a game whose panel lists sections by name (Root's has its own pages)
@@ -566,7 +566,7 @@ object LfgSetup {
             summary(s.c, d.picked, s.actual) +
             (if (d.note.nonEmpty) "**" + d.note + "**\n" else "") +
             (if (isTactics(kind.meta))
-            "The map, the game length and the rules are as given with /" + kind.command + " (or the site's defaults). Pick the Commanders, the Lost Brigades and the map options, " +
+            "Ranked or unranked, the map, the game length and the rules are as given with /" + kind.command + " (or the site's defaults). Pick the Commanders, the Lost Brigades and the map options, " +
             "then press **Open the game** to post it here for players to join; each player picks a faction on Join. Only you see this."
             else if (isNort(kind.meta))
             "Ranked or unranked, the game length, victory conditions, " + (if (kind.clans) "Creatures, " else "the expansion drafted, ") + "Wilderness and Wastelands parts, warchiefs, " + (if (kind.clans) "central tile, " else "") + "fame and undo are as given with /" + kind.command + " (or the site's defaults). " +
