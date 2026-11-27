@@ -29,12 +29,19 @@ With the Full Game Rules come the twelve core Commanders (**Commanders**, furthe
 ## Team games
 
 Since 2026-11-24, three to five players play in two teams on any mission but the free-for-all (rulebook p. 6, Team Game End Game Conditions, and 11.0, uneven
-teams allowed): the Allies (US Forces, British Forces, Soviet Forces) against the Axis (Wehrmacht, Oberkommando West), so the
+teams allowed): the Allies (US Forces, British Forces, Soviet Forces) against the Axis (Wehrmacht, Oberkommando West, Deutsches Afrikakorps), so the
 setup refuses three players or more on one side (`validateFactionCombination` in `meta.scala`). Two players are two teams as
 before, any two factions, and play as they did (`teamGame` in `game.scala` is false, every helper below gives the old answer).
 
 - The team of the first seat is team 1 (the first Spawn Area); teammates share their team's Spawn Area (`teams`, `team`, `mates`,
   `enemies`, `foe`).
+- **3v3** (2026-11-27, the owner's ask): six players, three a side, on a map of three panels or more: Wehrmacht, OKW and the
+  Desert Warfare expansion's DAK against the three Allies, or with a faction taking a second seat ("Wehrmacht
+  II", `SecondFaction` in `game.scala`), as the rulebook lets the same faction play twice in a team game: it plays its first's boards,
+  units, Commanders, Lost Brigades and art, and its units are marked "II" on the map, with its own health badge colour. A second seat
+  needs its first in the game and three players or more (`validateFactionCombination`). The rules are the team rules below: shared
+  VPs, 2 starting Infantry each, alternating turns and purchases in seating order. The rulebook's team note doesn't cover 3v3, so
+  these are readings to check against Desert Warfare's 6-player rules once its files are in.
 - Teammates share VPs: a team's VPs are its players' together (`teamVP`), and the game ends at 3 more than the game length, 21,
   24 or 27 (`endVP`, p. 6). The 3 bonus VPs for the most Victory Point Control Points go to the team holding the most; a tie in
   VPs goes to the team that went first in the game. A unit destroyed gives its VP to the other team's first player (shared
@@ -347,6 +354,18 @@ Range and a Munitions +1 AI, the Churchill only the Defense XP upgrade (no Remov
   up and has a Firing Arc like a Weapon Team; the Raketenwerfer may set up in Buildings; the Sturmtiger's HE is HE Splash and it is Slow.
 - **Left out**: the anti-aircraft symbols and the "treat AP (HE) as AI against aircraft" notes (no aircraft in the core rules played
   here).
+- **Deutsches Afrikakorps** (DAK, 2026-11-27, the Desert Warfare expansion's Axis faction): its three Building Boards are the pictures in
+  Bad Crow's "3rd printing balance changes" sheet, a Google Doc the owner shared (not in the mod; `tactics-art.py factions <dir> <out> dak`
+  cuts them saved as `dak-1.jpg` ... in `<dir>`). DAK Headquarters: Assault Grenadiers (Speed Die; two XP upgrades of +1 Close Range
+  Firepower each, read off the soldier-with-lightning icon), Panzerjaeger (a Wrench), Flakvierling (a Light Vehicle that pins like a
+  machine gun and sets up with a Firing Arc like a Weapon Team). DAK Mechanized Kompanie: the **SdKfz 250 Half-Track** (no attack,
+  Transport, Capture, Reinforce; Infantry spawned into it on the round it spawned cost 2 Manpower less; its Munitions upgrade makes it
+  the Mortar Halftrack: 2 indirect HE, range 2 to 4, sets up with a Firing Arc, no more Transport, its passenger falling back as from the
+  Universal Carrier), the StuG III D (HE Splash, fixed HE and AI), the 8-Rad (a No-Fire Capture mode like the T-70). DAK Panzerarmee
+  Kommand: Panzer III (turreted, Heroic Sacrifice for XP, two +1 AI), the 88mm FLAK 36 (a Light Vehicle that sets up like a Weapon Team,
+  Slow), the **Command Tiger** (one at a time; its XP upgrade lets the DAK, once a round in its Maneuver Phase, put the command marker on one
+  of its Vehicles, which captures that round: the board's "gain Capture for next round" read as the round it is placed). Its Commanders
+  (8 core, 4 Desert Warfare) and Lost Brigades are on the same sheet and not in yet: a DAK player draws none.
 
 ## Commanders
 
@@ -499,6 +518,38 @@ Readings:
 - Cavalry Riflemen's free Assault: once a round, after spending a CP, onto an adjacent enemy-held hex, with no CP.
 - The Dozer destroys the Sandbags of the hex it Assaults (the field defenses this game has) at the start of the Damage Phase.
 - Urban Assault's Smoke is offered with the other Smoke at the start of the Damage Phase, for Riflemen in an Assault.
+
+### The Deutsches Afrikakorps' Commanders
+
+The DAK's twelve cards (2026-11-27; Bad Crow's "3rd printing balance changes" sheet, cut by `tools/dak-commander-art.py`): eight core,
+drawn three at a time like the other factions' six (Armored Warfare Support, Armored Airpower Support, Italian Combined Armor, Italian
+Combined Arms, Italian Field Engineers, Defensive Warfare, Desert Skorpion, Italian Coastal), and four Desert Warfare cards, drawn only
+with Expansion Commanders (Italian Light Support, Italian Desert Raid, Assault Support Doctrine, Italian Tank Assault). The abilities a
+card shares with another faction's (Hull Down, Hold the Line, Step on it, the Nebelwerfer and Stuka strikes, Recon Plane, the vehicles'
+free move, the 8-Rad's No-Fire income, the Elefant) play by those rules. The Elefant and the MG Bunker are the Wehrmacht's units, with
+DAK tokens. Readings:
+
+- **Units** read off the cards: Kradschützen 2 health, range 2, 1 AI, Capture, 2 Speed Dice (the doubled runner); Semovente 2 health,
+  range 3, 2 fixed AP or 2 fixed HE picked each attack; Bersaglieri 3 health, range 3, 2 AI, a Defense Die; Guastatori 4 health, range 2,
+  2 AI, 2 Wrenches; Panzerpioneer 5 health, range 3, 1 indirect HE, 2 Wrenches; 105 Howitzer 4 health, range 1 to 5 (only the 5 is
+  printed), 3 indirect HE, Slow, sets up like a Weapon Team; 210/22 Artillery Emplacement 4 health, range 4 to 6, 3 indirect HE, 5
+  Manpower; L6/40 1 health, range 2, 1 turreted AI, a Speed Die, the T-70's No-Fire Capture mode, two for each bought, six at most;
+  Flammpanzer III a Panzer III (its upgrades and limit) with Flame in place of AP.
+- **Kradschützen's rider**: a move of a Kradschützen at 2 Health may leave the rider (1 health, Heroic Sacrifice) on the hex the move
+  starts from, the Kradschützen losing 1 Health; the rider spots and captures like Infantry but spends no CP and never fires.
+- **Bersaglieri**: when its first move of the round starts in its team's Spawn Area or in a Transport, it may then move once more for free.
+- **Guastatori**: at Infantry in a Building or at an Emplacement their AI dice are Flame, except in an Assault.
+- **Smoke and Cover**: a Guastatori pinned by a machine gun may, when it would pick a target, Smoke its hex instead; the pin is broken
+  when the machine gun isn't next to it (Smoke blocks attacks from further away), but the machine gun's damage stands.
+- **Battlefield Salvage**: each of your units destroyed gives the XP as usual and one trade, in your purchases, of 1 XP for 1 Manpower,
+  Munitions or Fuel.
+- **Counter Offensive**: with no Command Tiger in play, one spawns for free in the purchases (like West Point Reserves' Major).
+- **Prepared Positions**: Emplacements and Vehicle Weapon Teams (Flakvierling, 88mm FLAK 36, 105 Howitzer, Mortar Halftrack) are
+  Camouflaged and have one more Defense Die that round.
+- **250/3 Funkpanzerwagen**: Infantry may spawn into an empty SdKfz 250 anywhere (Slow the first round outside the Spawn Area), and
+  none gets the 250's Manpower discount; with it, and with Recon Tractor's Spot Camo upgrade, the 250 can't take the Mortar Halftrack.
+- **Stuka JU-87 Anti-Tank Loiter** and **Recon Plane**: planes aren't in yet, so they are played as the other factions' strike and
+  Recon Plane. Transfer Depots lasts the Supply Phase, as US Breakthrough does.
 
 ## Lost Brigades
 

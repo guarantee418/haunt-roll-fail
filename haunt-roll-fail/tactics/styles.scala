@@ -22,6 +22,14 @@ package object elem {
         British --> color("#e8c86e")
         Soviet --> color("#f2708a")
         OKW --> color("#9fbde3")
+        DAK --> color("#f0a860")
+        // the second seats ("Wehrmacht II"): a paler shade of their first's
+        US2 --> color("#cfe8b0")
+        Wehrmacht2 --> color("#ffb8b0")
+        British2 --> color("#f4e0a8")
+        Soviet2 --> color("#f8b0c0")
+        OKW2 --> color("#cfe0f4")
+        DAK2 --> color("#f8d0a8")
 
         Manpower --> color("#d8d26a")
         Munitions --> color("#ff8a50")
@@ -86,5 +94,12 @@ package object elem {
         British --> outline.color("#c8a24a")
         Soviet --> outline.color("#a0203c")
         OKW --> outline.color("#5d7a99")
+        DAK --> outline.color("#c67a34")
+        US2 --> outline.color("#4f7a2a")
+        Wehrmacht2 --> outline.color("#9c2a24")
+        British2 --> outline.color("#9c7a2e")
+        Soviet2 --> outline.color("#6e1028")
+        OKW2 --> outline.color("#3b5571")
+        DAK2 --> outline.color("#8c5220")
     }
 }

@@ -122,7 +122,7 @@ object Brigade {
         LBCommandPantherUS, LBCommandPantherWM, LBCommandPantherBR, LBCommandPantherSU, LBCommandPantherOKW)
 
     // a faction's deck: its twelve and its Command Panther
-    def of(f : Faction) = all.%(_.faction == f)
+    def of(f : Faction) = all.%(_.faction == f.base)
 
     // the starting Infantry a brigade gives
     def startUnit(b : Brigade) : |[UnitType] = b @@ {

@@ -444,11 +444,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
             val hp = ImageRect(textImage(game.health(u) + "/" + game.maxHealth(u), "#f3eee2", u.faction.color), Rectangle(-size * 0.28, size * 0.22, size * 0.56, size * 0.31), 0.95)
             val st = $[ImageRect]() ++
                 game.pinned.contains(u).$(ImageRect(new RawImage(img("status:pinned")), Rectangle(-size / 2, -size / 2, size * 0.32, size * 0.32), 1.0)) ++
-                (u.utype.setsUp && passenger.not).$(ImageRect(new RawImage(img(game.setUp.contains(u).?("status:setup").|("status:nofire"))), Rectangle(size * 0.18, -size / 2, size * 0.32, size * 0.32), 1.0)) ++
+                (game.setsUp(u) && passenger.not).$(ImageRect(new RawImage(img(game.setUp.contains(u).?("status:setup").|("status:nofire"))), Rectangle(size * 0.18, -size / 2, size * 0.32, size * 0.32), 1.0)) ++
                 game.noFire.contains(u).$(ImageRect(new RawImage(img("status:nofire")), Rectangle(size * 0.18, -size / 2, size * 0.32, size * 0.32), 1.0)) ++
                 game.slowed.get(u).has(game.round).$(ImageRect(new RawImage(img("status:slow")), Rectangle(-size / 2, size * 0.18, size * 0.32, size * 0.32), 1.0)) ++
                 game.retreating.contains(u).$(ImageRect(new RawImage(img("status:retreat")), Rectangle(size * 0.18, size * 0.18, size * 0.32, size * 0.32), 1.0)) ++
-                game.facing.get(u).toList.map(e => ImageRect(arrowImage(e, u.faction.color), Rectangle(-size * 0.8, -size * 0.8, size * 1.6, size * 1.6), 1.0))
+                game.facing.get(u).toList.map(e => ImageRect(arrowImage(e, u.faction.color), Rectangle(-size * 0.8, -size * 0.8, size * 1.6, size * 1.6), 1.0)) ++
+                // a second seat's units ("Wehrmacht II") are marked II above the token, as their art is their first's
+                u.faction.second.$(ImageRect(textImage("II", "#f3eee2", u.faction.color), Rectangle(-size * 0.2, -size * 0.66, size * 0.4, size * 0.225), 0.95))
             units.add(Sprite($(token, hp) ++ st, $(box), $((h, u))), 1.0, passenger.?(2).|(assaulting.?(3).|(1)))(x, y)
         }
 
@@ -493,7 +495,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         val points = Div(("Control Points " + game.pointsOf(f).num).txt)(styles.small)
 
         // the Commander: its name and tiers unlocked (or how many are drawn), tapping shows the cards
-        val commanderSpan = (game.commanders && Commander.all.exists(_.faction == f)).?(OnClick(("commander", f), Span(game.commanderOf.get(f)./(c => c.elem ~ " " ~ (game.tiersOf.getOrElse(f, 0) + "/4").hl).|(("Commander: " + game.drawn.getOrElse(f, $[Commander]()).num + " drawn").txt), xlo.pointer)) : Elem).|(Empty)
+        val commanderSpan = (game.commanders && Commander.all.exists(_.faction == f.base)).?(OnClick(("commander", f), Span(game.commanderOf.get(f)./(c => c.elem ~ " " ~ (game.tiersOf.getOrElse(f, 0) + "/4").hl).|(("Commander: " + game.drawn.getOrElse(f, $[Commander]()).num + " drawn").txt), xlo.pointer)) : Elem).|(Empty)
         // the Lost Brigade, on the same line: its name once picked (or how many are drawn), tapping shows the cards
         val brigadeSpan = game.brigades.?(OnClick(("brigade", f), Span(game.brigadeOf.get(f)./(b => b.elem).|(("Lost Brigades: " + game.brigadesDrawn.getOrElse(f, $[Brigade]()).num + " drawn").txt), xlo.pointer)) : Elem).|(Empty)
         val commander = (game.commanders || game.brigades).?(Div(commanderSpan ~ (game.commanders && game.brigades).?(" · ".txt : Elem).|(Empty) ~ brigadeSpan)(styles.small)).|(Empty)
