@@ -741,7 +741,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
     override def info(self : |[Faction], aa : $[UserAction]) = {
         val ii = currentGame.info($, self, aa)
         ii.any.??($(ZOption(Empty, Break)) ++ convertActions(self.of[Faction], ii)) ++
-            tutorial.$(ZBasic(Break ~ Break, "Tutorial Lessons".hh, () => { onClick(TutorialLessonView(0)) }).copy(clear = false)) ++
+            tutorial.$(ZBasic(Break ~ Break, "Tutorial Lessons".hh, () => { onClick(TutorialLessonView(Tutorial.firstLesson(game))) }).copy(clear = false)) ++
             (tutorial && tutorialTipsHidden && currentGame.isOver.not).$(ZBasic(Break, "Show tutorial tips".hh, () => { hideTutorialTips(false) }).copy(clear = false)) ++
             $(ZBasic(Break ~ Break, "Building Boards".hh, () => { onClick(("board", self.|(game.setup.head))) }).copy(clear = false)) ++
             $(ZBasic(Break ~ Break, "Icons".hh, () => { onClick("legend") }).copy(clear = false)) ++

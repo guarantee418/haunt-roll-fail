@@ -23,11 +23,15 @@ played and the choices made.
   `webp2/`, where the live site couldn't find them (404).
   No ranking.
 - Tutorial (2026-11-25, "some new players need a tutorial"): "Tutorial" on the Company of Heroes menu (URL `/play/tactics/tutorial`,
-  the core `tutorialMenu` Northgard's uses) has eight lessons on the First Game Rules and the site, as the US Forces (`Tutorial.lessons`
-  in `tutorial.scala`, all the text in one place): how you win, the map and Control Points, a round, Maneuver and CP, Damage, Supply,
-  playing on this site, and the Full Game Rules for after; then a practice game, US Forces against the Wehrmacht's Easy bot on Moro
-  River with the First Game Rules, no Commanders, Short (`Tutorial.options`, the hidden `TutorialOption`), saved in the browser like the
-  local games (kind `tutorial`). A "Tutorial tip" above the choices explains each kind of choice (`Tutorial.tip`, `preinfo` in `ui.scala`),
+  the core `tutorialMenu` Northgard's uses) teaches as the US Forces in two parts (`Tutorial.lessons` in `tutorial.scala`, all the text in
+  one place; `Tutorial.groupOf`, the core `tutorialLessonGroup`). First Game Rules: how you win, the map and Control Points, a round,
+  Maneuver and CP, Damage, Supply, playing on this site, and what the Full Game Rules add; then a practice game, US Forces against the
+  Wehrmacht's Easy bot on Moro River with the First Game Rules, no Commanders, Short (`Tutorial.options`, the hidden `TutorialOption`),
+  saved in the browser like the local games (kind `tutorial`). Full Game Rules (asked for the same day): Operations, Retreats, Assaults,
+  facing, arcs and Overwatch, HE Splash, Buildings and defenses, Commanders, and where to go next; then its own practice game with the
+  Full Game Rules and the Commanders (`Tutorial.fullOptions`, kind `tutorial-full`, URL `/play/tactics/tutorial/tutorial-full`). Each
+  part's game is offered after its last lesson (`Tutorial.games`, the core `tutorialGames`, which by default is Northgard's one
+  `tutorialGame`). A "Tutorial tip" above the choices explains each kind of choice (`Tutorial.tip`, `preinfo` in `ui.scala`),
   "Hide tips" turns them off (`tactics.tutorial-tips-hidden`), "Tutorial Lessons" under the action pane opens the lessons over the game
   (`TutorialLessonView`). The lessons' resource icons are in `Meta.menuImages` under their asset names (`res:<id>`), so they show in the
   menu as in the game.
@@ -102,7 +106,7 @@ booklet's pictures (pages 9 and 10). Moro River's first rows had the bridge poin
   forcing each card and `XP=25`), scenario checks for the rarer ones (Ramming, Thorough Salvage, Hold the Line, Crocodile, Thompsons,
   the Emplacements, Assault Tactics' income), the older games still replaying unchanged. sbt can't fetch from Maven Central here at times (HTTP 429): `~/.sbt/repositories` pointing at Google's mirror
   (`https://maven-central.storage-download.googleapis.com/maven2/`) with `-Dsbt.override.build.repos=true` works.
-- Tutorial: `TACTICS_TUTORIAL=1` plays the practice game's seating and options and prints each kind of choice the US Forces were
+- Tutorial: `TACTICS_TUTORIAL=1` (`full` for the Full Game Rules one) plays the practice game's seating and options and prints each kind of choice the US Forces were
   offered with a tip ("TIP") or without ("NO TIP"); the bot never sees the soft menus (a unit's moves, the spawn hexes), so those were
   checked in Chromium (2026-11-25: the lessons in the menu, the practice game's setup, Maneuver and unit tips, the lessons overlay).
 - Browser: see "Browser driving" in `nort/HANDOFF.md`. A dump goes into `localStorage` as `tactics.hotseat.game.<time>`
