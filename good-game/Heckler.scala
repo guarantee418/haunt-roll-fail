@@ -64,6 +64,7 @@ object Heckler {
         case "nort" | "nort-adset" => ratatoskr
         case "pincer" => pamphleteer
         case "tactics" => sergeant
+        case "cyclades" => satyr
         case _ => crow
     }
 
@@ -986,4 +987,20 @@ object Heckler {
         "reminder" -> List(
             "{name}! Are you still asleep in that foxhole? It's STILL your turn!",
             "This is the Assault Specialist, {name}. The war is waiting. On YOU.")))
+
+    // CYCLADES (2026-11-27): the Satyr, who steals Philosophers and dignity alike (his picture the Satyr Creature card's)
+    val satyr = Voice("The Satyr", "lfg/webhooks/heckler-cyclades.png", Map(
+        "turn" -> List(
+            "Your turn, {name}! The gods are watching. Mostly to laugh.",
+            "{name}, the Oracle foresaw your next move. She's still giggling.",
+            "Your offering, {name}. Even Apollo thinks you could do better, and Apollo takes anything.",
+            "{name}! Your Metropolis is a hut with ambitions. Your turn.",
+            "Your move, {name}. I'd steal your Philosopher, but I've seen your plan. No need."),
+        "asked" -> List("{name}, the gods require your attention. Briefly, they hope."),
+        "intro-waiting" -> List("Welcome to the trolls, {name}! {game} has waited on you for {time}. The Kraken got bored and left."),
+        "intro-pings" -> List("{name} needed {n} turn pings in {game}. Even Sisyphus moves faster, and his rock rolls back."),
+        "intro-lost" -> List("I read the scrolls of {game}, {name}: {score}, while {winner} won with {top}. The Fates were kind. To {winner}."),
+        "reminder" -> List(
+            "Still waiting, {name}. The Minotaur has finished his maze and started another.",
+            "{name}, your fleets have rusted at anchor. It's STILL your turn.")))
 }

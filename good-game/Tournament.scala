@@ -46,7 +46,8 @@ import scala.concurrent.duration.Duration
 //                                     discord-turns-webhook, "turns off" removes it); delete the change file once its .result says "set"
 //   nort-turns <url>                  the same for Northgard's games (the file discord-nort-turns-webhook, "nort-turns off")
 //   pincer-turns <url>                the same for Pincer's (discord-pincer-turns-webhook) and Company of Heroes' (tactics-turns,
-//   tactics-turns <url>               discord-tactics-turns-webhook); the bot's make-webhook change can make and set them itself
+//   tactics-turns <url>               discord-tactics-turns-webhook) and Cyclades' (cyclades-turns, discord-cyclades-turns-webhook);
+//   cyclades-turns <url>              the bot's make-webhook change can make and set them itself
 //   bot <token>                       the Discord bot's token, so a username given on the Tournament page pings (DiscordBot.scala;
 //                                     the file discord-bot-token, "bot off" removes it); delete the change file once its .result is read
 //   guild <id>                        the Discord server the bot looks usernames up in, if not the webhook's (the file discord-guild)
@@ -673,7 +674,7 @@ object Tournament {
                 case w if Heckler.words(w) => Heckler.change(w, rest)
                 // the General Announcements webhook's posts (Announce.scala; 2026-11-26)
                 case w if Announce.words(w) => Announce.change(w, rest)
-                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, congratulate, turns, nort-turns, pincer-turns, tactics-turns, bot, guild, discord, ping waiting, pings, status, no-discord, lfg-key, lfg-commands, invite, or the server changes roles, role, rename-role, merge-role, give-role, take-role, channels, category, channel, rename-channel, move-channel, order, webhooks, make-webhook, rename-webhook, test-ping, self-roles, self-role, self-role-off and role-picker, roast-role, roasts, announce, nort-announce, root-announce, pincer-announce, coh-announce, announce-voices)"
+                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, congratulate, turns, nort-turns, pincer-turns, tactics-turns, cyclades-turns, bot, guild, discord, ping waiting, pings, status, no-discord, lfg-key, lfg-commands, invite, or the server changes roles, role, rename-role, merge-role, give-role, take-role, channels, category, channel, rename-channel, move-channel, order, webhooks, make-webhook, rename-webhook, test-ping, self-roles, self-role, self-role-off and role-picker, roast-role, roasts, announce, nort-announce, root-announce, pincer-announce, coh-announce, cyclades-announce, announce-voices)"
             }
 
             (if (word == "webhook" || word == "forum" || TurnPings.slot(word).nonEmpty || word == "bot") word else line) + ": " + result

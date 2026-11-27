@@ -335,6 +335,10 @@ and the 4-player board of the two halves (`Layouts` in `cyclades/board.scala`, i
 column), offerings with outbidding, the five gods, battles and retreats, the 17 Creatures and their figures, Metropolises. GP are
 public. `cyclades/RULES.md` has the rules as played and the readings, `cyclades/HANDOFF.md` the state, files and testing
 (`cyclades.Host`, `cyclades.Check`, `cyclades.LogDump`; `CYCLADES_RANDOM=0.4` mixes in random choices to reach every rule).
+Its Discord section (2026-11-27, asked for): the `cyclades` role and category with #cyclades-announcements, -discussion, -lfg, -games,
+-feedback and -results, like Pincer's; turn pings in #cyclades-games through the bot-made "Herald of Olympus" (Zeus from his god tile;
+`cyclades-turns` in `TurnPings.slots`, led by 🏛️), game updates in #cyclades-announcements as the "Oracle of Delphi" (Apollo; `cyclades-announce
+<name>`, `Announce.cyclades`), the Roast Me heckler the Satyr (`Heckler.satyr`, the Satyr card's art), avatars by `tools/webhook-avatars.py`.
 
 ## Building
 
