@@ -41,6 +41,9 @@ object Meta extends MetaGame { mmm =>
     val quickMin = 2
     val quickMax = 5
 
+    // Discord LFG games (/cyclades, good-game/Lfg.scala; 2026-11-27): no options, 2 to 5 players
+    override def lfgPlayers = $(2, 3, 4, 5)
+
     override val about = $[Elem](
         "Cyclades".hlb ~ " by Bruno Cathala and Ludovic Maublanc, illustrated by Miguel Coimbra, published by Matagot (2009); the base game.",
         "The art is from the Tabletop Simulator mods of Cyclades.",
