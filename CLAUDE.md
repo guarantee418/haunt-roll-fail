@@ -335,6 +335,10 @@ and the 4-player board of the two halves (`Layouts` in `cyclades/board.scala`, i
 column), offerings with outbidding, the five gods, battles and retreats, the 17 Creatures and their figures, Metropolises. GP are
 public. `cyclades/RULES.md` has the rules as played and the readings, `cyclades/HANDOFF.md` the state, files and testing
 (`cyclades.Host`, `cyclades.Check`, `cyclades.LogDump`; `CYCLADES_RANDOM=0.4` mixes in random choices to reach every rule).
+"Tutorial" on its menu (2026-11-27, asked for; the core `tutorialMenu`, URL `/play/cyclades/tutorial`) teaches the rules in nine lessons
+(`Tutorial.lessons` in `cyclades/tutorial.scala`), then a practice game as Blue against the Red and Green Easy bots (hidden `TutorialOption`)
+with a "Tutorial tip" above each choice (`Tutorial.tip`, `preinfo` in `cyclades/ui.scala`), "Hide tips" and "Tutorial Lessons" as in
+Northgard's; How to Play points to it; `CYCLADES_TUTORIAL=1` in `cyclades.Host` lists the choices with and without a tip.
 `/cyclades` in the LFG channel (2026-11-27) posts a game like `/pincer`: 2 to 5 players picking a color on Join (or a random one), no options and so no setup panel, pinging the `cyclades` role (or `cyclades-lfg`; `Lfg.cyclades`, `cycladesPicks`, `lfgPlayers` in `cyclades/meta.scala`).
 Its Discord section (2026-11-27, asked for): the `cyclades` role and category with #cyclades-announcements, -discussion, -lfg, -games,
 -feedback and -results, like Pincer's; turn pings in #cyclades-games through the bot-made "Herald of Olympus" (Zeus from his god tile;
@@ -1309,7 +1313,7 @@ server. No session can reach the server, and none needs to.
   at least one pick, in place of a yes/no question per game): the tournament changes `onboarding` (lists the questions) and
   `onboarding-question <title> | <answer> = <role> [= <emoji> [= <description>]] | ... [| single] [| optional]` (`DiscordServer.scala`; the emoji Unicode, a server emoji's name, `clan:Wolf` or `faction:MC`, the Root cat),
   which puts that question first, several picks and required by default, and drops the questions whose answers give only roles among
-  its own; roles with server permissions or a bot's are refused, as in `SelfRoles`. The bot needs Manage Server and Manage Roles.
+  its own (or roles since deleted), and `onboarding-remove <title>` takes a question out; roles with server permissions or a bot's are refused, as in `SelfRoles`. The bot needs Manage Server and Manage Roles.
 - Members give and take the game and ping roles themselves (2026-11-24, asked for): `/roles`, or the "Pick my roles" button under the
   bot's role picker post, opens a menu only they see with their roles ticked (`good-game/SelfRoles.scala`, a `BotCommand`; its button and
   menu go through `Lfg.interaction`). Only the roles the owner lists are offered (`tournament/self-roles.tsv`, set by the tournament changes

@@ -31,6 +31,7 @@ package object elem {
 
         // the Tutorial's lessons and tips (tutorial.scala)
         object tutorialText extends CustomStyle(width("60ex"), max.width("100%"), margin.left("auto"), margin.right("auto"), margin.top("1ex"), text.align("left"))
+        object tutorialSite extends CustomStyle(SimpleCSSRule("border-left", "0.5ex solid #8fbf6f"), padding.left("1ex"))
         object tutorialTip extends CustomStyle(text.align("left"), SimpleCSSRule("border-left", "0.5ex solid #8fbf6f"))
         object menuText extends CustomStyle(text.align("center"))
 

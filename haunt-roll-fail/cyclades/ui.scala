@@ -405,6 +405,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         case "gods" =>
             showOverlay(overlayScrollX(Div("The Gods".hlb) ~ (God.main :+ Apollo)./(g => Div(Image("god:" + g.id, styles.godTile))).merge), onClick)
 
+        case TutorialLessonView(n) =>
+            showOverlay(overlayScrollX(tutorialLesson(n)).onClick, onClick)
+
         case c : Creature =>
             showOverlay(overlayFitX(Image("creature:" + c.id, styles.artwork) ~ Div(c.elem ~ Break ~ c.text)), onClick)
 
@@ -426,7 +429,45 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
             clearOverlay()
     }
 
+    // The Tutorial's practice game: a lesson tapped open, with the previous and next ones a tap away (a tap elsewhere closes it)
+    def tutorialLesson(n : Int) : Elem = {
+        val (t, body) = Tutorial.lessons(n)
+        val last = Tutorial.lessons.num - 1
+        val nav = (n > 0).?(("◂ " ~ Tutorial.lessons(n - 1)._1).spn(xstyles.outlined).pointer.onClick.param(TutorialLessonView(n - 1))).|(Empty) ~ " ".pre ~
+            (n < last).?((Tutorial.lessons(n + 1)._1 ~ " ▸").spn(xstyles.outlined).pointer.onClick.param(TutorialLessonView(n + 1))).|(Empty)
+        (("Lesson " + (n + 1) + " of " + (last + 1)).txt.div ~ t.hlb.div ~ body./(e => Div(e)).merge ~ nav.div(styles.menuText)).div(xlo.flexvcenter)
+    }
+
+    // The Tutorial's practice game: its tips, hidden by "Hide tips" (each browser remembers it)
+    def tutorial = game.options.has(TutorialOption)
+
+    val tutorialTipsKey = "cyclades.tutorial-tips-hidden"
+
+    def tutorialTipsHidden : Boolean = try { hrf.web.Local.get(tutorialTipsKey, "") == "yes" } catch { case _ : Throwable => false }
+
+    def hideTutorialTips(hide : Boolean) {
+        try { hrf.web.Local.set(tutorialTipsKey, hide.?("yes").|("")) } catch { case _ : Throwable => }
+        if (lastThen != null) ask(lastSelf, lastActions, lastThen)
+    }
+
+    // The tip for the choices offered (Tutorial.tip), or what the bots are doing
+    override def preinfo(self : |[Faction], aa : $[UserAction]) : $[ZOption] =
+        if (tutorial.not || tutorialTipsHidden || currentGame.isOver)
+            $
+        else {
+            val tip = (self match {
+                case Some(f) if f == Tutorial.side => Tutorial.tip(currentGame, f, aa)
+                case _ => None
+            }) || aa.none.?(Tutorial.waiting(currentGame))
+            tip./(t => ZOption("Tutorial tip".hl, Div(Div(t, $(styles.tutorialTip)) ~ Div(Parameter("hide", OnClick("Hide tips".spn(xstyles.outlined)(xstyles.smaller85)(xlo.pointer))), $(styles.menuText)), ZBasic.info), {
+                case "hide" => hideTutorialTips(true)
+                case _ =>
+            }, clear = false)).$
+        }
+
     override def info(self : |[Faction], aa : $[UserAction]) = {
+        tutorial.$(ZBasic(Break ~ Break, "Tutorial Lessons".hh, () => { onClick(TutorialLessonView(0)) }).copy(clear = false)) ++
+        (tutorial && tutorialTipsHidden && currentGame.isOver.not).$(ZBasic(Break, "Show tutorial tips".hh, () => { hideTutorialTips(false) }).copy(clear = false)) ++
         $(ZBasic(Break ~ Break, "The Gods".hh, () => { onClick("gods") }).copy(clear = false)) ++
             $(ZBasic(Break ~ Break, "Creatures".hh, () => { onClick("creatures") }).copy(clear = false)) ++
             (currentGame.isOver && hrf.HRF.flag("replay").not).$(
