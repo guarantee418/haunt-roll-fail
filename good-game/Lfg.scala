@@ -20,6 +20,10 @@ import java.nio.file.{Files, Path, Paths}
 // LfgSetup.scala), and its game gets its post and turn pings in the Northgard turns channel (TurnPings.webhookFor). Each game is
 // a Kind: its meta, the command, the role; a post keeps its meta (a ninth field of its open row; none, an older post, Root's).
 //
+// PINCER AND COMPANY OF HEROES (2026-11-27): /pincer and /coh, pinging pincer-lfg and coh-lfg, their posts and pings in their own
+// turns channels. Their players pick a side on Join, as Northgard's pick a clan (Picks: Pincer's colors, Company of Heroes' factions);
+// Pincer has no options and so no panel. A game whose sides can't play together (Company of Heroes' teams) isn't created (Picks.check).
+//
 // Discord sends the slash command and the button presses to POST /discord/interactions, signed with the application's public key
 // (HRF_DISCORD_PUBLIC_KEY, or the file discord-public-key, set by the tournament change "lfg-key <key>"); /root is registered in
 // the Discord server (DiscordBot.guild) with the bot's token when the key is set and at the server's start.
@@ -51,25 +55,68 @@ object Lfg {
 
     // a game LFG posts set up: its meta and label, the game's name, the slash command and its description, the role a new post pings
     // (the first of these names the Discord server has), the server's emoji for its posts (LfgSetup.emojiNames), the seats
-    case class Kind(meta : String, label : String, game : String, command : String, description : String, roles : List[String], emoji : String, minSeats : Int = 2, maxSeats : Int = 6, clans : Boolean = false) {
+    // (picks: the sides its players pick on Join, for a game whose seats are its factions; panel: whether /<command> opens the setup
+    // panel, a game with options to set; size: the players if not given)
+    case class Kind(meta : String, label : String, game : String, command : String, description : String, roles : List[String], emoji : String, minSeats : Int = 2, maxSeats : Int = 6, picks : Option[Picks] = None, panel : Boolean = true, size : Int = 4) {
         // the client's defaults (POST /lfg/template): Root's keeps its first name
         def template = TurnPings.dir.resolve(if (meta == "root-adset") "lfg-template.tsv" else "lfg-template-" + meta + ".tsv")
+        // its players pick their side (clan, color, faction) on Join
+        def clans = picks.nonEmpty
+        def word = picks.map(_.word).getOrElse("clan")
     }
 
-    val root = Kind("root-adset", "Root: Advanced Setup", "Root", "root", "Look for players for an online Root game (Advanced Setup) on the site", List("root-lfg"), "title")
-    val nortStd = Kind("nort", "Northgard", "Northgard", "northgard", "Look for players for an online Northgard game (standard, or Adset with a clan draft) on the site", List("ng-lfg", "northgard-lfg"), "title-nort", clans = true)
-    val nort = Kind("nort-adset", "Northgard: Adset", "Northgard", "northgard", "Look for players for an online Northgard game (standard, or Adset with a clan draft) on the site", List("ng-lfg", "northgard-lfg"), "title-nort")
+    // THE SIDES PICKED ON JOIN (2026-11-27, Pincer and Company of Heroes, as Northgard's clans): each side's value (as the lobby's
+    // "user <faction>" lines name the seat), label and Unicode emoji; the random picks (value, label, the sides drawn from); whether the
+    // players pick a color too (Northgard's ColorOption and TeamOption); and what makes a combination of sides unplayable (with the
+    // options), checked when the game is created
+    case class Side(value : String, label : String, emoji : String = "")
+    case class Picks(word : String, button : String, sides : List[Side], randoms : List[(String, String, List[String])], colors : Boolean = false, check : (List[String], List[String]) => Option[String] = (_, _) => None) {
+        def values = sides.map(_.value)
+        def all = values ++ randoms.map(_._1)
+        def random(v : String) = randoms.find(_._1 == v)
+        def side(v : String) = sides.find(_.value == v)
+    }
 
-    // (a command with several kinds picks one with its "mode" option, the first by default)
-    val kinds = List(root, nortStd, nort)
-
-    def kindsOf(command : String) = kinds.filter(_.command == command)
-
-    // THE CLANS a standard Northgard game's players pick from, as the client names them, and the random picks
+    // (here, before the kinds that use them: the object is set up in order)
     val coreClans = List("Bear", "Boar", "Goat", "Raven", "Snake", "Stag", "Wolf")
     val bloodClans = List("Dragon", "Horse", "Kraken", "Lynx", "Ox", "Rat", "Squirrel")
     val randomCore = "RandomCore"
     val randomAny = "RandomAny"
+
+    // Northgard's clans: the core and New Blood ones, or a random core clan or random clan; each with a color
+    val nortPicks = Picks("clan", "Clan and color", (coreClans ++ bloodClans).map(c => Side(c, c + " Clan")),
+        List((randomCore, "Random core clan (7)", coreClans), (randomAny, "Random clan (14)", coreClans ++ bloodClans)), colors = true)
+
+    // PINCER (2026-11-27): its players are its colors, 2 to 4
+    val pincerPicks = Picks("color", "Pick a color", List(Side("R", "Red", "🔴"), Side("G", "Green", "🟢"), Side("B", "Blue", "🔵"), Side("Y", "Yellow", "🟡")),
+        List(("Random", "Random color", List("R", "G", "B", "Y"))))
+
+    // COMPANY OF HEROES (2026-11-27): any two factions, or three to five in teams, Allies (US, British, Soviet) against Axis (Wehrmacht,
+    // OKW), as the setup screen checks (validateFactionSeatingOptions in tactics/meta.scala); the skirmishes are for two
+    val allies = List("US", "BR", "SU")
+    val axis = List("WM", "OKW")
+    val skirmishes = List("TheRiverMap", "FrozenPondMap")
+    val cohPicks = Picks("faction", "Pick a faction",
+        List(Side("US", "US Forces", "🇺🇸"), Side("BR", "British Forces", "🇬🇧"), Side("SU", "Soviet Forces", "⭐"), Side("WM", "Wehrmacht", "🦅"), Side("OKW", "Oberkommando West", "🛡️")),
+        List(("RandomAllies", "Random Allied faction", allies), ("RandomAxis", "Random Axis faction", axis), ("Random", "Random faction", allies ++ axis)),
+        check = (ss, options) =>
+            if (ss.size != 2 && options.exists(skirmishes.contains)) Some("That map is a skirmish, for two players.")
+            else if (ss.size > 2 && (!ss.exists(allies.contains) || !ss.exists(axis.contains))) Some("With three players or more the game is Allies (US, British, Soviet) against Axis (Wehrmacht, OKW): someone has to play the other side.")
+            else None)
+
+    val root = Kind("root-adset", "Root: Advanced Setup", "Root", "root", "Look for players for an online Root game (Advanced Setup) on the site", List("root-lfg"), "title")
+    val nortStd = Kind("nort", "Northgard", "Northgard", "northgard", "Look for players for an online Northgard game (standard, or Adset with a clan draft) on the site", List("ng-lfg", "northgard-lfg"), "title-nort", picks = Some(nortPicks))
+    val nort = Kind("nort-adset", "Northgard: Adset", "Northgard", "northgard", "Look for players for an online Northgard game (standard, or Adset with a clan draft) on the site", List("ng-lfg", "northgard-lfg"), "title-nort")
+
+    val pincer = Kind("pincer", "Pincer", "Pincer", "pincer", "Look for players for an online game of Pincer: A Gentleman's War on the site", List("pincer-lfg", "pincer"), "title-pincer", maxSeats = 4, picks = Some(pincerPicks), panel = false, size = 2)
+    val coh = Kind("tactics", "Company of Heroes", "Company of Heroes", "coh", "Look for players for an online Company of Heroes game on the site", List("coh-lfg", "tactics-lfg", "coh"), "title-tactics", maxSeats = 5, picks = Some(cohPicks), size = 2)
+
+    // (a command with several kinds picks one with its "mode" option, the first by default)
+    val kinds = List(root, nortStd, nort, pincer, coh)
+
+    def kindsOf(command : String) = kinds.filter(_.command == command)
+
+    // THE COLORS a standard Northgard game's players may pick (its clans are above, with nortPicks)
     val colors = List("Blue", "Red", "Yellow", "Purple", "Green", "Orange")
     // each color's emoji, in the post and the color menu
     val colorEmoji = Map("Blue" -> "🔵", "Red" -> "🔴", "Yellow" -> "🟡", "Purple" -> "🟣", "Green" -> "🟢", "Orange" -> "🟠")
@@ -158,23 +205,28 @@ object Lfg {
     def clanIcon(c : String) = clanEmoji(c).map { case (n, id, a) => "<" + (if (a) "a" else "") + ":" + n + ":" + id + "> " }.getOrElse("")
     // a clan as the post and the replies show it: its emoji alone (asked for on 2026-11-21), else its name ("a random clan" ...)
     // (a random pick as ❓ with how many clans it draws from, 7 or 14, asked for on 2026-11-21)
-    def clanShown(c : String) = c match {
-        case `randomCore` => "❓ (7)"
-        case `randomAny` => "❓ (14)"
-        case _ => Some(clanIcon(c).trim).filter(_.nonEmpty).getOrElse(clanLabel(c))
+    // (the other games' sides by their Unicode emoji; 2026-11-27)
+    def clanShown(k : Kind, c : String) : String = k.picks.flatMap(_.random(c)) match {
+        case Some((_, _, pool)) => "❓ (" + pool.size + ")"
+        case None if k.picks.exists(_.colors) => Some(clanIcon(c).trim).filter(_.nonEmpty).getOrElse(clanLabel(k, c))
+        case None => k.picks.flatMap(_.side(c)).map(s => (if (s.emoji.isEmpty) "" else s.emoji + " ") + s.label).getOrElse(clanLabel(k, c))
     }
 
-    def clanIconField(c : String) = if (c == randomCore || c == randomAny) ",\"emoji\":{\"name\":\"❓\"}" else clanIconField0(c)
+    def clanIconField(k : Kind, c : String) = if (k.picks.exists(_.random(c).nonEmpty)) ",\"emoji\":{\"name\":\"❓\"}" else if (k.picks.exists(_.colors)) clanIconField0(c)
+        else k.picks.flatMap(_.side(c)).map(_.emoji).filter(_.nonEmpty).map(e => ",\"emoji\":{\"name\":" + json(e) + "}").getOrElse("")
     def clanIconField0(c : String) = clanEmoji(c).map { case (n, id, a) => ",\"emoji\":{\"id\":" + json(id) + ",\"name\":" + json(n) + ",\"animated\":" + a + "}" }.getOrElse("")
 
-    def clanLabel(c : String) = c match {
-        case `randomCore` => "a random core clan"
-        case `randomAny` => "a random clan"
-        case "" => "no clan yet"
-        case x => x + " Clan"
+    def clanLabel(k : Kind, c : String) = k.picks.flatMap(_.random(c)) match {
+        case Some((_, l, _)) => "a " + l.replaceAll(" \\(\\d+\\)$", "").toLowerCase.replace("random allied", "random Allied").replace("random axis", "random Axis")
+        case None if c == "" => "no " + k.word + " yet"
+        case None => k.picks.flatMap(_.side(c)).map(_.label).getOrElse(c)
     }
 
     def kind(meta : String) = kinds.find(_.meta == meta).getOrElse(root)
+
+    // a side of a game whose players pick one on Join (Pincer's colors, Company of Heroes' factions), by its value or its label
+    def sideOf(meta : String, f : String) : Option[Side] = kinds.find(k => k.meta == meta && !k.picks.exists(_.colors)).flatMap(_.picks)
+        .flatMap(p => p.sides.find(s => s.value == f || s.label.equalsIgnoreCase(f) || s.label.equalsIgnoreCase(f.replace('_', ' '))))
 
     def commands = (kinds.map(_.command).distinct ++ BotCommands.all.map(_.name)).map("/" + _).mkString(", ")
 
@@ -188,7 +240,7 @@ object Lfg {
         // every player has a clan (always, in a game whose clans aren't picked on Join)
         def clansPicked = !kind.clans || players.forall(x => clan(x._1).nonEmpty)
         // the concrete clans other players took
-        def taken(u : String) = players.map(_._1).filter(_ != u).map(clan).filter(c => coreClans.contains(c) || bloodClans.contains(c)).toSet
+        def taken(u : String) = players.map(_._1).filter(_ != u).map(clan).filter(c => kind.picks.exists(_.values.contains(c))).toSet
         // a player's color ("" for any), and the colors other players took
         def color(u : String) = hues.getOrElse(u, "")
         def colorsTaken(u : String) = players.map(_._1).filter(_ != u).map(color).filter(colors.contains).toSet
@@ -248,7 +300,9 @@ object Lfg {
     // the options the site's latest client gives a new LFG game: (version, options), from Play Online
     def setTemplate(body : String) : String = synchronized {
         body.split('\n').toList.map(_.trim) match {
-            case m :: v :: o :: _ if kinds.exists(_.meta == m) && v.nonEmpty && v.length <= 32 && v.forall(c => c.isLetterOrDigit || c == '.' || c == '-') && o.nonEmpty && o.length <= 20000 =>
+            // (Pincer has no options: an empty third line, 2026-11-27)
+            case m :: v :: rest if kinds.exists(_.meta == m) && v.nonEmpty && v.length <= 32 && v.forall(c => c.isLetterOrDigit || c == '.' || c == '-') && rest.headOption.getOrElse("").length <= 20000 =>
+                val o = rest.headOption.getOrElse("")
                 val ok = o.forall(c => c.isLetterOrDigit || c == ' ' || c == '(' || c == ')' || c == ',' || c == '_')
                 val template = kind(m).template
                 if (ok && !rows(template).lastOption.contains(List(m, v, o))) {
@@ -273,7 +327,16 @@ object Lfg {
             (if (map != "AutumnMap" && o.contains("DefaultClearings")) o.filter(x => x != "DefaultClearings" && x != "NoClustersClearings") :+ "NoClustersClearings" else o).distinct
         }
 
-    def randomTitle(k : Kind) = if (k.game == "Northgard") {
+    // (Pincer's and Company of Heroes' as their clients' randomGameName)
+    def randomTitle(k : Kind) = if (k.game == "Pincer") {
+        val n = scala.util.Random.shuffle(List("Empire", "Colonies", "Muskets", "Frigates", "Forts", "Trade", "Crowns", "Seals", "Honour", "Powder"))
+        val c = scala.util.Random.shuffle(List("for", "against", "versus", "through", "and", "of", "in", "as"))
+        n.head + " " + c.head + " " + n.last
+    } else if (k.game == "Company of Heroes") {
+        val n = scala.util.Random.shuffle(List("River", "Ridge", "Crossing", "Hedgerow", "Bridge", "Farm", "Mill", "Ford", "Orchard", "Chapel"))
+        val c = scala.util.Random.shuffle(List("at", "by", "over", "past", "beyond", "under"))
+        n.head + " " + c.head + " " + n.last
+    } else if (k.game == "Northgard") {
         val n = scala.util.Random.shuffle(List("Winter", "Saga", "Clan", "Jarl", "Raid", "Feast", "Harvest", "Fame", "Lore", "Valhalla", "Frost", "Blood", "Iron", "Kin", "Hearth", "Storm", "Glory", "Exile"))
         val c = scala.util.Random.shuffle(List("for", "against", "of", "and", "through", "in", "under"))
         n.head + " " + c.head + " " + n.last
@@ -321,28 +384,42 @@ object Lfg {
 
         // a standard Northgard game: each player's clan (random picks drawn now among the clans no one took), the seats named by
         // clan, and each clan the color and team of its place in the seating, as the setup screen gives them
-        val clanOf : List[String] = if (!p.kind.clans) Nil else {
-            var taken = p.players.map(x => p.clan(x._1)).filter(c => coreClans.contains(c) || bloodClans.contains(c)).toSet
-            p.players.map(x => p.clan(x._1)).map {
-                case c if c == randomCore || c == randomAny =>
-                    val pool = (if (c == randomCore) coreClans else coreClans ++ bloodClans).filterNot(taken.contains)
-                    val d = scala.util.Random.shuffle(pool).headOption.getOrElse(scala.util.Random.shuffle((coreClans ++ bloodClans).filterNot(taken.contains)).head)
-                    taken += d
-                    d
-                case c => c
-            }
+        // (the other games' sides the same way, drawn again, up to 50 times, until the sides can play together: Company of Heroes' teams)
+        val clanOf : List[String] = p.kind.picks match {
+            case None => Nil
+            case Some(k) =>
+                def draw() = {
+                    var taken = p.players.map(x => p.clan(x._1)).filter(k.values.contains).toSet
+                    p.players.map(x => p.clan(x._1)).map { c =>
+                        k.random(c) match {
+                            case Some((_, _, all)) =>
+                                val pool = all.filterNot(taken.contains)
+                                val d = scala.util.Random.shuffle(pool).headOption.getOrElse(scala.util.Random.shuffle(k.values.filterNot(taken.contains)).head)
+                                taken += d
+                                d
+                            case None => c
+                        }
+                    }
+                }
+                val tries = Iterator.continually(draw()).take(50).toList
+                val ok = tries.find(l => k.check(l, options).isEmpty).getOrElse(tries.head)
+                k.check(ok, options) match {
+                    case Some(why) => return Left(why)
+                    case None => ok
+                }
         }
+        val colorsPicked = p.kind.picks.exists(_.colors)
         val seatName = if (p.kind.clans) clanOf else p.players.indices.map(i => "P" + (i + 1)).toList
         val order = scala.util.Random.shuffle(seatName)
         // the colors the players picked, and the rest in seating order (colors left over, as the setup screen gives them)
-        val picked : Map[String, String] = if (!p.kind.clans) Map() else clanOf.zip(p.players).flatMap { case (c, (u, _)) => Some(p.color(u)).filter(colors.contains).map(c -> _) }.toMap
+        val picked : Map[String, String] = if (!colorsPicked) Map() else clanOf.zip(p.players).flatMap { case (c, (u, _)) => Some(p.color(u)).filter(colors.contains).map(c -> _) }.toMap
         val colorOf : Map[String, String] = {
             var left = colors.filterNot(picked.values.toSet.contains)
             order.map { c => c -> picked.getOrElse(c, { val h = left.headOption.getOrElse(colors.head); left = left.drop(1); h }) }.toMap
         }
-        val clanOptions = if (!p.kind.clans) Nil else
+        val clanOptions = if (!colorsPicked) Nil else
             order.zipWithIndex.flatMap { case (c, i) => List("ColorOption(" + c + "," + colorOf(c) + ")", "TeamOption(" + c + "," + (i % 2) + ")") }
-        val gameOptions = (if (p.kind.clans) options.filterNot(o => o.startsWith("ColorOption(") || o.startsWith("TeamOption(")) ++ clanOptions else options)
+        val gameOptions = (if (colorsPicked) options.filterNot(o => o.startsWith("ColorOption(") || o.startsWith("TeamOption(")) ++ clanOptions else options)
         val ranked = p.players.map(x => rankingNameOf(x._1))
         val dd = Ranking.displays()
 
@@ -456,12 +533,13 @@ object Lfg {
                 (head + "**" + label + ": " + p.title + "**, looking for players 🪑 " + p.players.size + "/" + p.size + "\n" + picks +
                     "👑 Host: " + mention(p.host) + "\n" +
                     "👥 Players: " + p.players.map(x => mention(x._1) + " " + (p.clan(x._1) match {
-                        case c if c == randomCore || c == randomAny || clanIcon(c).nonEmpty => clanShown(c)
-                        case c => "(" + clanLabel(c) + ")"
+                        case c if !p.kind.picks.exists(_.colors) && c.nonEmpty => clanShown(p.kind, c)
+                        case c if p.kind.picks.exists(_.random(c).nonEmpty) || clanIcon(c).nonEmpty => clanShown(p.kind, c)
+                        case c => "(" + clanLabel(p.kind, c) + ")"
                     }) + colorEmoji.get(p.color(x._1)).map(" " + _).getOrElse("")).mkString(", ") + "\n" +
-                    "👍 Press **Clan and color** to join, or to change your clan or color. The game starts by itself when all " + p.size + " seats are taken and everyone has a clan, or when the host presses **Start** (" + minSeats + " players or more).",
+                    "👍 Press **" + pickButton(p.kind) + "** to join, or to change your " + pickWhat(p.kind) + ". The game starts by itself when all " + p.size + " seats are taken and everyone has " + aWord(p.kind) + ", or when the host presses **Start** (" + minSeats + " players or more).",
                     // (one button joins and changes the clan, asked for on 2026-11-21; the Clan button of the first posts still works)
-                    buttons(button("Clan and color", 1, "join", p.id, "👍"), button("Leave", 2, "leave", p.id, "🚪"), button("Start", 3, "start", p.id, "▶️"), button("Cancel", 4, "cancel", p.id, "✖️")))
+                    buttons(button(pickButton(p.kind), 1, "join", p.id, "👍"), button("Leave", 2, "leave", p.id, "🚪"), button("Start", 3, "start", p.id, "▶️"), button("Cancel", 4, "cancel", p.id, "✖️")))
             case None =>
                 val minSeats = p.kind.minSeats
                 (head + "**" + label + ": " + p.title + "**, looking for players 🪑 " + p.players.size + "/" + p.size + "\n" + picks +
@@ -598,11 +676,11 @@ object Lfg {
         // the mode: one of the command's kinds, the first by default
         val k = options.get("mode").flatMap(v => Option(v)).collect { case v : String => v }.flatMap(m => kindsOf(cmd).find(_.meta == m)).getOrElse(kindsOf(cmd).head)
         import k.{minSeats, maxSeats}
-        val size = options.get("players").map(v => str(Option(v)).toIntOption.getOrElse(4)).getOrElse(4).max(minSeats).min(maxSeats)
+        val size = options.get("players").map(v => str(Option(v)).toIntOption.getOrElse(k.size)).getOrElse(k.size).max(minSeats).min(maxSeats)
         val title = Some(clean(str(options.get("title").flatMap(Option(_))).replace("*", "").replace("~", "").replace("`", ""))).filter(_.nonEmpty).getOrElse(randomTitle(k))
         // the setup panel, with every option, once the site has sent them (LfgSetup.scala); else the post with the site's defaults
         val picks = LfgSetup.sections(k).map(_._1).flatMap(n => options.get(n).flatMap(v => Option(v)).collect { case v : String => v }.toList.flatMap(v => LfgSetup.translate(k, n, v)))
-        LfgSetup.open(k, uid, clean(name), size, title, picks).getOrElse {
+        (if (k.panel) LfgSetup.open(k, uid, clean(name), size, title, picks) else None).getOrElse {
             val id = Tournament.newSecret(10)
             event("open", id, uid, clean(name), size, title, "", k.meta)
             reply(4, announced(posts()(id)))
@@ -614,10 +692,11 @@ object Lfg {
     // (a seated player also gets the color menu under it: the colors no other player took, or any; kind 4 a new reply, 7 an edit of it)
     def clanMenu(p : Post, uid : String, channel : String, message : String, text : String, kind : Int = 4) = {
         val taken = p.taken(uid)
-        val choices = (coreClans ++ bloodClans).filterNot(taken.contains).map(c => (c + " Clan", c)) ++ List(("Random core clan (7)", randomCore), ("Random clan (14)", randomAny))
-        val menu = LfgSetup.select("lfg:pick:" + p.id + ":" + channel + ":" + message, "Pick your clan", 1, 1,
-            choices.map { case (l, v) => (l, v, p.clan(uid) == v, clanIconField(v), "") })
-        val hues = if (!p.players.exists(_._1 == uid)) Nil else {
+        val k = p.kind.picks.get
+        val choices = k.sides.filterNot(s => taken.contains(s.value)).map(s => (s.label, s.value)) ++ k.randoms.map { case (v, l, _) => (l, v) }
+        val menu = LfgSetup.select("lfg:pick:" + p.id + ":" + channel + ":" + message, "Pick your " + k.word, 1, 1,
+            choices.map { case (l, v) => (l, v, p.clan(uid) == v, clanIconField(p.kind, v), "") })
+        val hues = if (!k.colors || !p.players.exists(_._1 == uid)) Nil else {
             val free = colors.filterNot(p.colorsTaken(uid).contains)
             List(LfgSetup.select("lfg:color:" + p.id + ":" + channel + ":" + message, "Pick your color (optional)", 1, 1,
                 (anyColor :: free).map(c => (if (c == anyColor) "Any color" else c, c, p.color(uid) == c || (c == anyColor && p.color(uid).isEmpty),
@@ -628,6 +707,12 @@ object Lfg {
 
     // a color as the replies show it
     def colorShown(c : String) = colorEmoji.get(c).map(_ + " " + c).getOrElse("any color")
+
+    // the pick button, what it changes, "a clan" ...; and "You play X" with the color, for a game whose players pick one
+    def pickButton(k : Kind) = k.picks.map(_.button).getOrElse("Join")
+    def pickWhat(k : Kind) = if (k.picks.exists(_.colors)) k.word + " or color" else k.word
+    def aWord(k : Kind) = "a " + k.word
+    def playing(p : Post, uid : String, c : String, h : String) = "You play " + clanShown(p.kind, c) + (if (p.kind.picks.exists(_.colors)) " with " + colorShown(h) else "")
 
     // the post edited with the bot's token, from an interaction that isn't the post's own (the clan menu)
     def editPost(channel : String, msg : String, q : Post) {
@@ -649,10 +734,10 @@ object Lfg {
                     case Some(p) =>
                         val c = values.headOption.getOrElse("")
                         val seated = p.players.exists(_._1 == uid)
-                        if (!(coreClans ++ bloodClans ++ List(randomCore, randomAny)).contains(c))
-                            privately("That isn't a clan I know.")
+                        if (!p.kind.picks.exists(_.all.contains(c)))
+                            privately("That isn't " + aWord(p.kind) + " I know.")
                         else if (p.taken(uid).contains(c))
-                            clanMenu(p, uid, ch, msg, "**" + c + " Clan** was just taken. Pick another.")
+                            clanMenu(p, uid, ch, msg, "**" + clanLabel(p.kind, c) + "** was just taken. Pick another.")
                         else if (!seated && p.players.size >= p.size)
                             privately("All seats are taken.")
                         else {
@@ -669,14 +754,14 @@ object Lfg {
                                         editPost(ch, msg, r)
                                         announceStart(app, token, r, s)
                                         welcome(r, s)
-                                        done("You play " + clanShown(c) + " in **" + p.title + "**, which has started: your seat link is in your DMs.")
+                                        done("You play " + clanShown(p.kind, c) + " in **" + p.title + "**, which has started: your seat link is in your DMs.")
                                 }
                             else {
                                 editPost(ch, msg, q)
                                 // the menus again, the color one now too, so the player can pick a color (or change the clan)
-                                clanMenu(q, uid, ch, msg, "You play " + clanShown(c) + " with " + colorShown(q.color(uid)) + " in **" + p.title + "**." +
+                                clanMenu(q, uid, ch, msg, playing(q, uid, c, q.color(uid)) + " in **" + p.title + "**." +
                                     (if (q.players.size < q.size) " The game starts when all " + q.size + " seats are taken." else "") +
-                                    " Pick a color below if you want one.", 7)
+                                    (if (q.kind.picks.exists(_.colors)) " Pick a color below if you want one." else " Pick again to change it."), 7)
                             }
                         }
                 }
@@ -686,7 +771,7 @@ object Lfg {
                     case None => privately("This game isn't known any more.")
                     case Some(p) if p.game.nonEmpty => privately("**" + p.title + "** has already started.")
                     case Some(p) if p.cancelled => privately("**" + p.title + "** was cancelled.")
-                    case Some(p) if !p.players.exists(_._1 == uid) => privately("Pick your clan first, to join.")
+                    case Some(p) if !p.players.exists(_._1 == uid) => privately("Pick your " + p.kind.word + " first, to join.")
                     case Some(p) =>
                         val c = values.headOption.getOrElse("")
                         if (c != anyColor && !colors.contains(c))
@@ -698,7 +783,7 @@ object Lfg {
                             event("color", id, uid, h)
                             val q = p.copy(hues = if (h.isEmpty) p.hues - uid else p.hues + (uid -> h))
                             editPost(ch, msg, q)
-                            clanMenu(q, uid, ch, msg, "You play " + clanShown(q.clan(uid)) + " with " + colorShown(h) + " in **" + p.title + "**.", 7)
+                            clanMenu(q, uid, ch, msg, playing(q, uid, q.clan(uid), h) + " in **" + p.title + "**.", 7)
                         }
                 }
             case "lfg" :: action :: id :: Nil =>
@@ -725,9 +810,10 @@ object Lfg {
                                 }
                             case (_, Some(_)) => privately("**" + p.title + "** has already started.")
                             case (_, None) if p.cancelled => privately("**" + p.title + "** was cancelled.")
-                            case ("join" | "clan", None) if p.kind.clans && seated => clanMenu(p, uid, channel, messageId, "Pick your clan or color for **" + p.title + "** (now " + clanShown(p.clan(uid)) + " with " + colorShown(p.color(uid)) + ").")
-                            case ("clan", None) if p.kind.clans => privately("Press **Clan and color** first.")
-                            case ("join", None) if p.kind.clans && p.players.size < p.size => clanMenu(p, uid, channel, messageId, "Pick your clan to join **" + p.title + "**.")
+                            case ("join" | "clan", None) if p.kind.clans && seated => clanMenu(p, uid, channel, messageId, "Pick your " + pickWhat(p.kind) + " for **" + p.title + "** (now " +
+                                (if (p.clan(uid).isEmpty) clanLabel(p.kind, "") else clanShown(p.kind, p.clan(uid))) + (if (p.kind.picks.exists(_.colors)) " with " + colorShown(p.color(uid)) else "") + ").")
+                            case ("clan", None) if p.kind.clans => privately("Press **" + pickButton(p.kind) + "** first.")
+                            case ("join", None) if p.kind.clans && p.players.size < p.size => clanMenu(p, uid, channel, messageId, "Pick your " + p.kind.word + " to join **" + p.title + "**.")
                             case ("join", None) if seated => privately("You're already in.")
                             case ("join", None) if p.players.size >= p.size => privately("All seats are taken.")
                             case ("join", None) =>
@@ -741,7 +827,7 @@ object Lfg {
                                 update(p.copy(players = p.players.filter(_._1 != uid), clans = p.clans - uid, hues = p.hues - uid))
                             case ("start", None) if !host => privately("Only the host (" + mention(p.host) + ") can start the game early.")
                             case ("start", None) if p.players.size < p.kind.minSeats => privately("At least " + p.kind.minSeats + " players are needed.")
-                            case ("start", None) if !p.clansPicked => privately("Not everyone has a clan yet: " + p.players.filter(x => p.clan(x._1).isEmpty).map(x => mention(x._1)).mkString(", ") + " (press **Clan and color**).")
+                            case ("start", None) if !p.clansPicked => privately("Not everyone has " + aWord(p.kind) + " yet: " + p.players.filter(x => p.clan(x._1).isEmpty).map(x => mention(x._1)).mkString(", ") + " (press **" + pickButton(p.kind) + "**).")
                             case ("start", None) => start(p)
                             case ("cancel", None) if !host => privately("Only the host (" + mention(p.host) + ") can cancel the game.")
                             case ("cancel", None) =>
@@ -773,7 +859,7 @@ object Lfg {
                                     kk.map(x => "{\"name\":" + json(if (x.clans) "Standard" else x.label.split(": ").last) + ",\"value\":" + json(x.meta) + "}").mkString(",") + "]}"
                                 val opts = kk.flatMap(LfgSetup.commandOptions).foldLeft(List[(String, String, List[(String, String)])]()) { case (l, o) => if (l.exists(_._1 == o._1)) l else l :+ o }
                                 "{\"name\":" + json(k.command) + ",\"type\":1,\"description\":" + json(k.description) + ",\"options\":[" +
-                                "{\"type\":4,\"name\":\"players\",\"description\":\"How many players (" + k.minSeats + " to " + k.maxSeats + ", 4 if not given)\",\"required\":false,\"min_value\":" + k.minSeats + ",\"max_value\":" + k.maxSeats + "}," +
+                                "{\"type\":4,\"name\":\"players\",\"description\":\"How many players (" + k.minSeats + " to " + k.maxSeats + ", " + k.size + " if not given)\",\"required\":false,\"min_value\":" + k.minSeats + ",\"max_value\":" + k.maxSeats + "}," +
                                 "{\"type\":3,\"name\":\"title\",\"description\":\"The game's name (a random one if not given)\",\"required\":false,\"max_length\":32}" + mode +
                                 opts.map { case (n, d, cc) =>
                                     ",{\"type\":3,\"name\":" + json(n) + ",\"description\":" + json(d + " (the site's default if not given)") + ",\"required\":false,\"choices\":[" +

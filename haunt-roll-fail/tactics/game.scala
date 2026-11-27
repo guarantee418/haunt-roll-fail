@@ -1342,6 +1342,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     // a destroyed unit's VP: to the other team, or in a free-for-all to every player who assigned it Damage (11.0)
     def killed(x : Squad, by : $[Faction]) {
+        Jests.note(this, "destroyed", x.faction, by.%(e => foe(e, x.faction)).headOption.|(other(x.faction)), x.utype.name)
         if (has(x, HeroicSacrifice).not) {
             if (freeForAll)
                 by.distinct.%(e => foe(e, x.faction)).foreach { e =>
@@ -1390,6 +1391,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     // the round
     var round = 0
+
+    // what happened to whom, for the Assault Specialist's jests (display only: online.scala)
+    var jests : $[String] = $
     var first : Faction = null
     var gameFirst : Faction = null
     var current : Faction = null
@@ -3570,6 +3574,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                     occupant(h).%(u => foe(u.faction, e) && pinned.contains(u).not && (full && retreating.contains(u)).not).foreach { u =>
                         control -= h
                         log(u, "neutralized", e, "Control Point in", h)
+                        Jests.note(this, "neutralized", e, u.faction, h.name)
                     }
                 }
 
