@@ -27,7 +27,7 @@ object Meta extends MetaGame { mmm =>
 
     val minPlayers = 2
 
-    val options = $[O]() ++ RulesChoice.all ++ CommandersChoice.all ++ $(ExpansionCommanders) ++ $(LostBrigades) ++ MapChoice.ordered ++ $(OptionalMapFeatures) ++ Length.all ++ hiddenOptions
+    val options = $[O]() ++ RankingOption.all ++ RulesChoice.all ++ CommandersChoice.all ++ $(ExpansionCommanders) ++ $(LostBrigades) ++ MapChoice.ordered ++ $(OptionalMapFeatures) ++ Length.all ++ hiddenOptions
 
     // hidden rules fixes every new game gets, so games made before keep their rules
     override def hiddenOptions = $[O](TeamRetreatPoints, TutorialOption)
@@ -42,7 +42,7 @@ object Meta extends MetaGame { mmm =>
     override def mandatoryFor(n : Int, l : $[F]) = $[O](TeamRetreatPoints)
 
     // new games play the Full Game Rules (2026-11-24); a game with neither choice (made before) plays the First Game Rules
-    override def defaultsFor(n : Int, l : $[F]) = $(FullGameRules, DrawCommanders, MoroRiverMap, ShortGame)
+    override def defaultsFor(n : Int, l : $[F]) = $(FullGameRules, DrawCommanders, MoroRiverMap, ShortGame, RankedGame)
 
     // a setup saved in the browser before the rules choice gets the Full Game Rules
     override def completeSaved(n : Int, l : $[F], options : $[O]) : $[O] = {
@@ -54,6 +54,21 @@ object Meta extends MetaGame { mmm =>
     // Discord LFG games (good-game/Lfg.scala, /coh; 2026-11-27): the site's defaults, two to five players, each picking a faction on Join
     override def lfgOptions : $[O] = (mandatoryFor(2, factions.take(2)) ++ completeSaved(2, factions.take(2), defaultsFor(2, factions.take(2)))).distinct
     override def lfgPlayers = $(2, 3, 4, 5)
+
+    // Rankings, turn ping reasons and the Assault Specialist's jests (online.scala; 2026-11-27): a ladder of its own, a team one side,
+    // its Victory Points the score; the games list shows the map, then each player's faction
+    override def ranking = |("tactics")
+    override def rankingSides(g : G, winners : $[Any]) = Online.rankSides(g, winners)
+    override def rankingSeat(g : G, f : F) = Online.rankSeat(g, f)
+    override def rankingFan(g : G) = Online.rankFan(g)
+    override def rankingSetup(g : G) = $("M" -> g.options.of[MapChoice].single./(_.map.name).|(MoroRiver.name))
+    override def overviewIcons = MapChoice.all./(c => c.toString -> ("coh_" + c.toString.toLowerCase.stripSuffix("map")))
+    override def overview(g : G) = overviewOptions(g.options./(writeOption)) ++ g.setup./~(f => glyph(f))
+    override def turnReason(g : G, f : Any, actions : $[Any]) : String = f match {
+        case f : Faction => TurnReasons.of(g, f, actions)
+        case _ => ""
+    }
+    override def jests(g : G) = Jests.report(g, f => turnSeat(g, f))
 
     val quickMin = 2
     val quickMax = 2

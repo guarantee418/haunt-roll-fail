@@ -224,6 +224,10 @@ object Lfg {
 
     def kind(meta : String) = kinds.find(_.meta == meta).getOrElse(root)
 
+    // a side of a game whose players pick one on Join (Pincer's colors, Company of Heroes' factions), by its value or its label
+    def sideOf(meta : String, f : String) : Option[Side] = kinds.find(k => k.meta == meta && !k.picks.exists(_.colors)).flatMap(_.picks)
+        .flatMap(p => p.sides.find(s => s.value == f || s.label.equalsIgnoreCase(f) || s.label.equalsIgnoreCase(f.replace('_', ' '))))
+
     def commands = (kinds.map(_.command).distinct ++ BotCommands.all.map(_.name)).map("/" + _).mkString(", ")
 
     def publicKey = Tournament.hook("HRF_DISCORD_PUBLIC_KEY", "discord-public-key")
