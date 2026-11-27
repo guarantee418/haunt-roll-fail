@@ -294,6 +294,43 @@ case class MoreCreaturesAction(self : Faction, area : AreaRef, then : ForcedActi
 case class MoreCreaturesSkipAction(self : Faction, then : ForcedAction) extends BaseAction("More creatures!")("No new creature")
 
 
+// The Creature phase's moves as things stand ("show monster movement", Discord northgard-feedback, 2026-11-26): each creature in line
+// order, the territories it would move to at each step (more than one: a tie the first player breaks, and the first is assumed for the
+// creatures after it), a Myrkalf's two steps. Worked out on the game with game.creatureAt put back after, so display only; what the
+// phase does on the way (Hvedrung's call, a fight) isn't foreseen
+case class CreatureForecast(c : Creature, from : AreaRef, steps : $[$[AreaRef]])
+
+object CreatureForecast {
+    def moving(c : Creature)(implicit game : Game) = c.kind != Hrimgandr && (PCExpansion.on.not || PCExpansion.moves(c))
+
+    def all(implicit game : Game) : $[CreatureForecast] = {
+        val saved = game.creatureAt
+
+        try {
+            game.creatureLine.%(game.creatureAt.contains).%(moving)./{ c =>
+                val start = game.creatureAt(c)
+                val first = CreaturesExpansion.destinations(c)./(_.anchor)
+
+                first.headOption.foreach(a => game.creatureAt += c -> a)
+
+                val second : $[$[AreaRef]] =
+                    if (first.any && c.kind == Myrkalf && game.noAbilities.not) {
+                        val home = game.board.territory(start)
+                        val l = CreaturesExpansion.destinations(c).%(_ != home)./(_.anchor)
+                        l.headOption.foreach(a => game.creatureAt += c -> a)
+                        l.any.$(l)
+                    }
+                    else $
+
+                CreatureForecast(c, start, first.any.$(first) ++ second)
+            }
+        }
+        finally {
+            game.creatureAt = saved
+        }
+    }
+}
+
 object CreaturesExpansion extends Expansion {
     // Territories f controls that hold creatures it could attack with a Move action
     def attackable(f : Faction)(implicit game : Game) : $[Territory] =

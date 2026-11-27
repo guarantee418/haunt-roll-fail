@@ -491,6 +491,11 @@
                 font-weight: bold;
             }
 
+            /* a finished game's winners in Completed Games (myGame in hrf.scala) */
+            .hrf-winner {
+                color: #f5c542;
+            }
+
             /* what's in a game of the Active Games list: its map, then its factions (overviewOf in hrf.scala) */
             .hrf-overview {
                 display: flex;
@@ -1394,6 +1399,14 @@
                 body[data-meta=tactics] :has(> .setup-page) [class*="hrf-faction-tile"] { width: calc(50% - 1.6ex); }
             }
             .home-name span { font-family: "Luminari", serif !important; font-size: 100% !important; }
+            /* A note under a waiting line ("The bot is playing" / "Faster or slower: ...") goes on its own line, not run on beside it */
+            #game-attachment-point [class*="hrf-info"]:has(> .hrf-smaller75) { flex-wrap: wrap; justify-content: center; }
+            #game-attachment-point [class*="hrf-info"] > .hrf-smaller75 { flex-basis: 100%; text-align: center; }
+            /* Root on a phone: the in-game choices were 17px tall with 6px between them, so taps landed on the neighbour; 44px, apart, and readable */
+            @media (pointer: coarse), (max-width: 700px) {
+                body[data-meta^="root"] #game-attachment-point [class*="hrf-choice"][data-onclick] { min-height: 44px; box-sizing: border-box; align-items: center; justify-content: center; margin-top: 4px; margin-bottom: 4px; }
+                body[data-meta^="root"] #game-attachment-point [class*="hrf-choice"][class*="hrf-thu"][data-onclick] { font-size: max(1em, 14px); }
+            }
 
             /* The menus: brighter text, larger buttons, one look (the panes of the menus only; a game's own are elsewhere) */
             body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class*="hrf-pane---hrf-action"], body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class*="hrf-pane-action"] { color: #b4b4b4; }

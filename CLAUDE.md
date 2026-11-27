@@ -143,7 +143,7 @@ again over the pieces, so a figure that must overlap one never hides it. Tapping
 picks its territory for an offered action (`pieceInfo` in `nort/ui.scala`): a creature, Jötunn Blainn
 or a Raid card its card, a warchief (and Horse's Brok) its board, power and upgrade card (`WarchiefInfo`,
 `Meta.warchiefInfo`), and Kaija, Lynx's Brundr and Kaelinn, the High Tide and Scorched Earth tokens their
-clan's three clan cards (`ClanAbilityInfo`, `Meta.clanAbility`). An Ox Ancestral Equipment token says what it does in a fight and how Ox takes it (`GearTokenInfo`, `gearTokenView`; asked for on 2026-10-21); when taking a token is offered, the tap takes it. The Automa's Leaders open nothing. Each creature token has its place in the creature line (1 moves first) in a small gold-on-black square at its top left corner (`ui/order-<n>`, by `nort/tools/order-badges.py`; asked for on Discord on 2026-11-23); display only. The tiles with a rule of their own (the Wilderness and Wastelands Environment tiles, the Wastelands central tiles and The Bridge) keep their centrepiece (the Vedrfolnir eagle, ...) out of the territory tint, like the resource icons, with a small "i" at its top right; tapping either opens the tile's name, picture and rule (`TileAbilities` in `nort/tile-abilities.scala`, `TileAbilityInfo`; asked for on 2026-11-01). The fame icons printed on the Ruins, both Wyvern's Dens and Yggdrasil stay out of the tint too, and figures are kept off them (`TileAbilities.fame`; 2026-11-02).
+clan's three clan cards (`ClanAbilityInfo`, `Meta.clanAbility`). An Ox Ancestral Equipment token says what it does in a fight and how Ox takes it (`GearTokenInfo`, `gearTokenView`; asked for on 2026-10-21); when taking a token is offered, the tap takes it. The Automa's Leaders open nothing. Each creature token has its place in the creature line (1 moves first) in a small gold-on-black square at its bottom left corner (`ui/order-<n>`, by `nort/tools/order-badges.py`; asked for on Discord on 2026-11-23; moved from the top left on 2026-11-26, as it hid the creature's picture); display only. "Creature Moves", a button under the action pane while creatures are on the map (Discord northgard-feedback, 2026-11-26, "show monster movement"), shows and hides an arrow from each creature to where the Creature phase would move it as things stand, dashed to each territory of a tie the first player breaks, a Myrkalf's second step on from its first, none into or out of the fog of war (`CreatureForecast` in `nort/creatures.scala`, worked out on the game with `creatureAt` put back; `moveArrow` and `showCreatureMoves` in `nort/ui.scala`); display only. In bot games every first creature of a phase went where it showed; a later one can differ when an earlier one's fight or Hvedrung's call changes the board. The tiles with a rule of their own (the Wilderness and Wastelands Environment tiles, the Wastelands central tiles and The Bridge) keep their centrepiece (the Vedrfolnir eagle, ...) out of the territory tint, like the resource icons, with a small "i" at its top right; tapping either opens the tile's name, picture and rule (`TileAbilities` in `nort/tile-abilities.scala`, `TileAbilityInfo`; asked for on 2026-11-01). The fame icons printed on the Ruins, both Wyvern's Dens and Yggdrasil stay out of the tint too, and figures are kept off them (`TileAbilities.fame`; 2026-11-02).
 The Northgard layout (`layouter` in `nort/ui.scala`) has the map on the left
 and the player panels, log and action pane (choices and hand) on the right;
 the owner asked for that on 2026-10-05, undoing an earlier mirrored layout
@@ -412,7 +412,7 @@ cd haunt-roll-fail && sbt fullOptJS
   first the games waiting on the signed-in player (asked for on 2026-11-20). The server doesn't run the games, so each client, once it has
   read the whole log and reached a question, posts the factions asked (`Journal.turn`, called from `Runner.run`'s `Ask` and `MultiAsk`
   cases; `/turn/<user>/<secret>/<game>`, kept in `turns.tsv` by `good-game/Turns.scala`), and `/my-games` matches them to the lobby's
-  "user <faction> <user>" lines. A game nobody has opened since this was deployed shows no highlight until a player opens it. The tournament game ("Your Tournament Game", `/tournament/mine`, its seventh field from `Tournament.mine`) is highlighted the same way (2026-11-21). Each game in the list shows what's in it (2026-11-22, asked for): its map (Root's map, Northgard's central tile and expansion map tiles, the `webp2/lfg/emoji/` pictures, `Meta.overviewIcons`) and its factions' glyphs, in seating order (`overviewOf` in `hrf.scala`). A client reporting a turn adds the game's icons as a fourth line (`Meta.overview`, `Journal.turn`), kept in `overviews.tsv` (`Turns.setOverview`) and sent as `/my-games`' seventh field; for a game no client has reported, the server sends the lobby's seating and options instead and the client works them out (`Meta.overviewLobby`; Advanced Setup's seats draft their factions in the game, so those show the map only until someone opens it). The tournament game shows them too, from its game's reported icons (`/tournament/mine`'s eighth field, `Turns.overview`; 2026-11-22). Every game also says who else plays in it, "as <name> against <names>" like the tournament game: each seat's ranking name, else the name typed for it, and the bots by level, in seating order (`/my-games`' eleventh field, `othersOf` in `GoodGame.scala`), and another game's short name is NGUL, NGUL Adset or Root Adset (`myGame` in `hrf.scala`; owner, 2026-11-22). In Advanced Setup and Northgard's Adset, the drafted factions no seat took (and Adset's banned clan) follow the picked ones, grayed out ("off:<glyph>" in the overview, `hrf-overview-off`; `overviewOf` in `root/meta.scala` and `nort/meta.scala`; asked for on 2026-11-22). A finished game's report adds them too ("U <faction> ..." and "B <faction> ...", kept as the sides `U:` and `B:`; `Meta.rankingDraft`, `RankingSeat.draft`), and the games reported before have theirs in `good-game/ranking-drafts.tsv` (the `DRAFT` lines of `LiveCheck <hrf-games> ranking`, merged in by `Ranking.list`), for the Rankings' "Draft" tab: how often each faction drawn for a draft was picked (and banned), and its score per pick (`Elo.drafts`, `drafts` in `rankingsMenu`). A finished Root game's report also lists its landmarks and hirelings ("K <landmark> ..." and "H <hireling> ...", the sides `K:` and `H:`, not `L:`, a losing side; `Meta.rankingSetup`, `rankSetup` in `root/meta.scala`; asked for on 2026-11-23), the games before have theirs in `ranking-drafts.tsv` too (merged in per kind, so a game reported with a draft but before the landmarks still gets them), for Root's "Landmarks & Hirelings" tab: how many games had each and which factions won them (`Elo.setups`, `setups` in `rankingsMenu`). Each report also gives the map ("M <map>", the side `M:`; Root's map, the tournament's picked one, Northgard's central tile, `rankSetup` in `root/meta.scala` and `nort/meta.scala`; 2026-11-23, asked for), filled in for the games before in `ranking-drafts.tsv`; the tab is "Maps & Setup" for Root and "Maps" for Northgard.
+  "user <faction> <user>" lines. A game nobody has opened since this was deployed shows no highlight until a player opens it. The tournament game ("Your Tournament Game", `/tournament/mine`, its seventh field from `Tournament.mine`) is highlighted the same way (2026-11-21). Each game in the list shows what's in it (2026-11-22, asked for): its map (Root's map, Northgard's central tile and expansion map tiles, the `webp2/lfg/emoji/` pictures, `Meta.overviewIcons`) and its factions' glyphs, in seating order (`overviewOf` in `hrf.scala`). A client reporting a turn adds the game's icons as a fourth line (`Meta.overview`, `Journal.turn`), kept in `overviews.tsv` (`Turns.setOverview`) and sent as `/my-games`' seventh field; for a game no client has reported, the server sends the lobby's seating and options instead and the client works them out (`Meta.overviewLobby`; Advanced Setup's seats draft their factions in the game, so those show the map only until someone opens it). The tournament game shows them too, from its game's reported icons (`/tournament/mine`'s eighth field, `Turns.overview`; 2026-11-22). Every game also says who else plays in it, "as <name> against <names>" like the tournament game: each seat's ranking name, else the name typed for it, and the bots by level, in seating order (`/my-games`' eleventh field, `othersOf` in `GoodGame.scala`), and another game's short name is NGUL, NGUL Adset or Root Adset (`myGame` in `hrf.scala`; owner, 2026-11-22). A completed game also says who won, "🏆 Won by <name> (<faction>, <score>)", or "🏆 You won", in gold (`/my-games`' twelfth and thirteenth fields, `winnersOf` in `GoodGame.scala`, from the game's first reported result; 2026-11-25, asked for). In Advanced Setup and Northgard's Adset, the drafted factions no seat took (and Adset's banned clan) follow the picked ones, grayed out ("off:<glyph>" in the overview, `hrf-overview-off`; `overviewOf` in `root/meta.scala` and `nort/meta.scala`; asked for on 2026-11-22). A finished game's report adds them too ("U <faction> ..." and "B <faction> ...", kept as the sides `U:` and `B:`; `Meta.rankingDraft`, `RankingSeat.draft`), and the games reported before have theirs in `good-game/ranking-drafts.tsv` (the `DRAFT` lines of `LiveCheck <hrf-games> ranking`, merged in by `Ranking.list`), for the Rankings' "Draft" tab: how often each faction drawn for a draft was picked (and banned), and its score per pick (`Elo.drafts`, `drafts` in `rankingsMenu`). A finished Root game's report also lists its landmarks and hirelings ("K <landmark> ..." and "H <hireling> ...", the sides `K:` and `H:`, not `L:`, a losing side; `Meta.rankingSetup`, `rankSetup` in `root/meta.scala`; asked for on 2026-11-23), the games before have theirs in `ranking-drafts.tsv` too (merged in per kind, so a game reported with a draft but before the landmarks still gets them), for Root's "Landmarks & Hirelings" tab: how many games had each and which factions won them (`Elo.setups`, `setups` in `rankingsMenu`). Each report also gives the map ("M <map>", the side `M:`; Root's map, the tournament's picked one, Northgard's central tile, `rankSetup` in `root/meta.scala` and `nort/meta.scala`; 2026-11-23, asked for), filled in for the games before in `ranking-drafts.tsv`; the tab is "Maps & Setup" for Root and "Maps" for Northgard.
   The games with a bot (the lobby's `bot` line, checked by `my-games`) or with fan content, which count toward no rating (`Meta.rankingFan`), are in an "Unranked Games" folder under them while they
   go on (finished ones go to Completed Games, marked "Unranked"; open by default while one waits on the player; 2026-11-21): the turn report adds a fifth line "fan" (`Runner.run`'s
   `unranked`), kept in `turns.tsv`'s fifth field (`Turns.fan`), and a finished game's result says it ("X:fan"); `/my-games` gives it as
@@ -467,6 +467,12 @@ server. No session can reach the server, and none needs to.
   with `None.get` in the console. Test changes to the loaders both on
   `localhost` (cache path) and through a non-localhost http address (no
   cache).
+- Some webviews have Cache Storage that never answers or refuses: Discord's in-app browser on an iPad stayed on the first
+  log lines ("John 3:16", the game's name), as every image, the menus' too, waited on `caches.open` (2026-11-26). The three
+  cached loaders share `CacheFirstLoader` in `loader.scala`: a cache that rejects, or hasn't answered in 6 seconds (20 for
+  `cache.add`, which downloads), is given up for the page's life (`CacheGuard.broken`) and every load waiting on it, and
+  after, goes straight to the network. Test with Chromium and `CacheStorage.prototype.open` replaced by a never-settling or
+  rejecting promise: the menu should show after about 6 seconds.
 - Browsers keep every image in Cache Storage under `hrf-image-cache-<imageDataVersion>`
   (`HRF.imageDataVersion` in `haunt-roll-fail/hrf.scala`) and never refetch it. When an image
   changes but keeps its file name, bump `imageDataVersion`, or players keep seeing the old one
@@ -507,6 +513,10 @@ server. No session can reach the server, and none needs to.
     Negotiations there asks no card for the clearing's other ruler. Older games keep it until the end of the current phase,
     and their Negotiations still asks a card for the other faction that rules the clearing; a running game can be switched over
     with `SilverTongueOneEffectAction(X)` (done for Destiny in Right on 2026-10-30).
+    The Keepers' whole Recover is that one effect: the ruled clearings are counted once when it starts, so a Silver-Tongue clearing
+    counts for every relic recovered (`RetinueRecoverContinueAction` in `root/faction-expedition.scala` carries the count). It ended
+    after the first relic, so in Right of Betrayal (2026-11-25) a Jewel 2 after a Jewel 1 discarded the Faithful Retainer. New games
+    get the hidden `SilverTongueWholeRecover`, in `RulesVersion6`; a running game can be switched over with `SilverTongueWholeRecoverAction(X)`.
   - Brazen Demagogue: the dominance can be activated only right when it is
     taken; the player keeps scoring (`demagogue` flag in `FactionState`).
   - Feather Rufflers, Spy Network, Silver-Tongue and Friend are usable from
@@ -950,7 +960,9 @@ server. No session can reach the server, and none needs to.
   (`EveningNAction(30, f : Council)` and `Council.clearPathWanted` in `root/faction-council.scala`): it reveals its cards in
   Birdsong and gets them back only in Evening, so its Daylight hand was empty and the path never came up (Discord,
   2026-11-04). New games get the hidden default option `CouncilEveningClearPath`; older games keep their Evening so their replays
-  don't change, and a running game can be switched over with `CouncilEveningClearPathAction(X)`. `ReplayCheck <games> mountain`
+  don't change, and a running game can be switched over with `CouncilEveningClearPathAction(X)`. Taken out again on 2026-11-25
+  (Discord root-feedback: clearing a path is Daylight only): `RulesVersion8` is `RulesVersion7` without it, so new games don't offer it;
+  the games that have it keep it, and `CouncilNoEveningClearPathAction(X)` switches one off. `ReplayCheck <games> mountain`
   plays the Mountain map with the Council.
 - Governors (17.2.3) stop Lilypad Diaspora's enclaves and the Corvids' plots at an enemy Council's Governing assemblies from
   crafting until the Council is entreated (`Council.craftingIn` in `root/faction-council.scala`, used by `craftEnclaves` and
@@ -1016,8 +1028,10 @@ server. No session can reach the server, and none needs to.
   recoloured on 2026-10-22 to the lime of its warriors and gardens (`#b6dc6c`), lighter than the olive it had (owner's ask).
 - Lizard Cult crafting (house rule, asked for on 2026-10-13): gardens of the Outcast suit craft as
   usual, and every other garden pays only for wild (any suit) cost icons (`WildOnly` in `root/game.scala`, `craft` in
-  `root/faction-fanatic.scala`). Law of Root 10.2.1 allows only Outcast gardens. Not gated by an option: it only adds
-  craft choices, so recorded games replay the same.
+  `root/faction-fanatic.scala`). Law of Root 10.2.1 allows only Outcast gardens. Players took it for a bug (2026-11-25,
+  Tournament 1 Table B: Saboteurs offered with no Outcast garden), so new games get the hidden `LizardsOutcastOnly`, in
+  `RulesVersion7`: only Outcast gardens craft (`FanaticExpansion.outcastOnly`); older games keep the house rule, and a running game
+  can be switched over with `LizardsOutcastOnlyAction(X)` (done for that table).
 - Lizard Cult Outcast gardens pay for their clearing's suits, not their printed suit (Homeland Lilypad Diaspora rules,
   posted on 2026-10-15): only frog at a Militant enclave, either at a Peaceful one, any of the Lost City's three,
   and either of a double suited Mousehold, Foxburrow or Rabbittown clearing (`c.asset`, a `OneOf`). New games get the hidden
@@ -1099,6 +1113,10 @@ server. No session can reach the server, and none needs to.
   to the acclaims, so that pick has no Cancel (`CraftAction(f : Knaves, ...)` in `root/faction-knaves.scala`): the generic one's
   Cancel after a recorded move threw "cancel on non-soft external action", and Wind of Victory stopped loading on 2026-10-30 when
   the Knaves served Bake Sale (two rabbits) with frog, rabbit and rabbit-or-frog acclaim. Only takes away a choice that threw.
+- The Knaves' acclaim already activated to craft this turn with Serve is drawn grayed out on the map until the end of the
+  Knaves' turn, like the physical token flipped to its other side (`usedAcclaim` in `drawMap`, `root/ui.scala`, from
+  `KnavesPlayer.activated`; images `kd-acclaim-used`, `nw-acclaim-used`; Discord root-discussion, 2026-11-26: players took the
+  used acclaim for a bug). Display only, so no game records change.
 - The Knaves' captain list (player panel and info overlay) says "(retired)" for a captain the Knaves retired, "(removed)" for one
   an enemy removed from the map, and "(retired, removed)" for both (`status` in `KnavesPlayer`, `root/faction-knaves.scala`;
   "removed" is a captain that has been on the map, `placed`, and isn't now). Asked for on Discord on 2026-11-03 (Glory through
@@ -1253,7 +1271,7 @@ server. No session can reach the server, and none needs to.
   session, which can't reach Discord, can do it): `roles`, `role <name> [| color #rrggbb] [| hoist] [| mentionable]`, `rename-role`,
   `give-role <user> -> <role>`, `take-role`, `channels`, `category <name> [| private] [| see <roles>] [| read-only <roles>]`,
   `channel <name> [| in <category>] [| text|voice|forum|announcement|stage] [| topic <text>] [| private] [| see ...] [| read-only ...] [| synced]`,
-  `rename-channel`, `move-channel <name> -> <category>|none`, `order <category> -> <channel>, ...` (`good-game/DiscordServer.scala`, its header has the forms). Creating
+  `rename-channel`, `move-channel <name> -> <category>|none`, `order <category> -> <channel>, ...`, and `merge-role <role> -> <role>` (everyone holding the first gets the second and loses the first; 2026-11-25, used to merge ng-spectator into root-spectator, renamed spectator) (`good-game/DiscordServer.scala`, its header has the forms). Creating
   changes the one of that name if there is one. On purpose nothing is deleted, nobody kicked or banned, and a role is never given
   server permissions; every request carries the audit log reason "HRF server change". The bot needs Manage Roles and Manage Channels,
   and its role above the roles it manages.
@@ -1262,7 +1280,9 @@ server. No session can reach the server, and none needs to.
   menu go through `Lfg.interaction`). Only the roles the owner lists are offered (`tournament/self-roles.tsv`, set by the tournament changes
   `self-roles`, `self-role <role>, ...`, `self-role-off <role>, ...`; `role-picker <channel> [| text <text>]` posts the button), and only
   while each gives no server permission, isn't a bot's and sits under the bot's role, checked again at every pick, so Manager or any
-  moderating role is never handed out.
+  moderating role is never handed out. My Account offers the same roles to each name the device holds whose Discord is known ("Discord Roles", `roleRows` in
+  `myAccount`, `hrf.scala`; `/discord/roles` and `/discord/role`, `SelfRoles.site` and `siteSet`, the player code proving the name;
+  2026-11-26, asked for): tapping one gives or takes it, with the same checks; a name whose Discord isn't a server member is told to join.
 - The "Roast Me" role (2026-11-25, asked for: a notification role that makes fun of you while you play): a member with it gets each of their
   turn pings from the game's heckler instead of the turns webhook's plain ping: one message, the ping with a jab on its second line, posted
   by the same webhook in the same thread under the heckler's own name and picture (a webhook post's `username` and `avatar_url`, `persona` in
@@ -1270,18 +1290,22 @@ server. No session can reach the server, and none needs to.
   carries the eagle's insults down Yggdrasil), Pincer's Pamphleteer and Company of Heroes' Sergeant Major (`good-game/Heckler.scala`, its
   lines there; the jabs mock the play, never the person). The Court Crow also mocks, in the game's thread, what happens to a
   player with the role on anyone's turn (asked for the same day): a 3-0 roll against them, their own 0-3, an ambush, a Raze, a Revolt, a
-  Lizard Convert or Sanctify, the Eyrie's Turmoil, a Corvid bomb. The Root game notes each event with its victim as it plays out, before the
+  Lizard Convert or Sanctify, the Eyrie's Turmoil, a Corvid bomb, The Faithful's extra hit against them drawing the card that keeps it, a battle leaving them with nothing where they had 4 pieces or a building (`game.jestBattle`), still 0 VP at the third round, last alone when another reaches 25 VP, the Vagabond turning Hostile, the Knaves taking their warriors prisoner, and their own dominance card (2026-11-25). The Root game notes each event with its victim as it plays out, before the
   board changes (`Jests` in `root/jests.scala`, from `internalPerform`; `game.jests`, display only, numbered in order, so every client numbers
   them alike, which `ReplayCheck` checks), the clients send the last 12 with their turn reports (the seventh line, `Meta.jests`), and the
-  server takes each number once (`Heckler.jests`, `turns/jests.tsv`; a game's first report only sets where it starts). About one Court Crow post in three carries one of its animated GIFs under the line (asked for:
-  "sometimes the crow just sends a trolling gif, with some context"): the 3-0 dice for a roll or a battle, the crow popping out of its
-  trash can for something trashed, else the crow laughing (`Heckler.gifFor`, a webhook embed; `webp2/lfg/gifs/`, made by
-  `heckler-art.py`, served by `/art/`). Half of those GIFs are instead one of 18 laughing GIFs from Klipy (the library Discord's GIF picker searches),
-  the first results of its "lol" search, picked by the owner on 2026-11-25 and linked from Klipy's servers (`Heckler.klipyLaughs`). For the harshest events (a 3-0 roll against them, a Raze, a Revolt, Turmoil, a bomb, a Sanctify, last place) half the
-  GIFs are Emotional Damage instead, the owner's pick, a Klipy video made a GIF (`webp2/lfg/gifs/emotional-damage.gif`, `Heckler.harsh`). When they're under attack or banished, half are a terrified Rick Moranis, another owner's pick
-  (`terrified.gif`, `Heckler.scared`). A troll member who loses a Root game on exactly 29 VP gets the crow in its thread with Vegeta in the
+  server takes each number once (`Heckler.jests`, `turns/jests.tsv`; a game's first report only sets where it starts). A Court Crow post carries one of its animated GIFs under the line only when the line gives it a reason, and sparingly (asked for:
+  "sometimes the crow just sends a trolling gif, with some context"; owner, 2026-11-25: "you don't need to send GIFs for no reason", then
+  "GIFs should be used sparingly ... too frequently and they become annoying from cluttering the thread"): a game lost on 29 VP always gets
+  Vegeta, anything else with a GIF of its own one time in four and never within half an hour of the last GIF in that game's thread
+  (`Heckler.gifFor`, `lastGif`, a webhook embed): a 3-0 or 0-3 roll the crow's dice (`webp2/lfg/gifs/crow-dice.gif`, made by
+  `heckler-art.py`, served by `/art/`), a Lizard Cult conversion an unmasking lizard (`convert.gif`, the owner's Klipy pick), under attack or
+  banished a terrified Rick Moranis (`terrified.gif`, `Heckler.scared`), an ambush or The Faithful's lucky draw the crow laughing or one of 18
+  laughing GIFs from Klipy (the library Discord's GIF picker searches, the first results of its "lol" search, picked by the owner and linked
+  from Klipy's servers, `Heckler.klipyLaughs`), the harshest events (a Raze, a Revolt, Turmoil, a bomb, a Sanctify, last place) Emotional
+  Damage (a Klipy video made a GIF, `emotional-damage.gif`, `Heckler.harsh`) or the crow popping out of its trash can; a plain turn ping or
+  a reminder none. Northgard's Ratatoskr has a library to match (2026-11-26, asked for): more lines for every reason, each clan's own turn lines half the time (`clanTurns`), and the jests of `nort/jests.scala` (`ratJests`: a territory lost, an attack repelled, wiped out, beaten by a creature, both sides wiped out, Unrest, a fallen warchief, a creature appearing or moving in; from the public log only, never hidden fame; `NORT_JESTS=1` in `nort.Host` prints them), its GIFs the shared ones (no crow art), slow turns (`ratSlow`) and, once a game is over, a loss or win by one fame and last place (`ratLostByOne`, `ratWonByOne`, `ratLast`). A turn of a day or more gets the crow once the troll member moves (`Heckler.slow`, from `TurnPings.waiting`), the crow's turn pings use its faction's own lines half the time (`Heckler.factionTurns`), and a loss or a win by one VP gets the crow too (`lostByOne`, `wonByOne`; 2026-11-25). A troll member who loses a Root game on exactly 29 VP gets the crow in its thread with Vegeta in the
   rain (`vegeta-rain.gif`, `Heckler.gameOver`, from `/report-result`). On the Riverfolk's own turns the crow has its own lines (`otterLines`),
-  half its GIFs Milhouse flirting (`milhouse-flirt.gif`; "otters trying to sell"). The role is called @troll on the server since 2026-11-25 (`roast-role troll`). The tournament change `troll-intro`
+  and sometimes Milhouse flirting (`milhouse-flirt.gif`; "otters trying to sell"). The role is called @troll on the server since 2026-11-25 (`roast-role troll`). The tournament change `troll-intro`
   gives every member with the role one first jab at once, in the thread of the game it is about, for the first thing found in their games:
   a game waiting on them (and for how long), last on VP in a Root game, last place in a finished game (`ranking/results.tsv`), a game that
   needed 4 or more turn pings, 8 VP or more behind the leader, or a lost game; nothing found, nothing posted (no welcome, owner's ask;
@@ -1289,6 +1313,34 @@ server. No session can reach the server, and none needs to.
   `role Roast Me` and `self-role Roast Me`; `roast-role <role>` picks another (`off`: none), `roasts` says how it stands. The pictures are
   `webp2/lfg/webhooks/heckler-*.png`, served by `/art/` (`Lookup.artFile` serves that folder), and the crow as a Discord server emoji,
   `webp2/lfg/server-emoji/root_crowjester.png`, and peeking out of a trash can, `root_jestercan.png`, both uploaded to the server by hand; `haunt-roll-fail/tools/heckler-art.py` makes them.
+- Final scores (owner, 2026-11-25: "when a game ends, always have Command Warren post the final scores with a congratulation message"): the
+  first result a finished game reports (`/report-result`) is posted in its thread by its turns webhook (Command Warren for Root, and the
+  Northgard, Pincer and Company of Heroes forums' own): the winners congratulated and mentioned when they can be pinged, then every seat's
+  faction and final score, winners first, each led by its faction's or clan's emoji (2026-11-25, asked for) (`TurnPings.finished`); the tournament change `final-scores <game> ...` posts it again, or for a game that ended before. A tournament table's game is left out, as `Tournament.reported`
+  congratulates it.
+- General Announcements (2026-11-26, asked for): a webhook in the server's #announcements channel (General category, above #welcome), named
+  "General Announcements" with a scroll picture, that posts each announcement under the next of four names from Samson's riddle, in turn, each
+  with its own picture: Eater to Eat, Sweeter than Honey, Strength became Sweet, Stronger than a Lion (a sun, Judges 5:31; a fist before 2026-11-26) (`good-game/Announce.scala`; pictures
+  `webp2/lfg/webhooks/general-announcements.png` and the four, drawn by `haunt-roll-fail/tools/announce-avatars.py`, served by `/art/`). Made
+  by the tournament change `make-webhook General Announcements | in announcements | avatar general-announcements.png | for general` (its URL
+  in `discord-general-webhook`); the texts are `announcements/<name>.md` in `hrf-games`, posted by the change `announce <name>` (a line of
+  `---` starts a new message, longer ones split at blank lines; a message pings only when it says @everyone or @here); `announce-voices` says which name is next. The how-tos for the
+  Discord and the site are `announcements/discord-how-to.md` and `site-how-to.md`.
+  Northgard Announcements (2026-11-26, asked for): a second desk, the webhook Vedrfolnir in #ng-announcements, always posting under that
+  name: the hawk at the top of Yggdrasil that sees all nine worlds (the Wastelands tile), paired with the heckler Ratatoskr, who runs down
+  that tree with the eagle's insults (`Announce.nort`, `Announce.Desk`; avatar `webp2/lfg/webhooks/vedrfolnir.png`, the eagle with the glowing eye from the video game's Clan of the Eagle
+  painting (its GOG page's `eagle614.jpg`), by `announce-avatars.py <painting>`; a drawing, the Wastelands tile's eagle, the clan's emblem and
+  a painting of the eagle on Yggdrasil were turned down). Made by `make-webhook Vedrfolnir | in ng-announcements | avatar vedrfolnir.png | for nort-announcements` (its URL in
+  `discord-nort-announce-webhook`); `nort-announce <name>` posts `announcements/<name>.md` through it.
+- Game updates go to their game's announcements channel (the owner's standing rule, 2026-11-26): after a deploy that changes something
+  players of a game will notice (a feature, a fix, a rules change), post it there, each through its own webhook and name (`Announce.desks`):
+  Northgard's in #ng-announcements as Vedrfolnir (`nort-announce <name>`), Root's in #root-announcements through Royal Claim, the
+  tournament's webhook, as Informants (`root-announce <name>`), Pincer's in #pincer-announcements as Dispatch Rider (`pincer-announce
+  <name>`), Company of Heroes' in #coh-announcements as Signal Corps (`coh-announce <name>`). Write the post as `announcements/<name>.md` in
+  `hrf-games` and add the change line to a `tournament-changes/<name>.txt` there, after the deploy is live. Never post a game's update through
+  General Announcements (site-wide news only), another game's webhook or a turns webhook; a change to the whole site goes to General.
+  Avatars in `webp2/lfg/webhooks/` (`informants.png` from the Informants card, `dispatch-rider.png` from Pincer's Mustang card,
+  `signal-corps.png` the Mechanized Company commander card's crewman in his radio headset; `announce-avatars.py`).
 - The bot's `/rule <rule> [game] [private]` (2026-11-22, asked for as a bot "to help cite the rules", not to interpret them): Root's
   rules by their Law of Root number (`4.3.2`, `H.1`, a section lists the rules under it) or name, with the rule's text and the link to
   it on the Root Database (`webp2/lfg/rules-root.tsv`, made by `haunt-roll-fail/tools/law-index.py` from the Root Database's copy, kept up
@@ -1487,6 +1539,10 @@ server. No session can reach the server, and none needs to.
   `sbt "runMain root.ReplayCheck <games> [base|ld|tc|kd|ki] [dense]"` with the
   `host.xsbt` setup. `ReplayCheck <games> marsh` or `marsh5` plays the
   Marsh map with 4 or 5 players and the three Homeland landmarks.
+- The undo texts ("Stag undid 5 actions", and "Undo 5 actions" in the confirm box) count the player moves that left a line in
+  the log and still stand (`loggedMoves` in `runner.scala`, `GameUI.movesIn` in `base.scala`, used by `grey.scala`), not every
+  recorded entry undone: those include the automatic steps (`Next`, phase changes, draws), so five crossed-out lines read
+  "undid 35 actions" (Discord northgard-feedback, 2026-11-26). Display only, every game.
 - Looking at an earlier state in the log (tapping a line) no longer jumps to the latest state when other players' moves come
   in (`ui.overrideGame` checks in `runner.scala`; a spectator, 2026-10-21); "Back", or the player's own turn, does.
 - A finished game's "Save Replay As File" (`Quine.save` in `quine.scala`) inlines the whole client and every image of

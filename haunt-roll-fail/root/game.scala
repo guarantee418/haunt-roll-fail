@@ -1648,12 +1648,14 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
     var frogsSkipLostSouls = false
     var frogsCraftByClearing = false
     var lizardsCraftByClearing = false
+    var lizardsOutcastOnly = false
     var governorsStopEnclaveFlips = false
     var governorsStopDelve = false
     var outragePeekNeedsOk = false
     var outragePeekNotifies = false
     var councilRevealOnce = false
     var councilEveningClearPath = false
+    var councilNoEveningClearPath = false
     var fearsAfterRemoval = false
     var silverTongueOneEffect = false
     var governorsStopCrafting = false
@@ -1667,6 +1669,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
     var banishCaptainsLast = false
     var nabFearsOrder = false
     var charismaticPlaces = false
+    var silverTongueWholeRecover = false
     var featherRufflersOnCraft = false
     var counterMiceInABush = false
     var forcedAsyncChooseHits = false
@@ -1840,6 +1843,8 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
 
     // what happened to whom, for the Court Crow's jests (display only: root/jests.scala)
     var jests : $[String] = $
+    // each side's presence in the clearing when the current battle started (Jests, "wiped": pieces, a building counting 4)
+    var jestBattle : Map[Faction, Int] = Map()
 
     // a tournament game has no map until its draft picks one (TournamentExpansion): the Autumn map stands in until then
     var board : Board = TournamentExpansion.boardOf(options).|(options./~{

@@ -172,6 +172,8 @@ object Host extends hrf.host.BaseHost {
     }
 
     def winnersFromFaction(f : F)(implicit g : G) = {
+        // NORT_JESTS=1: the events Ratatoskr's jests would mock (nort/jests.scala)
+        if (sys.env.get("NORT_JESTS").has("1") && f == g.factions.head) g.jests.foreach(j => println("JEST " + j))
         // Fame tokens with no source noted (FactionState.addFame), which the end screen's table shows as "Other"
         g.factions.foreach { c =>
             val untracked = g.states(c).fame - g.fameFrom.filter(_._1._1 == c).values.sum

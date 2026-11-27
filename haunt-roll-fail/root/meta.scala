@@ -670,6 +670,15 @@ case object CharismaticPlacesWhatItCan extends GameOption with ToggleOption {
     val valueOn = "Charismatic".hh ~ " places what it can"
 }
 
+// A Silver-Tongue clearing counts as ruled for the Keepers' whole Recover, every relic recovered in it, not only the first
+// (2026-11-25, Right of Betrayal: a Jewel 2 after a Jewel 1 discarded the Faithful Retainer). The Recover counts the ruled clearings
+// once, when it starts. Hidden, in RulesVersion6; older games keep counting again for each relic (SilverTongueWholeRecoverAction
+// switches a running one over).
+case object SilverTongueWholeRecover extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Silver-Tongue".hh ~ " for a whole " ~ "Recover".hh
+}
+
 // With MountainSuitedLandmark, the landmark drawn for the Mountain's Tower clearing may be of that clearing's own suit (owner,
 // 2026-11-19): older games left those out. Hidden, in RulesVersion3; it only changes a setup draw, so running games need no switch.
 case object SuitedLandmarkAnySuit extends GameOption with ToggleOption {
@@ -681,6 +690,8 @@ case object SuitedLandmarkAnySuit extends GameOption with ToggleOption {
 // are revealed in Birdsong and come back to hand only in Evening, so its Daylight had none to discard (Discord,
 // 2026-11-04). Hidden and on by default for new games; older games keep their Evening so their replays don't change
 // (CouncilEveningClearPathAction switches a running one over).
+// Taken out again in RulesVersion8 (2026-11-25, Discord root-feedback: clearing a path is Daylight only, Law of Root's Mountain
+// map rules); the games that have it keep it unless CouncilNoEveningClearPathAction switches it off.
 case object CouncilEveningClearPath extends GameOption with ToggleOption {
     val group = "Card Draft"
     val valueOn = "Twilight Council".hh ~ " may clear a path in Evening"
@@ -836,6 +847,14 @@ case object KnavesCaptainsInDraft extends GameOption with ToggleOption {
 case object HirelingsByTheCard extends GameOption with ToggleOption with FoldedOption {
     val group = "Hirelings"
     val valueOn = "Hirelings".hh ~ " as their cards say"
+}
+
+// Lizard Cult gardens craft only in the Outcast's suit (Law of Root 10.2.1): the others paid for any-suit costs, a house rule
+// from 2026-10-13 that players took for a bug (2026-11-25, Tournament 1 Table B: Saboteurs crafted with no Outcast garden).
+// Hidden, in RulesVersion7; older games keep the house rule (LizardsOutcastOnlyAction switches a running one over).
+case object LizardsOutcastOnly extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Lizard Cult".hh ~ " crafts only with " ~ "Outcast".hh ~ " gardens"
 }
 
 // Lizard Cult gardens of the Outcast suit pay for their clearing's suits (frog at enclaves, the Lost City's three,
@@ -2074,7 +2093,7 @@ object Meta extends MetaGame {
 
     // The hidden options of rules fixes, each gating a fix so the games started before it replay the same (most new games get through
     // their RulesVersion); not listed in a game's log (OptionsAction)
-    lazy val fixes : $[O] = $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, HitsAndAmbushesSetup, DuskDeckFixes, BanishCaptainsLast, SuitedLandmarkAnySuit, NabFearsOrder, CharismaticPlacesWhatItCan)
+    lazy val fixes : $[O] = $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, HitsAndAmbushesSetup, DuskDeckFixes, BanishCaptainsLast, SuitedLandmarkAnySuit, NabFearsOrder, CharismaticPlacesWhatItCan, SilverTongueWholeRecover, LizardsOutcastOnly)
 
     def unlisted : $[O] = fixes ++ settled ++ RulesVersion.all
 
@@ -4493,6 +4512,7 @@ object Meta extends MetaGame {
         ImageAsset("nw-skunk-x5"         ) ::
         ImageAsset("nw-skunk-x5-empty"   ) ::
         ImageAsset("nw-acclaim"          ) ::
+        ImageAsset("nw-acclaim-used"     ) ::
         ImageAsset("nw-captain-empty"    , "kd-captain-empty" ) ::
         $("birdsong", "daylight", "evening", "gladiator", "cheat", "jailor", "harrier", "ronin", "adventurer", "scoundrel", "arbiter", "vagrant", "ranger", "tinker", "thief", "bard", "barkeep", "berserker", "blacksmith", "swindler", "zealot")./(k => ImageAsset("nw-captain-" + k, "kd-captain-" + k))
     ) ::
@@ -4940,6 +4960,7 @@ object Meta extends MetaGame {
         ImageAsset("kd-captain-zealot"     ) ::
 
         ImageAsset("kd-acclaim"          ) ::
+        ImageAsset("kd-acclaim-used"     ) ::
     $) ::
     // Faction boards shown when a faction's status is tapped (boardImage in ui.scala),
     // from the Tabletop Simulator mod "Root - Ultimate Collection" (Steam workshop 2516434159)
@@ -4998,9 +5019,24 @@ case object RulesVersion5 extends RulesVersion(5) {
     def fixes = RulesVersion4.fixes ++ $[Meta.O](CharismaticPlacesWhatItCan)
 }
 
+// A Silver-Tongue clearing counts for the Keepers' whole Recover (2026-11-25)
+case object RulesVersion6 extends RulesVersion(6) {
+    def fixes = RulesVersion5.fixes ++ $[Meta.O](SilverTongueWholeRecover)
+}
+
+// The Lizard Cult crafts only with Outcast gardens (2026-11-25)
+case object RulesVersion7 extends RulesVersion(7) {
+    def fixes = RulesVersion6.fixes ++ $[Meta.O](LizardsOutcastOnly)
+}
+
+// The Twilight Council no longer clears a Mountain path in Evening, as clearing is Daylight only (2026-11-25)
+case object RulesVersion8 extends RulesVersion(8) {
+    def fixes = RulesVersion7.fixes.diff($[Meta.O](CouncilEveningClearPath))
+}
+
 object RulesVersion {
-    val all : $[RulesVersion] = $(RulesVersion1, RulesVersion2, RulesVersion3, RulesVersion4, RulesVersion5)
-    def latest : RulesVersion = RulesVersion5
+    val all : $[RulesVersion] = $(RulesVersion1, RulesVersion2, RulesVersion3, RulesVersion4, RulesVersion5, RulesVersion6, RulesVersion7, RulesVersion8)
+    def latest : RulesVersion = RulesVersion8
     def implied : $[Meta.O] = all./~(_.fixes).distinct
 
     def expand(l : $[Meta.O]) : $[Meta.O] = l ++ l.of[RulesVersion]./~(_.fixes).distinct.diff(l)

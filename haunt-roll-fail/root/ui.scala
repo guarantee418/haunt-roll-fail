@@ -1008,8 +1008,128 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         val x = ((e.clientX - rect.left) * k - tx) / sc - dw
         val y = ((e.clientY - rect.top) * k - ty) / sc - dh
 
-        // Tapping a card pile, a landmark or a hireling's piece first, then the water
-        pileTargets.find { case (px, py, pw, ph, _) => x >= px && x < px + pw && y >= py && y < py + ph }./ { case (_, _, _, _, target) => target }.orElse(waterAt(x, y)).foreach(onClick)
+        // Tapping a card pile, a landmark or a hireling's piece first, then a clearing a choice is about, then the water
+        pileTargets.find { case (px, py, pw, ph, _) => x >= px && x < px + pw && y >= py && y < py + ph }./ { case (_, _, _, _, target) => target } match {
+            case Some(target) => onClick(target)
+            case None => clearingAt(x, y).%(c => tapChoices(c).any) match {
+                case Some(c) => tapClearing(c)
+                case None => waterAt(x, y).foreach(onClick)
+            }
+        }
+    }
+
+    map.node.onmousemove = (e : dom.MouseEvent) => {
+        val rect = map.node.getBoundingClientRect()
+        val (tx, ty, sc, dw, dh, bw) = mapTransform
+        val k = bw / rect.width
+        val x = ((e.clientX - rect.left) * k - tx) / sc - dw
+        val y = ((e.clientY - rect.top) * k - ty) / sc - dh
+
+        map.node.style.cursor = clearingAt(x, y).exists(tappable.has).?("pointer").|("default")
+    }
+
+    // Clearings on the map choose (asked for on 2026-11-26): a clearing a current choice is about is outlined, and tapping it
+    // takes that choice, as its button would; when several choices are about it, it is marked and the next button carries on with it.
+    // The buttons stay for every choice. A choice's clearings are its own fields (a clearing, or a list or option of them),
+    // not those of what follows it; a clearing every choice shares (the one moved from) doesn't pick between them
+
+    // The clearing at (x, y) on the map, within its printed circle and a little more
+    def clearingAt(x : Double, y : Double) : |[Clearing] =
+        game.clearings.but(LegendSpace)./(c => c -> center(c)).%{ case (_, (cx, cy)) => (cx - x) * (cx - x) + (cy - y) * (cy - y) < 230 * 230 }
+            .sortBy { case (_, (cx, cy)) => (cx - x) * (cx - x) + (cy - y) * (cy - y) }.headOption./(_._1)
+
+    // A choice's own clearings: those it names one by one, and those in its lists
+    def ownClearings(a : Any) : ($[Clearing], $[Clearing]) = a match {
+        case p : Product =>
+            val ff = p.productIterator.$
+            (ff./~{
+                case c : Clearing => $(c)
+                case Some(c : Clearing) => $(c)
+                case _ => $()
+            }, ff./~{
+                case l : List[_] => l.collect { case c : Clearing => c }
+                case _ => $()
+            })
+        case _ => ($, $)
+    }
+
+    // The choices that can be taken from the map: not information, not unavailable, not a number to set or several to pick
+    def mapChoices : $[UserAction] = (lastThen != null).??(lastActions.%{
+        case _ : Info | _ : Hidden | _ : Cancel | _ : Extra[_] | _ : HalfExplode => false
+        case _ => true
+    })
+
+    // Each choice with the clearings that pick it: the ones it names, less those every choice names (how many to move from
+    // one clearing to another is left to the buttons, as is a choice alone in naming a clearing, an ambush card beside Skip),
+    // and the ones in its lists (a menu's "where")
+    def tapKeys : $[(UserAction, $[Clearing], $[Clearing])] = {
+        val l = mapChoices./{ a =>
+            val (s, ll) = ownClearings(a)
+            if (s.any || ll.any) (a, s, ll) else ownClearings(a.unwrap).use { case (s, ll) => (a, s, ll) }
+        }
+        val named = l.%(_._2.any)
+        val common = (named.num > 1).??(named./(_._2).reduce(_ intersect _))
+        // a list counts only for a choice that opens more choices (Move, Battle, Build): one that is taken at once (a suit,
+        // a card) is not picked by a clearing that happens to be in its list
+        val keys = l./{ case (a, s, ll) => (a, (named.num > 1).??(s.diff(common)), a.isSoft.??(ll)) }
+        keys
+    }
+
+    def tapChoices(c : Clearing) : $[UserAction] = {
+        val k = tapKeys
+        k.%(_._2.has(c))./(_._1).some.|(k.%(_._3.has(c))./(_._1))
+    }
+
+    def tappable : $[Clearing] = {
+        val k = tapKeys
+        k./~(_._2).distinct.some.|(k./~(_._3).distinct)
+    }
+
+    // After a tap took a choice that opens more choices (Move, Battle, Build), the next one about the same clearing is taken too
+    var tapFollow : |[Clearing] = None
+
+    // The clearing tapped when several choices are about it (Battle or Move there): marked on the map, and the button
+    // pressed next carries on with it, so it isn't tapped twice. No list over the map: the buttons are the list
+    var tapMarked : |[Clearing] = None
+
+    // A tap takes a choice at once only where every choice asks the same question (where to move, which clearing to
+    // place in); in a menu of different actions (Battle, Build Sawmill, Recruit) it only marks the clearing, so a tap
+    // never spends anything by itself
+    def tapClearing(c : Clearing) {
+        val same = tapKeys.%(k => k._2.any || k._3.any)./(_._1.question(game).text).distinct.num == 1
+
+        tapChoices(c) match {
+            case List(a) if same => takeFromMap(a, c)
+            case Nil =>
+            case _ =>
+                val again = tapMarked.has(c)
+                tapMarked = again.not.?(c)
+                tapFollow = tapMarked
+                drawMap()
+        }
+    }
+
+    // As if its button were pressed
+    def takeFromMap(a : UserAction, c : Clearing) {
+        val then = lastThen
+
+        if (then == null || lastActions.has(a).not)
+            return
+
+        overlayPane.invis()
+        overlayPane.clear()
+
+        lastThen = null
+        lastActions = $
+        lastActionsOffset = 0
+        lastActionsChosen = None
+        lastWaiting = $
+
+        tapFollow = a.isSoft.?(c)
+
+        asker.clear()
+
+        then(a)
     }
 
     // A failure drawing the map (seen only on iPhones, Ground and Might, 2026-10-16) must not stop the rest of the
@@ -1657,13 +1777,19 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         // Warriors held prisoner in forests are drawn behind bars
         val caged = currentGame.ui.graveyard.not.??(game.board.forests./~(r => factions.of[CommonAbduct].%(game.states.contains)./~(_.from(Cage(r)).$)./(u => (r : Region, u.faction, u.piece)))).toSet
 
+        // The Knaves' acclaim already activated to craft this turn (Serve) is drawn grayed out until the turn ends, like the flipped
+        // token of the physical game (Discord root-discussion, 2026-11-26); display only, from KnavesPlayer.activated
+        val usedAcclaim = currentGame.ui.graveyard.not.??(factions.of[Knaves].%(game.states.contains)./~(f => f.activated./(c => (c : Region, f : Faction)))).toSet
+
         draws.%(_.piece != Keep).sortBy(d => d.y - (d.piece.is[Token]).??(10000) - (d.piece == FreeBuildingSlot).??(20000) - (d.piece == Keep).??(40000)).foreach { d =>
             val jail = caged.contains((d.region, d.faction, d.piece))
 
             if (jail)
                 drawJail(g, d.rect, false)
 
-            g.drawImage(resources.images.get(d.rect.key), d.rect.x, d.rect.y)
+            val key = (d.piece == Acclaim && usedAcclaim.contains((d.region, d.faction))).?(d.rect.key + "-used").|(d.rect.key)
+
+            g.drawImage(resources.images.get(key), d.rect.x, d.rect.y)
 
             if (jail)
                 drawJail(g, d.rect, true)
@@ -1737,6 +1863,47 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 g.drawImage(resources.images.get("mc-recruiter"), mp.width / 2 - 19 * 50 + x * 100, mp.height / 2 + 16 * 50 - y * 100)
             }
         }
+
+        // The clearings a tap can choose: a light ring with a dark edge, over the pieces, readable on every map;
+        // the one tapped, marked for the next button, as a clearing is highlighted
+        if (currentGame.ui.graveyard.not)
+            tapMarked.%(tappable.has).foreach { c =>
+                val (x, y) = center(c)
+                g.globalAlpha = 1.0
+                g.beginPath()
+                g.arc(x, y, 196, 0, 2 * math.Pi)
+                g.fillStyle = "rgba(255, 228, 150, 0.30)"
+                g.fill()
+                g.lineWidth = 44
+                g.strokeStyle = "rgba(0, 0, 0, 0.55)"
+                g.stroke()
+                g.lineWidth = 28
+                g.strokeStyle = "rgba(255, 228, 150, 1.0)"
+                g.stroke()
+            }
+
+        // what can be tapped, for checking (as data attributes on the map, read by tests and Report a Bug)
+        map.node.dataset.update("taps", tappable./(_.name).mkString(","))
+        map.node.dataset.update("tapMarked", tapMarked./(_.name).|(""))
+        map.node.dataset.update("tapsAt", tappable./{ c =>
+            val (x, y) = center(c)
+            val (tx, ty, sc, dw, dh, bw) = mapTransform
+            c.name + ":" + ((x + dw) * sc + tx).round + ":" + ((y + dh) * sc + ty).round
+        }.mkString(","))
+
+        if (currentGame.ui.graveyard.not)
+            tappable.%(c => tapMarked.has(c).not).foreach { c =>
+                val (x, y) = center(c)
+                g.globalAlpha = 1.0
+                g.beginPath()
+                g.arc(x, y, 196, 0, 2 * math.Pi)
+                g.lineWidth = 26
+                g.strokeStyle = "rgba(0, 0, 0, 0.55)"
+                g.stroke()
+                g.lineWidth = 12
+                g.strokeStyle = "rgba(255, 228, 150, 0.95)"
+                g.stroke()
+            }
 
         g.globalAlpha = 1.0
 
@@ -6545,6 +6712,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
     override def wait(self : $[Player], factions : $[Player], message : Elem) {
         val was = lastWaiting
+        val outlined = mapChoices.any
+
+        tapFollow = None
+        tapMarked = None
 
         lastThen = null
         lastActions = $
@@ -6559,6 +6730,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         showNotifications(passing.?($[F]()).|(self))
 
         super.wait(self./(fix), factions./(fix), message)
+
+        // the outlines of the last choices go
+        if (outlined)
+            drawMap()
     }
 
     override val allSwitches = $(
@@ -6764,6 +6939,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
     var lastWaiting : $[Player] = $
 
     override def ask(faction : |[Player], actions : $[UserAction], then : UserAction => Unit) {
+        val follow = tapFollow
+        tapFollow = None
+        tapMarked = None
+
         lastActions = actions
         lastThen = then
         lastActionsOffset = 0
@@ -6820,6 +6999,18 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         showNotifications(faction.$)
 
         super.ask(faction, actions, then)
+
+        // the clearings to tap, outlined
+        drawMap()
+
+        // a tap's choice opened this one: the choice about the same clearing, if it alone is
+        // (or the one choice that names it and opens more, as "Move from" with one clearing left to move from)
+        follow.foreach { c =>
+            tapKeys.%(_._2.has(c))./(_._1).some.|(mapChoices.%(a => a.isSoft && ownClearings(a)._1.has(c))) match {
+                case List(a) => scalajs.js.timers.setTimeout(0) { if (lastActions.has(a)) takeFromMap(a, c) }
+                case _ =>
+            }
+        }
     }
 
     // Pass and play: in a local game with several human players, the action pane (hand, choices, notifications)

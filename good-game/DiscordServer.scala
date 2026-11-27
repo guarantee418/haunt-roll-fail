@@ -17,6 +17,8 @@ import java.nio.charset.StandardCharsets.UTF_8
 //   rename-role <name> -> <new name>
 //   give-role <user> -> <role>                a user ID, a mention, a username or display name the bot finds, or a ranking name
 //   take-role <user> -> <role>                with a Discord (Tournament.discordId)
+//   merge-role <role> -> <role>               gives everyone holding the first role the second and takes the first off them; the first
+//                                             role stays, to be deleted in Discord (2026-11-25)
 //   channels                                  lists the categories and their channels: type, name, ID, who may see or write
 //   category <name> [| private] [| see <role>, ...] [| read-only <role>, ...]
 //   channel <name> [| in <category>] [| text | voice | forum | announcement | stage] [| topic <text>] [| private]
@@ -41,7 +43,9 @@ import java.nio.charset.StandardCharsets.UTF_8
 //                                             makes the channel's webhook, or renames and gives the avatar to the one of that name
 //                                             there; avatar is a picture in webp2/lfg/webhooks/ (made by tools/webhook-avatars.py:
 //                                             drum-and-fife.png, field-wireless.png); for sets it as turns, nort-turns, pincer-turns or
-//                                             tactics-turns, as that change would (only a webhook Discord gives the bot the token of)
+//                                             tactics-turns, as that change would (only a webhook Discord gives the bot the token of), or
+//                                             general, the General Announcements webhook, or nort-announcements, pincer-announcements,
+//                                             coh-announcements, a game's update webhook (Announce.scala)
 //   rename-webhook <name> -> <new name>       (in any channel; its ID works in place of its name)
 //   test-ping <turns channel> [| role <role>] [| text <text>]
 //                                             posts a new thread, "Test ping", through that turns channel's webhook, mentioning the
@@ -179,6 +183,7 @@ object DiscordServer {
                 call("PATCH", "/guilds/" + g + "/roles/" + r.id, "{\"name\":" + Tournament.json(b) + "}").map(_ => "renamed")) }
             case "give-role" => member(g, rest, "PUT").map(_ => "given")
             case "take-role" => member(g, rest, "DELETE").map(_ => "taken")
+            case "merge-role" => mergeRole(g, rest)
             case "channels" => listChannels(g)
             case "category" => channel(g, rest, true)
             case "channel" => channel(g, rest, false)
@@ -259,6 +264,44 @@ object DiscordServer {
                 case DiscordBot.Unavailable => Left("Discord couldn't be asked about " + v)
             }
         }
+    }
+
+    // MERGE-ROLE (2026-11-25, asked for: "merge the ng spectator and the root spectator into a single spectator role"): every member
+    // holding the first role is given the second and the first is taken off them; the first role itself stays (the bot deletes
+    // nothing), for the owner to delete in Discord
+    def mergeRole(g : String, rest : String) : Either[String, String] = arrow(rest).flatMap { case (a, b) =>
+        roles(g).flatMap { rr =>
+            findRole(rr, a).flatMap(from => findRole(rr, b).flatMap { into =>
+                if (Seq(from, into).exists(r => r.managed || r.name == "@everyone")) Left("those roles can't be given or taken")
+                else if (from.id == into.id) Left("that's the same role")
+                else holders(g, from.id).map { ids =>
+                    val failed = ids.filter(id => call("PUT", "/guilds/" + g + "/members/" + id + "/roles/" + into.id).flatMap(_ =>
+                        call("DELETE", "/guilds/" + g + "/members/" + id + "/roles/" + from.id)).isLeft)
+                    "moved " + (ids.size - failed.size) + " of " + ids.size + " members from " + from.name + " to " + into.name +
+                        (if (failed.nonEmpty) " (not moved: " + failed.mkString(", ") + ")" else "") + "; delete " + from.name + " in Discord's server settings"
+                }
+            })
+        }
+    }
+
+    // the user IDs of the members holding a role (the server's members, 1000 a page; needs the Server Members Intent)
+    def holders(g : String, role : String) : Either[String, List[String]] = {
+        def page(after : String, acc : List[String]) : Either[String, List[String]] =
+            call("GET", "/guilds/" + g + "/members?limit=1000&after=" + after).flatMap { body =>
+                Json.parse(body) match {
+                    case l : List[_] =>
+                        val mm = l.collect { case m : Map[_, _] => m.asInstanceOf[Map[String, Any]] }
+                        val ids = mm.flatMap { m =>
+                            val id = m.get("user").collect { case u : Map[_, _] => u.asInstanceOf[Map[String, Any]].get("id") }.flatten.collect { case v : String => v }
+                            val has = m.get("roles").collect { case r : List[_] => r.contains(role) }.getOrElse(false)
+                            id.map(_ -> has)
+                        }
+                        val now = acc ++ ids.filter(_._2).map(_._1)
+                        if (mm.size == 1000 && ids.nonEmpty) page(ids.last._1, now) else Right(now)
+                    case _ => Left("Discord didn't list the members")
+                }
+            }
+        page("0", Nil)
     }
 
     def member(g : String, rest : String, method : String) : Either[String, String] = arrow(rest).flatMap { case (u, r) =>
@@ -372,7 +415,8 @@ object DiscordServer {
     } yield ww.sortBy(w => (cc.find(_.id == w.channel).map(_.name).getOrElse(""), w.name)).map { w =>
         w.name + " (" + w.id + ") in " + cc.find(_.id == w.channel).map(_.name).getOrElse(w.channel) +
             (if (w.application == bot) ", made by the bot" else "") +
-            slotUsing(w.id).map(", set as " + _).mkString
+            slotUsing(w.id).map(", set as " + _).mkString +
+            Announce.using(w.id).map(", set as " + _).mkString
     }.mkString("\n") match { case "" => "no webhooks" ; case t => t }
 
     // the picture a webhook's avatar is made from, as Discord takes it
@@ -390,9 +434,10 @@ object DiscordServer {
         for {
             _ <- if (name.isEmpty || name.length > 80 || norm(name).contains("discord") || norm(name).contains("clyde")) Left("a webhook's name is 1 to 80 characters, without \"discord\" or \"clyde\"") else Right(())
             in <- opt("in").toRight("which channel? make-webhook <name> | in <channel>")
-            target <- opt("for") match {
+            desk = opt("for").flatMap(Announce.desk)
+            target <- opt("for").filter(_ => desk.isEmpty) match {
                 case None => Right(None)
-                case Some(s) => TurnPings.slot(s.trim).map(Some(_)).toRight("for takes " + TurnPings.slots.map(_.name).mkString(", "))
+                case Some(s) => TurnPings.slot(s.trim).map(Some(_)).toRight("for takes " + (Announce.desks.map(_.name) ++ TurnPings.slots.map(_.name)).mkString(", "))
             }
             picture <- opt("avatar") match { case None => Right(None) ; case Some(f) => avatar(f.trim).map(Some(_)) }
             cc <- channels(g)
@@ -409,7 +454,7 @@ object DiscordServer {
             what + " " + w.name + " (" + w.id + ") in " + c.name + (if (picture.nonEmpty) ", with its avatar" else "") + target.map { s =>
                 if (w.token.isEmpty) "; not set as " + s.name + ": Discord didn't give the bot its URL (make one with another name)"
                 else "; " + s.name + ": " + TurnPings.setHook(s, w.url)
-            }.getOrElse("")
+            }.getOrElse("") + desk.map { k => if (w.token.isEmpty) "; not set as " + k.name + ": Discord didn't give the bot its URL" else "; " + Announce.setHook(k, w.url) }.getOrElse("")
         }
     }
 
@@ -440,6 +485,6 @@ object DiscordServer {
         } yield r
     }
 
-    val words = Set("roles", "role", "rename-role", "give-role", "take-role", "channels", "category", "channel", "rename-channel", "move-channel", "order",
+    val words = Set("roles", "role", "rename-role", "merge-role", "give-role", "take-role", "channels", "category", "channel", "rename-channel", "move-channel", "order",
         "webhooks", "make-webhook", "rename-webhook", "test-ping")
 }

@@ -578,7 +578,7 @@ object French {
         "trampled" -> "retire",
         "brought on" -> "déclenche",
         "undid" -> "annule",
-        "multple" -> "plusieurs",
+        "multiple" -> "plusieurs",
         "action by" -> "action de",
         "actions by" -> "actions de",
         "action to" -> "action pour",

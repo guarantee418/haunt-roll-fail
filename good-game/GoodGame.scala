@@ -465,6 +465,9 @@ object GoodGame {
                             if (first)
                                 try Tournament.reported(journalId, all)
                                 catch { case e : Exception => println("Tournament result not taken: " + e) }
+                            // the final scores and a congratulation, in the game's thread (TurnPings.finished; 2026-11-25)
+                            if (first)
+                                TurnPings.finished(journalId, all)
                             // a troll member who lost a Root game on 29 VP (Heckler.gameOver; 2026-11-25)
                             if (first)
                                 Heckler.gameOver(journalId, l(0).safe.take(32), all)
@@ -521,6 +524,25 @@ object GoodGame {
                     }
                 }
             } ~
+            // the Discord roles a name may pick for itself (SelfRoles; My Account), and giving or taking one
+            (post & path("discord" / "roles")) {
+                decodeRequest {
+                    entity(as[String]) { body =>
+                        val l = body.split('\n').toList
+                        if (l.size < 2) complete(StatusCodes.Forbidden, "")
+                        else plain(SelfRoles.site(l(0).trim.ascii, l(1).trim.safeplus))
+                    }
+                }
+            } ~
+            (post & path("discord" / "role")) {
+                decodeRequest {
+                    entity(as[String]) { body =>
+                        val l = body.split('\n').toList
+                        if (l.size < 4) complete(StatusCodes.Forbidden, "")
+                        else plain(SelfRoles.siteSet(l(0).trim.ascii, l(1).trim.safeplus, l(2).trim.filter(_.isDigit), l(3).trim == "on"))
+                    }
+                }
+            } ~
             (post & path("tournament" / "withdraw")) {
                 decodeRequest {
                     entity(as[String]) { body =>
@@ -572,7 +594,8 @@ object GoodGame {
             // "meta, title, the seat's secret (its link), name, done, turn, unranked" with done 1 once the game's result is in, turn 1 while
             // the game waits on that seat (Turns.scala; the "user <faction> <user>" lines of the lobby say which seat is whose), and
             // unranked 1 for a game with a bot in it (its lobby's "bot" line) or with fan content, which counts toward no rating: its result says so ("X:fan"), or, before the end,
-            // the last turn report (2026-11-21)
+            // the last turn report (2026-11-21); then the overview, the other players, and for a finished game its winners and "1" when
+            // the seat won (2026-11-25)
             (post & path("my-games")) {
                 decodeRequest {
                     entity(as[String]) { body =>
@@ -591,6 +614,8 @@ object GoodGame {
                             val factionOf = info.view.mapValues(_.map(_.split(" ").toList).collect { case "user" :: f :: u :: Nil => u -> f }.toMap).toMap
                             val recorded = Ranking.recorded()
                             val done = recorded.flatMap(_.headOption).toSet
+                            // each finished game's sides, from its first result (2026-11-25, asked for: the winners in Completed Games)
+                            val sidesOf = recorded.reverse.collect { case g :: _ :: _ :: _ :: sides :: _ => g -> sides }.toMap
                             val fanDone = recorded.filter(r => r.lift(4).exists(_.split(';').contains("X:fan"))).flatMap(_.headOption).toSet
                             val dd = Ranking.displays()
                             // a game with a bot in it counts toward no rating either (Ranking.list; owner, 2026-11-22)
@@ -598,10 +623,32 @@ object GoodGame {
                             val seatNames = Ranking.seatNames()
                             // the other players of a game, in seating order: a seat's ranking name, else the name typed for it, and the bots
                             // by their level (asked for on 2026-11-22, as the tournament game had them)
+                            def namedIn(j : String, u : String) : Option[String] = {
+                                val typed = info.getOrElse(j, Nil).reverse.map(_.split(' ').toList).collect { case ("name" | "prename") :: v :: n if n.nonEmpty => v -> n.mkString(" ") }
+                                seatNames.get(u).map(k => dd.getOrElse(k, k)).orElse(typed.find(_._1 == u).map(_._2))
+                            }
+                            // a finished game's winners, "name (faction, score)" joined by " and ", and whether the seat me is one of them
+                            def winnersOf(j : String, game : String, meta : String, me : String) : (String, Boolean) = {
+                                val unit = if (meta.startsWith("root")) "VP" else if (meta.startsWith("nort")) "fame" else ""
+                                val ww = sidesOf.get(game).toList.flatMap(_.split(';').toList).filter(_.startsWith("W:")).flatMap(_.drop(2).split(',').toList).map(_.split("/", -1).toList)
+                                val shown = ww.flatMap {
+                                    case u :: rest =>
+                                        val faction = rest.headOption.map(_.replace('_', ' ')).filter(_.nonEmpty)
+                                        val score = rest.lift(3).filter(_.nonEmpty).map(sc => if (sc == "D") "dominance" else (sc + " " + unit).trim)
+                                        val name = if (u.isEmpty || u == "*") None else namedIn(j, u)
+                                        val extra = (faction.toList ++ score.toList).mkString(", ")
+                                        (name, faction) match {
+                                            case (Some(n), _) => Some(n + (if (extra.nonEmpty) " (" + extra + ")" else ""))
+                                            case (None, Some(f)) => Some(f + score.map(", " + _).getOrElse(""))
+                                            case _ => None
+                                        }
+                                    case _ => None
+                                }.distinct
+                                (shown.mkString(" and ").replace("\t", " ").replace("\n", " "), ww.exists(_.headOption.contains(me)))
+                            }
                             def othersOf(j : String, me : String, seats : List[String]) : String = {
                                 val lines = info.getOrElse(j, Nil)
-                                val typed = lines.reverse.map(_.split(' ').toList).collect { case ("name" | "prename") :: u :: n if n.nonEmpty => u -> n.mkString(" ") }
-                                def nameOf(u : String) = seatNames.get(u).map(k => dd.getOrElse(k, k)).orElse(typed.find(_._1 == u).map(_._2))
+                                def nameOf(u : String) = namedIn(j, u)
                                 val people = factionOf.getOrElse(j, Map()).toList.filter(_._1 != me).map { case (u, f) => f -> nameOf(u) }
                                 val bots = lines.map(_.split(' ').toList).collect { case "bot" :: f :: d => f -> Some(d.mkString(" ") match { case "Robotos" => "Robotos" ; case l => l + " bot" }) }
                                 val all = people ++ bots
@@ -619,7 +666,9 @@ object GoodGame {
                                         Backup.row(m("meta"), m.getOrElse("title", ""), p.secret, dd.getOrElse(k, k), if (over) "1" else "0", if (turn) "1" else "0",
                                             icons.mkString(" "), if (icons.isEmpty) seats.mkString(" ") else "", if (icons.isEmpty) m.getOrElse("options", "") else "",
                                             if (botGames.contains(p.journalId) || (if (over) fanDone.contains(m("server")) else Turns.fan(m("server")))) "1" else "0",
-                                            othersOf(p.journalId, p.userId, m.get("seating").map(_.split(" ").toList).getOrElse(Nil)))
+                                            othersOf(p.journalId, p.userId, m.get("seating").map(_.split(" ").toList).getOrElse(Nil)),
+                                            if (over) winnersOf(p.journalId, m("server"), m("meta"), p.userId)._1 else "",
+                                            if (over && winnersOf(p.journalId, m("server"), m("meta"), p.userId)._2) "1" else "0")
                                     }
                                 }
                             }.distinct.mkString("\n"))

@@ -193,92 +193,143 @@ class WrappedEmbeddedImageLoader(url2id : String => String) extends Loader[Image
     }
 }
 
-class CachedBlobImageLoader(id : String) extends Loader[ImageWrapper] {
-    // Cache Storage is only available in secure contexts (https or localhost)
-    val open = dom.window.caches.toOption.map(_.open(id))
+// Cache Storage that never answers, or refuses (Discord's in-app browser on an iPad, 2026-11-26: the page stayed on its
+// first log lines, as every image, even the menus', waited for a cache.open or match that never settled): a load the
+// cache hasn't answered in `waitAnswer` ms, or that it rejects, gives up the cache for the rest of the page's life, and every
+// load waiting on it then, and after, goes straight to the network
+object CacheGuard {
+    var broken = false
 
-    var requests = 0
+    // the cache's own answers (open, match) are quick; adding a file downloads it, so it gets longer
+    val waitAnswer = 6000
+    val waitAdd = 20000
 
-    // Load without the cache; a network error gives an empty image instead of never finishing
-    def direct(url : String) {
-        dom.fetch(url).`then`[Null]({ response : dom.Response =>
-            response.blob().then { blob : dom.Blob =>
-                put(url, new BlobImageWrapper(url, blob))
-                null
-            }
-            null
-        }, js.defined({ e : Any =>
-            put(url, new BlobImageWrapper(url, new dom.Blob(js.Array())))
-            null
-        } : js.Function1[Any, Null | js.Thenable[Null]]))
+    private var waiting = $[() => Unit]()
+
+    def give(why : String) {
+        if (!broken) {
+            broken = true
+            warn("cache storage unusable (" + why + "), loading directly")
+        }
+
+        val l = waiting
+        waiting = $
+        l.foreach(_())
     }
+
+    def await(f : () => Unit) { waiting +:= f }
+    def done(f : () => Unit) { waiting = waiting.filterNot(_ eq f) }
+
+    def open(id : String) : Option[js.Promise[dom.Cache]] =
+        scala.util.Try(dom.window.caches.toOption.map(_.open(id))).toOption.flatten
+
+    def reject(f : => Unit) : js.UndefOr[js.Function1[Any, Null | js.Thenable[Null]]] = js.defined({ e : Any => f ; null } : js.Function1[Any, Null | js.Thenable[Null]])
+}
+
+// Loads through Cache Storage (only there in secure contexts: https or localhost), else straight from the network
+abstract class CacheFirstLoader[T](id : String) extends Loader[T] {
+    lazy val open = CacheGuard.open(id)
+
+    // load without the cache
+    def direct(url : String) : Unit
+
+    // load from what the cache holds
+    def cached(url : String, response : dom.Response) : Unit
 
     def process(url : String) {
-        process(url, 0)
-    }
-
-    def process(url : String, tries : Int) {
-        // println("process " + url + " (x" + tries + ")")
-
-        if (open.isEmpty)
+        if (open.isEmpty || CacheGuard.broken)
             return direct(url)
 
-        open.get.then { cache =>
-            cache.`match`(url).then({ response =>
-                // println("cached response " + response)
+        var settled = false
 
-                if (js.isUndefined(response)) {
-                    try {
-                        if (tries == 0) {
-                            // println("add " + url)
-                            // cache.add rejects when the file is missing (404) or the request fails;
-                            // without this the url stays Loading forever and "Loading assets" never finishes
-                            cache.add(url).`then`[Null]({ x : Unit =>
-                                // println("then " + x)
-                                setTimeout(tries * 400) {
-                                    process(url, tries + 1)
-                                }
-                                null
-                            }, js.defined({ e : Any =>
-                                direct(url)
-                                null
-                            } : js.Function1[Any, Null | js.Thenable[Null]]))
-                        }
-                        else {
-                            // println("wait")
-                            setTimeout(tries * 400) {
-                                process(url, tries + 1)
-                            }
-                        }
-                    }
-                    catch {
-                        case e : Throwable =>
-                            // println("error")
-                            setTimeout(1000) {
-                                process(url, 0)
-                            }
-                    }
-                }
-                else {
-                    response.toOption.get.blob().then { blob : dom.Blob =>
-                        put(url, new BlobImageWrapper(url, blob))
-                        null
-                    }
-                }
-                null
-            })
-            null
+        // the first answer wins: the cache's, or the fallback to the network
+        def once(f : => Unit) {
+            if (!settled) {
+                settled = true
+                CacheGuard.done(fallback)
+                f
+            }
         }
+
+        lazy val fallback : () => Unit = () => once(direct(url))
+
+        def giveUp(why : String) {
+            if (!settled)
+                CacheGuard.give(why)
+
+            fallback()
+        }
+
+        CacheGuard.await(fallback)
+
+        setTimeout(CacheGuard.waitAnswer) { giveUp("no answer") }
+
+        def attempt(tries : Int) {
+            if (settled)
+                return
+
+            try {
+                open.get.`then`[Null]({ cache : dom.Cache =>
+                    cache.`match`(url).`then`[Null]({ response : js.UndefOr[dom.Response] =>
+                        if (js.isUndefined(response) || response == null) {
+                            if (tries == 0) {
+                                setTimeout(CacheGuard.waitAdd) { giveUp("add took too long") }
+
+                                // cache.add rejects when the file is missing (404) or the request fails;
+                                // without this the url stays Loading forever and "Loading assets" never finishes
+                                cache.add(url).`then`[Null]({ x : Unit =>
+                                    attempt(1)
+                                    null
+                                }, CacheGuard.reject(fallback()))
+                            }
+                            else
+                            if (tries < 6)
+                                setTimeout(tries * 400) {
+                                    attempt(tries + 1)
+                                }
+                            else
+                                // added, yet never found: the cache keeps nothing
+                                giveUp("added files not kept")
+                        }
+                        else
+                            once(cached(url, response.asInstanceOf[dom.Response]))
+
+                        null
+                    }, CacheGuard.reject(giveUp("match failed")))
+
+                    null
+                }, CacheGuard.reject(giveUp("open failed")))
+            }
+            catch {
+                case e : Throwable => giveUp("error " + e)
+            }
+        }
+
+        attempt(0)
     }
 }
 
-class CachedImageLoader(id : String) extends Loader[html.Image] {
-    // Cache Storage is only available in secure contexts (https or localhost)
-    val open = dom.window.caches.toOption.map(_.open(id))
+class CachedBlobImageLoader(id : String) extends CacheFirstLoader[ImageWrapper](id) {
+    // a network error gives an empty image instead of never finishing
+    def direct(url : String) {
+        dom.fetch(url).`then`[Null]({ response : dom.Response =>
+            response.blob().`then`[Null]({ blob : dom.Blob =>
+                put(url, new BlobImageWrapper(url, blob))
+                null
+            }, CacheGuard.reject(put(url, new BlobImageWrapper(url, new dom.Blob(js.Array())))))
+            null
+        }, CacheGuard.reject(put(url, new BlobImageWrapper(url, new dom.Blob(js.Array())))))
+    }
 
-    var requests = 0
+    def cached(url : String, response : dom.Response) {
+        response.blob().`then`[Null]({ blob : dom.Blob =>
+            put(url, new BlobImageWrapper(url, blob))
+            null
+        }, CacheGuard.reject(direct(url)))
+    }
+}
 
-    // Load without the cache
+class CachedImageLoader(id : String) extends CacheFirstLoader[html.Image](id) {
     def direct(url : String) {
         ImageLoader.wait($(url)) {
             if (ImageLoader.error(url))
@@ -288,143 +339,33 @@ class CachedImageLoader(id : String) extends Loader[html.Image] {
         }
     }
 
-    def process(url : String) {
-        process(url, 0)
-    }
-
-    def process(url : String, tries : Int) {
-        // println("process " + url + " (x" + tries + ")")
-
-        if (open.isEmpty)
-            return direct(url)
-
-        open.get.then { cache =>
-            cache.`match`(url).then({ response =>
-                // println("cached response " + response)
-
-                if (js.isUndefined(response)) {
-                    try {
-                        if (tries == 0) {
-                            // println("add " + url)
-                            // cache.add rejects when the file is missing (404) or the request fails;
-                            // without this the url stays Loading forever and "Loading assets" never finishes
-                            cache.add(url).`then`[Null]({ x : Unit =>
-                                // println("then " + x)
-                                setTimeout(tries * 400) {
-                                    process(url, tries + 1)
-                                }
-                                null
-                            }, js.defined({ e : Any =>
-                                direct(url)
-                                null
-                            } : js.Function1[Any, Null | js.Thenable[Null]]))
-                        }
-                        else {
-                            // println("wait")
-                            setTimeout(tries * 400) {
-                                process(url, tries + 1)
-                            }
-                        }
-                    }
-                    catch {
-                        case e : Throwable =>
-                            // println("error")
-                            setTimeout(1000) {
-                                process(url, 0)
-                            }
-                    }
-                }
-                else {
-                    response.toOption.get.blob().then { blob : dom.Blob =>
-                        var img = new njs.Image()
-                        img.onerror = (e : dom.ErrorEvent) => fail(url)
-                        img.onload = (e : dom.Event) => put(url, img.asInstanceOf[html.Image])
-                        img.src = dom.URL.createObjectURL(blob)
-                        null
-                    }
-                }
-                null
-            })
+    def cached(url : String, response : dom.Response) {
+        response.blob().`then`[Null]({ blob : dom.Blob =>
+            var img = new njs.Image()
+            img.onerror = (e : dom.ErrorEvent) => fail(url)
+            img.onload = (e : dom.Event) => put(url, img.asInstanceOf[html.Image])
+            img.src = dom.URL.createObjectURL(blob)
             null
-        }
+        }, CacheGuard.reject(direct(url)))
     }
 }
 
-
-class CachedStringLoader(id : String) extends Loader[String] {
-    // Cache Storage is only available in secure contexts (https or localhost)
-    val open = dom.window.caches.toOption.map(_.open(id))
-
-    // Load without the cache
+class CachedStringLoader(id : String) extends CacheFirstLoader[String](id) {
     def direct(url : String) {
         dom.fetch(url).`then`[Null]({ response : dom.Response =>
-            response.text().then { s : String =>
+            response.text().`then`[Null]({ s : String =>
                 put(url, s)
                 null
-            }
+            }, CacheGuard.reject(fail(url)))
             null
-        }, js.defined({ e : Any =>
-            fail(url)
-            null
-        } : js.Function1[Any, Null | js.Thenable[Null]]))
+        }, CacheGuard.reject(fail(url)))
     }
 
-    def process(url : String) {
-        process(url, 0)
-    }
-
-    def process(url : String, tries : Int) {
-        // println("process " + url + " (x" + tries + ")")
-
-        if (open.isEmpty)
-            return direct(url)
-
-        open.get.then { cache =>
-            cache.`match`(url).then({ response =>
-                // println("cached response " + response)
-
-                if (js.isUndefined(response)) {
-                    try {
-                        if (tries == 0) {
-                            // println("add " + url)
-                            // cache.add rejects when the file is missing (404) or the request fails;
-                            // without this the url stays Loading forever and "Loading assets" never finishes
-                            cache.add(url).`then`[Null]({ x : Unit =>
-                                // println("then " + x)
-                                setTimeout(tries * 400) {
-                                    process(url, tries + 1)
-                                }
-                                null
-                            }, js.defined({ e : Any =>
-                                direct(url)
-                                null
-                            } : js.Function1[Any, Null | js.Thenable[Null]]))
-                        }
-                        else {
-                            // println("wait")
-                            setTimeout(tries * 400) {
-                                process(url, tries + 1)
-                            }
-                        }
-                    }
-                    catch {
-                        case e : Throwable =>
-                            // println("error")
-                            setTimeout(1000) {
-                                process(url, 0)
-                            }
-                    }
-                }
-                else {
-                    response.toOption.get.text().then {
-                        s => put(url, s)
-                        null
-                    }
-                }
-                null
-            })
+    def cached(url : String, response : dom.Response) {
+        response.text().`then`[Null]({ s : String =>
+            put(url, s)
             null
-        }
+        }, CacheGuard.reject(direct(url)))
     }
 }
 

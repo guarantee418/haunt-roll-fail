@@ -318,6 +318,56 @@ object TurnPings {
         }
     }
 
+    // FINAL SCORES (owner, 2026-11-25: "when a game ends, always have Command Warren post the final scores with a congratulation
+    // message"): the first result a finished game's clients report (/report-result, Ranking.report) is posted in the game's thread by its
+    // turns webhook (Command Warren for Root): the winners congratulated, mentioned when they can be pinged, then every seat's faction and
+    // final score, winners first, best score first, seat order on ties. The sides are "W:" and "L:", each seat "<user>/<faction>/<seat>/
+    // <players>/<score>" (RankingSeat.token), people only. A tournament table's game is left out: Tournament.reported congratulates it.
+    def finished(game : String, sides : String) : Unit = try {
+        if (table(game).isEmpty) lobbyOf(game).filter(l => metas.contains(l.meta) && webhookFor(l.meta).nonEmpty).foreach { lobby =>
+            case class S(won : Boolean, user : String, faction : String, seat : Int, score : String) {
+                def rank = if (score == "D") Int.MaxValue else score.toIntOption.getOrElse(-1)
+            }
+            val seats = sides.split(';').toList.flatMap(t => t.split(":", 2).toList match {
+                case w :: rest :: Nil if w == "W" || w == "L" => rest.split(',').toList.flatMap(x => x.split("/", -1).toList match {
+                    case u :: f :: seat :: _ :: sc :: _ if u.nonEmpty && u != "*" => Some(S(w == "W", u, f.replace('_', ' '), seat.toIntOption.getOrElse(99), sc))
+                    case _ => None
+                })
+                case _ => Nil
+            }).distinctBy(_.user)
+
+            if (seats.nonEmpty) {
+                val unit = if (rootMetas.contains(lobby.meta)) "VP" else if (lobby.meta.startsWith("nort")) "fame" else "points"
+                def points(s : S) = if (s.score == "D") "dominance" else if (s.score.isEmpty) "" else s.score + " " + unit
+                // each seat's faction (or clan) emoji before its name (2026-11-25, asked for): the report names the faction as the game
+                // shows it, so a Root faction is found by its label in the LFG catalog ("Vagabond (Thief)" by "Vagabond"), a clan by its
+                // first word ("Stag Clan"); none for a faction with no emoji
+                def icon(s : S) : String = try {
+                    if (nortMetas.contains(lobby.meta))
+                        (Lfg.coreClans ++ Lfg.bloodClans).find(c => s.faction.toLowerCase.startsWith(c.toLowerCase + " ") || s.faction.equalsIgnoreCase(c)).map(Lfg.clanIcon).getOrElse("")
+                    else if (rootMetas.contains(lobby.meta)) {
+                        val name = s.faction.takeWhile(_ != '(').trim
+                        LfgSetup.catalog(Lfg.root.meta).flatMap(_.options.find(o => o.name.startsWith("IncludeFaction(") && o.label.trim.equalsIgnoreCase(name)))
+                            .map(o => LfgSetup.emojiText(o.name)).getOrElse("")
+                    }
+                    else ""
+                } catch { case _ : Exception => "" }
+                val winners = seats.filter(_.won)
+                val ids = winners.flatMap(w => mentionOf(w.user))
+                def who(s : S) = "**" + nameOf(lobby, s.user) + "**" + mentionOf(s.user).map(i => " (<@" + i + ">)").getOrElse("")
+                val title = "**" + (if (lobby.title.nonEmpty) lobby.title else "the game") + "**"
+                val head = winners match {
+                    case Nil => "🏁 " + title + " has ended."
+                    case w :: Nil => "🎉 Congratulations to " + who(w) + " on winning " + title + " as the **" + w.faction + "**" + (if (points(w).nonEmpty) ", with " + points(w) else "") + "!"
+                    case ww => "🎉 Congratulations to " + ww.map(who).mkString(" and ") + " on winning " + title + " together!"
+                }
+                val lines = seats.sortBy(s => (!s.won, -s.rank, s.seat)).map(s => (if (s.won) "🏆 " else "▫️ ") + icon(s) + nameOf(lobby, s.user) + " (" + s.faction + ")" + (if (points(s).nonEmpty) " · " + points(s) else ""))
+                post(game, lobby, head + "\n**Final scores**\n" + lines.mkString("\n"), ids)
+            }
+        }
+    }
+    catch { case e : Exception => println("Turn pings: final scores not posted: " + e) }
+
     // a new game's lobby was written (its first lines, with "server <game>"): its post, with its players and spectator link
     def lobbyWritten(lobby : String, lines : List[String]) {
         try {
@@ -391,6 +441,10 @@ object TurnPings {
             Ranking.append(state, row(game, index, (all -- fresh).toList.sorted.mkString(","), Ranking.now()))
         }
         val was = all -- fresh
+
+        // a wait of a day or more just ended: the slow turn's troll gets the crow (Heckler.slow; 2026-11-25)
+        // (only when the game now waits on someone else: a stray report waiting on nobody ends no turn)
+        if (waiting.nonEmpty) (was -- waiting).foreach(u => since.get((game, u)).filter(t => now - t >= 24 * 3600 * 1000L).foreach(t => Heckler.slow(game, u, (now - t) / 3600000)))
 
         reports = latest + (game -> Report(index, waiting))
         waitedSince = since -- (was -- waiting).map(u => (game, u)) ++ (waiting -- was).map(u => (game, u) -> now)
@@ -563,7 +617,7 @@ object TurnPings {
         // it, in place of the turns webhook's own ping and a second message (asked for: "don't have them get double pinged, the Court Crow
         // should replace Command Warren"); everyone else gets the plain ping
         val why = lobby.lines.map(_.split(" ").toList).collectFirst { case "user" :: s :: u :: _ if u == user => s }.flatMap(s => Turns.reason(game, s)).getOrElse("")
-        Heckler.ping(lobby.meta, why.split("/").head, why.split("/").lift(1).getOrElse(""), id, text, reminder, (t, persona) => post(game, lobby, t, List(id), persona, now = true))
+        Heckler.ping(lobby.meta, why.split("/").head, why.split("/").lift(1).getOrElse(""), id, text, reminder, (t, persona) => post(game, lobby, t, List(id), persona, now = true), game)
         "pinged"
     }
 }

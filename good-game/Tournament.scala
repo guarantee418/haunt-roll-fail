@@ -654,6 +654,15 @@ object Tournament {
                 // nobody can be pinged (2026-11-22; Play Online asks those players once, discordAsk in hrf.scala)
                 case "no-discord" => noDiscord()
                 // only those games (2026-11-21)
+                // a finished game's final scores and congratulation, posted again (or for a game that ended before they were posted;
+                // TurnPings.finished), from the result it reported: "final-scores <game> ..."
+                case "final-scores" =>
+                    rest.split("[ ,]+").toList.filter(_.nonEmpty).map { g =>
+                        Ranking.recorded().filter(_.headOption.contains(g)).lastOption.flatMap(_.lift(4)) match {
+                            case Some(sides) => TurnPings.finished(g, sides); g + ": posted"
+                            case None => g + ": no result reported"
+                        }
+                    }.mkString("; ")
                 case "pings" => TurnPings.history(rest.split("[ ,]+").toList.filter(_.nonEmpty)).mkString("\n")
                 case "ping" if rest.startsWith("waiting ") => TurnPings.pingWaitingIn(rest.drop(8).split("[ ,]+").toList.filter(_.nonEmpty)).mkString("; ")
                 // the Discord server's roles and channels, through the bot (DiscordServer.scala; 2026-11-24)
@@ -662,7 +671,9 @@ object Tournament {
                 case w if SelfRoles.words(w) => SelfRoles.change(w, rest)
                 // the Roast Me role's hecklers (Heckler.scala; 2026-11-25)
                 case w if Heckler.words(w) => Heckler.change(w, rest)
-                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, congratulate, turns, nort-turns, pincer-turns, tactics-turns, bot, guild, discord, ping waiting, pings, status, no-discord, lfg-key, lfg-commands, invite, or the server changes roles, role, rename-role, give-role, take-role, channels, category, channel, rename-channel, move-channel, order, webhooks, make-webhook, rename-webhook, test-ping, self-roles, self-role, self-role-off and role-picker, roast-role, roasts)"
+                // the General Announcements webhook's posts (Announce.scala; 2026-11-26)
+                case w if Announce.words(w) => Announce.change(w, rest)
+                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, congratulate, turns, nort-turns, pincer-turns, tactics-turns, bot, guild, discord, ping waiting, pings, status, no-discord, lfg-key, lfg-commands, invite, or the server changes roles, role, rename-role, merge-role, give-role, take-role, channels, category, channel, rename-channel, move-channel, order, webhooks, make-webhook, rename-webhook, test-ping, self-roles, self-role, self-role-off and role-picker, roast-role, roasts, announce, nort-announce, root-announce, pincer-announce, coh-announce, announce-voices)"
             }
 
             (if (word == "webhook" || word == "forum" || TurnPings.slot(word).nonEmpty || word == "bot") word else line) + ": " + result
