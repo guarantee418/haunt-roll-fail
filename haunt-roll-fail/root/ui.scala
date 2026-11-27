@@ -1017,10 +1017,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         val x = ((e.clientX - rect.left) * k - tx) / sc - dw
         val y = ((e.clientY - rect.top) * k - ty) / sc - dh
 
-        // Tapping a card pile, a landmark or a hireling's piece first, then a clearing a choice is about, then the water
+        // Tapping a card pile, a landmark or a hireling's piece first, then a clearing, then the water: a tap on a
+        // clearing never shows the water's info, even with no choice about it, as the river runs through its clearings
+        // (2026-11-27: a river clearing tapped for an action brought up "river" instead)
         pileTargets.find { case (px, py, pw, ph, _) => x >= px && x < px + pw && y >= py && y < py + ph }./ { case (_, _, _, _, target) => target } match {
             case Some(target) => onClick(target)
-            case None => clearingAt(x, y).%(c => tapChoices(c).any) match {
+            case None => clearingAt(x, y) match {
                 case Some(c) => tapClearing(c)
                 case None => waterAt(x, y).foreach(onClick)
             }

@@ -1461,7 +1461,8 @@ server. No session can reach the server, and none needs to.
   Riverboats, Boat Builders, Riversteads, the water hirelings, the Ferry); water that is only scenery (the sea on some maps) says so
   (`waterAt`, `"view-water"` in `root/ui.scala`; asked for on 2026-10-30). Where the water is comes from the masks
   `<map>/map-water.webp` (a quarter of the map's size, red for river or lake, blue for scenery), traced by hand in
-  `root/tools/water-masks.py`; flooded clearings are tested against their flood images.
+  `root/tools/water-masks.py`; flooded clearings are tested against their flood images. A tap on a clearing (within `clearingAt`'s reach) never
+  shows it, even when no choice is about that clearing (2026-11-27: a river clearing tapped for an action brought up the river's info).
 - Tapping the Tundra map's blizzard, or one of the snowflakes marking the spots it may move to, says what it does: it blocks the
   way (path or river) between its two clearings, which aren't adjacent while it is there, and after every round it moves at random
   to one of its six spots, maybe the same (`"view-blizzard"` in `root/ui.scala`; asked for on 2026-10-31).
