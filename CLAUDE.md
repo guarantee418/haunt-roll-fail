@@ -1216,7 +1216,7 @@ server. No session can reach the server, and none needs to.
   kept in `turns.tsv`'s fourth column (`Turns.reason`): Root's under attack or a battle (the server's sword emoji), a Twilight Council Banish as "you're being banished 💨 by" or "your banish 💨 of" (the tags `banished` and `banish`; 2026-11-24, asked for), a draw from the deck or the Lilypad Diaspora's Pond as "draw from the deck <card> or the Pond <lilypad>" (the tag `pond`, the server's emoji named lilypad or pond, else 🪷; 2026-11-24), the cards kept
   at the start, the hand limit, the faction draft, the tournament picks, Partisans, prisoners, an Entreat,
   Field Hospitals, setup and the faction's own turn (its head); Northgard's fights (the axe), harvest trading and Winter (plain ⚖️
-  and ❄️ after the words, so the webhook can post them, not the bot's `ng_trade` and `ng_winter` badges; 2026-11-23), card picks ("pick a card" then the server's Northgard card back emoji, `ng_cardback`, else the cards badge; 2026-11-24), setup, the Adset draft, raids, Events and the clan's own turn (its emblem). A Lilypad Diaspora negotiation is never a reason (2026-11-23, asked for: it is never owed, and the ping reminded the enemy of it): its menus report the seat's turn. The
+  and ❄️ after the words, so the webhook can post them, not the bot's `ng_trade` and `ng_winter` badges; 2026-11-23), card picks ("pick a card" then the server's Northgard card emoji, `ng_card`, else 🃏; 2026-11-27: the bot's cards badge, an application emoji, sent the ping from the bot, not the Northgard webhook, and the heckler dropped it; the draft, raid and Event icons likewise fall back to Unicode, never the bot's, `nortIcon`), setup, the Adset draft, raids, Events and the clan's own turn (its emblem). A Lilypad Diaspora negotiation is never a reason (2026-11-23, asked for: it is never owed, and the ping reminded the enemy of it): its menus report the seat's turn. The
   reasons say nothing only the seat may know (an ambush question and assigning hits are both "under attack"). `NORT_REASONS=1` in
   `nort.Host` prints them. A game's thread also says who takes the first turn, the first time the game waits on one seat alone
   (`announceFirst`, `turns/firsts.tsv`; mentioning them; only games first reported since 2026-11-21, when
@@ -1255,10 +1255,10 @@ server. No session can reach the server, and none needs to.
   online games get their posts and turn pings in their own forum (`TurnPings.webhookFor`: `HRF_DISCORD_NORT_TURNS_WEBHOOK` or the file
   `discord-nort-turns-webhook`, set by the tournament change `nort-turns <url>`); with none set they get none. Pincer and Company of Heroes
   (`pincer`, `tactics`) get theirs the same way in their own forums (`pincer-turns <url>`, `tactics-turns <url>`; `TurnPings.slots`;
-  2026-11-24), their pings led by a drum or a field radio emoji, as their clients give no reasons. The bot makes those webhooks itself,
-  with original personas, "Drum and Fife" and "Field Wireless" (avatars in `webp2/lfg/webhooks/`, drawn by
+  2026-11-24), their pings led by a drum or a medal emoji (🎖️, a field radio until 2026-11-27), as their clients give no reasons. The bot makes those webhooks itself,
+  with personas, "Drum and Fife" and "Field Wireless", since 2026-11-27 "The Major" (asked for, with the US Major's portrait from his unit token, `the-major.png`; `rename-webhook Field Wireless -> The Major | avatar the-major.png`) (avatars in `webp2/lfg/webhooks/`, drawn by
   `haunt-roll-fail/tools/webhook-avatars.py`): the tournament changes `webhooks`, `make-webhook <name> | in <channel> | avatar <file> |
-  for <turns channel>` (sets it as that turns channel without anyone copying its URL), `rename-webhook` and `test-ping <turns channel> | role <role>` (a "Test ping" thread through that webhook, mentioning the role) (`DiscordServer.scala`;
+  for <turns channel>` (sets it as that turns channel without anyone copying its URL), `rename-webhook <name> -> <new> [| avatar <file>]` and `test-ping <turns channel> | role <role>` (a "Test ping" thread through that webhook, mentioning the role) (`DiscordServer.scala`;
   the bot needs Manage Webhooks).
 - The bot's `/card <name> [game] [private]` (2026-11-22, asked for as a "bot to call cards and other art"): posts a Root or Northgard card,
   faction or clan board, quest, landmark, hireling or creature with its picture, the name suggested as it is typed (autocomplete). The list

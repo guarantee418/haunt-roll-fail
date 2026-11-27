@@ -4,6 +4,9 @@
 # taken from the published games.
 #   drum-and-fife.png   Pincer's "Drum and Fife": an 18th-century side drum with crossed sticks, on regimental blue
 #   field-wireless.png  Company of Heroes' "Field Wireless": a 1940s field radio set with its handset and whip antenna, on olive
+#   the-major.png       Company of Heroes' "The Major" (2026-11-27, asked for in place of Field Wireless, with his art): the US
+#                       Major's portrait from his unit token (webp2/tactics/images/token/major-us.webp), its green ring swapped
+#                       for the gold badge's
 # Run from the repository root: python3 haunt-roll-fail/tools/webhook-avatars.py
 import math
 import os
@@ -103,5 +106,19 @@ def radio():
     save(im, "field-wireless.png")
 
 
+def major():
+    im, d = badge((60, 70, 40), (40, 48, 26))
+    tok = Image.open("haunt-roll-fail/webp2/tactics/images/token/major-us.webp").convert("RGBA")
+    w = tok.size[0]
+    r = int(w / 2 * 0.79)          # the portrait inside the token's green ring
+    c = w // 2
+    face = tok.crop((c - r, c - r, c + r, c + r)).resize((S - 168, S - 168), Image.LANCZOS)
+    mask = Image.new("L", face.size, 0)
+    ImageDraw.Draw(mask).ellipse((0, 0, face.size[0] - 1, face.size[1] - 1), fill=255)
+    im.paste(face, (84, 84), mask)
+    save(im, "the-major.png")
+
+
 drum()
 radio()
+major()

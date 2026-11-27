@@ -113,7 +113,7 @@ object TurnPings {
             "not done: " + s.name + " <https://discord.com/api/webhooks/...> or " + s.name + " off"
 
     // the emoji a game with no faction emojis leads its pings with
-    val gameIcon = Map("pincer" -> "🥁 ", "tactics" -> "📻 ")
+    val gameIcon = Map("pincer" -> "🥁 ", "tactics" -> "🎖️ ")
 
     // 10 seconds for every wait (owner, 2026-11-24): it was a minute, and 30 seconds for a battle on another's turn (Tournament 1
     // Table A: the Duchy answered an ambush before the bot's ping, due 60 to 90 seconds in, came)
@@ -532,6 +532,9 @@ object TurnPings {
         def axe = LfgSetup.serverNamed(List("axeng", "axe", "battleaxe", "fight")).getOrElse("🪓 ")
         def e(key : String) = LfgSetup.emojiText(key)
         def w(icon : String) = icon.trim
+        // a Northgard reason's icon never the bot's own (application) emoji: only the bot can post those, so a ping holding one went out
+        // from the bot instead of the Northgard turns webhook (2026-11-27), and a heckler's post dropped it; the server's emoji, else Unicode
+        def nortIcon(key : String, unicode : String) = Some(e(key)).filter(i => i.nonEmpty && !Tournament.appEmojis(i)).getOrElse(unicode + " ")
         // the other faction as its emoji and name ("by <emoji>**Marquise de Cat**"), its name from the LFG catalog when it has one
         // (a Northgard creature comes as "~<its name>": the Discord server's emoji of that name, if any, and the name)
         def creature(n : String) = LfgSetup.serverNamed(List(LfgSetup.norm(n))).getOrElse("") + "the **" + n + "**"
@@ -571,12 +574,13 @@ object TurnPings {
             case (true, "trade") => (head, "harvest trading ⚖️")
             case (true, "winter") => (head, "Winter ❄️ is here")
             case (true, "kobold") => (head, "the Kobolds offer an exchange ⚖️")
-            // the Discord server's Northgard card back emoji (ng_cardback, 2026-11-24, asked for) right after "card", else the cards badge
-            case (true, "cards") => (head, "pick a card " + w(LfgSetup.serverNamed(List("cardback", "cardbacks")).getOrElse(e("HorizonsDevelopments"))))
-            case (true, "draft") => (e("title"), "your pick in the clan draft")
+            // the Discord server's Northgard card emoji (:ng_card:; 2026-11-27, asked for: the ping showed the bot's cards badge, which only
+            // the bot can post, so the ping came from the bot, not the Northgard webhook, and the heckler's lost it), else a Unicode card
+            case (true, "cards") => (head, "pick a card " + w(LfgSetup.serverNamed(List("ngcard", "card", "cards", "cardback", "cardbacks")).getOrElse("🃏")))
+            case (true, "draft") => (nortIcon("title", "📜"), "your pick in the clan draft")
             case (true, "setup") => (head, "time to place your clan")
-            case (true, "raid") => (e("ModuleOption(Sea)"), "your raid")
-            case (true, "event") => (e("ModuleOption(EventsModule)"), "an event needs you")
+            case (true, "raid") => (nortIcon("ModuleOption(Sea)", "⛵"), "your raid")
+            case (true, "event") => (nortIcon("ModuleOption(EventsModule)", "🎲"), "an event needs you")
             case (_, "asked") => (head, "you're needed")
             case _ => (head, "it's your turn")
         }
