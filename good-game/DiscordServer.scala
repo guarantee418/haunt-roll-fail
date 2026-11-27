@@ -42,11 +42,12 @@ import java.nio.charset.StandardCharsets.UTF_8
 //   make-webhook <name> | in <channel> [| avatar <file>] [| for <turns channel>]
 //                                             makes the channel's webhook, or renames and gives the avatar to the one of that name
 //                                             there; avatar is a picture in webp2/lfg/webhooks/ (made by tools/webhook-avatars.py:
-//                                             drum-and-fife.png, field-wireless.png); for sets it as turns, nort-turns, pincer-turns or
+//                                             drum-and-fife.png, field-wireless.png, the-major.png); for sets it as turns, nort-turns, pincer-turns or
 //                                             tactics-turns, as that change would (only a webhook Discord gives the bot the token of), or
 //                                             general, the General Announcements webhook, or nort-announcements, pincer-announcements,
 //                                             coh-announcements, a game's update webhook (Announce.scala)
-//   rename-webhook <name> -> <new name>       (in any channel; its ID works in place of its name)
+//   rename-webhook <name> -> <new name> [| avatar <file>]
+//                                             (in any channel; its ID works in place of its name)
 //   test-ping <turns channel> [| role <role>] [| text <text>]
 //                                             posts a new thread, "Test ping", through that turns channel's webhook, mentioning the
 //                                             role (2026-11-24, asked for to try the new webhooks); a forum's thread, else the channel
@@ -193,8 +194,12 @@ object DiscordServer {
             case "webhooks" => listWebhooks(g)
             case "make-webhook" => makeWebhook(g, rest)
             case "test-ping" => testPing(g, rest)
-            case "rename-webhook" => arrow(rest).flatMap { case (a, b) => webhooks(g).flatMap(findWebhook(_, a)).flatMap(w =>
-                call("PATCH", "/webhooks/" + w.id, "{\"name\":" + Tournament.json(b) + "}").map(_ => "renamed")) }
+            // (| avatar <file> gives it a picture too; 2026-11-27, Field Wireless made The Major)
+            case "rename-webhook" => { val (r, opts) = split(rest) ; arrow(r).flatMap { case (a, b) => for {
+                picture <- opts.find(_._1 == "avatar") match { case None => Right(None) ; case Some((_, f)) => avatar(f).map(Some(_)) }
+                w <- webhooks(g).flatMap(findWebhook(_, a))
+                _ <- call("PATCH", "/webhooks/" + w.id, ("\"name\":" + Tournament.json(b) :: picture.map(p => "\"avatar\":" + Tournament.json(p)).toList).mkString("{", ",", "}"))
+            } yield "renamed" + (if (picture.nonEmpty) ", with its avatar" else "") } }
             case "move-channel" => arrow(rest).flatMap { case (a, b) => channels(g).flatMap { cc =>
                 findChannel(cc, a, _ != 4).flatMap { c =>
                     (if (norm(b) == "none") Right(None) else findChannel(cc, b, _ == 4).map(Some(_))).flatMap { p =>
