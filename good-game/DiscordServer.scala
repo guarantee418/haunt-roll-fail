@@ -59,8 +59,9 @@ import java.nio.charset.StandardCharsets.UTF_8
 //                                             roles and channels; then the default channels, and whether onboarding is on
 //   onboarding-question <title> | <answer> = <role>[, <role>] [= <emoji> [= <description>]] | ... [| single] [| optional]
 //                                             puts that question first among the onboarding questions (several picks and required,
-//                                             unless single or optional), its answers giving those roles; the emoji a Unicode one or the
-//                                             name of one of the server's; it takes the place of a question of that title, and of every
+//                                             unless single or optional), its answers giving those roles; the emoji a Unicode one, the
+//                                             name of one of the server's, clan:<clan> (the clan's emoji, as the LFG posts find it) or
+//                                             faction:<short name> (a Root faction's, as the turn pings find it: faction:MC the cat); it takes the place of a question of that title, and of every
 //                                             question whose answers give only roles among its own (the yes/no question for each game)
 object DiscordServer {
     def api = sys.props.getOrElse("hrf.discord.api", "https://discord.com/api/v10")
@@ -577,10 +578,19 @@ object DiscordServer {
                             val described = more.drop(1).headOption.getOrElse("")
                             names(rs).foldLeft[Either[String, List[Role]]](Right(Nil))((a, n) => a.flatMap(x => findRole(rr, n).map(x :+ _))).flatMap { found =>
                                 found.find(r => r.permissions != 0 || r.managed || r.name == "@everyone").map(r => Left("@" + r.name + " has server permissions or is a bot's: never handed out")).getOrElse {
-                                    val custom = emojis.find(e => norm(str(e, "name")) == norm(emoji.stripPrefix(":").stripSuffix(":")))
-                                    val old = o.questions.flatMap(_.answers).find(a => norm(a.title) == norm(label))
-                                    Right(l :+ Answer(old.map(_.id).getOrElse(snowflake()), label, described, found.map(_.id), Nil,
-                                        custom.map(str(_, "id")).getOrElse(""), custom.map(str(_, "name")).getOrElse(if (emoji.exists(_.isLetterOrDigit)) "" else emoji), custom.exists(bool(_, "animated"))))
+                                    // the server's own emoji: clan:<clan> as the LFG posts find it (Lfg.serverEmoji), faction:<short name>
+                                    // as the turn pings find a Root faction's (the server's emoji of that name), or a name; else a Unicode one
+                                    val named = emoji.stripPrefix(":").stripSuffix(":")
+                                    val custom : Option[(String, String, Boolean)] =
+                                        if (named.startsWith("clan:")) Lfg.serverEmoji(named.drop(5).trim)
+                                        else if (named.startsWith("faction:")) LfgSetup.emojiMap().get(named.drop(8).trim.toLowerCase).map { case (id, a) => (named.drop(8).trim.toLowerCase, id, a) }
+                                        else emojis.find(e => norm(str(e, "name")) == norm(named)).map(e => (str(e, "name"), str(e, "id"), bool(e, "animated")))
+                                    if (custom.isEmpty && emoji.exists(_.isLetterOrDigit)) Left("the server has no emoji " + emoji)
+                                    else {
+                                        val old = o.questions.flatMap(_.answers).find(a => norm(a.title) == norm(label))
+                                        Right(l :+ Answer(old.map(_.id).getOrElse(snowflake()), label, described, found.map(_.id), Nil,
+                                            custom.map(_._2).getOrElse(""), custom.map(_._1).getOrElse(emoji), custom.exists(_._3)))
+                                    }
                                 }
                             }
                         case _ => Left("an answer is <answer> = <role>")
