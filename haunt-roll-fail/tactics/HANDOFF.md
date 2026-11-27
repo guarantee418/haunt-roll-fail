@@ -130,7 +130,10 @@ booklet's pictures (pages 9 and 10). Moro River's first rows had the bridge poin
   `contentUri`s). Done: the DAK faction (its boards, units, art). To do, all on the sheet: the DAK's 12 Commanders and 17 Lost Brigade
   cards; the other factions' new Commanders (Rocket pack, Universal German, Desert Rats, Stuart Honey pack, Stretch Goal box) and Lost
   Brigades; Planes and the anti-air capability; Troop Transports (boats); Blitz Cubes; the Barricade; the Black Gold and Twin Beaches
-  panels (Fortifications, Anchors, Shorelines, permanent barbed wire) and 17 1v1 scenarios; the 3rd printing's board changes to the five
-  factions (to ask the owner whether they replace the boards played now, as an option for new games). 4v4 isn't on the sheet. Keep the
+  panels (Fortifications, Anchors, Shorelines, permanent barbed wire) and 17 1v1 scenarios; and, when they come, its anti-air notes. The sheet's 15
+  new boards for the five core factions are, compared pixel by pixel on 2026-11-27, the very boards the site already plays (the mod
+  had them), and the code follows them, so its "board changes" list needs nothing. The owner's rule (2026-11-27): never replace what
+  is played; a printing's changes and new cards go in as setup options, like Northgard's Card edition (so the sheet's new Commanders
+  and Lost Brigades for the core factions go behind a "3rd printing" setup toggle, off for older games). 4v4 isn't on the sheet. Keep the
   second seats (`Faction.seconds`) so games made with them load. The Discord LFG (`/coh`) stops at 5 seats and offers no second seats.
 - A better bot.
