@@ -235,6 +235,8 @@ trait MetaBase {
     // Rankings (good-game/Ranking.scala, Rankings in hrf.scala): the ladder a finished online game goes to (metas with the same
     // one share it, as Northgard and its Adset do), and its sides (a player, or a team) with whether each won; bots are left out later
     def ranking : |[String] = None
+    // the rating a new player of the ladder starts at (Root's 1100 since 2026-11-27, which raised every Root rating by 100)
+    def rankingStart : Double = 1000.0
     // The site's tournament (good-game/Tournament.scala, tournamentMenu in hrf.scala; Root's, 2026-11-20): the meta its games are
     // played in, shown as "Tournament" on this meta's menu, and the options that meta gives a tournament game
     def tournament : |[String] = None

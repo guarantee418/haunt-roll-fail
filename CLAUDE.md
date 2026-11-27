@@ -393,7 +393,7 @@ cd haunt-roll-fail && sbt fullOptJS
   the game is opened. The first client to reach a game's end (`onOver` in `Runner.run`) posts its sides (`Meta.rankingSides`: a team
   or a clan; people only, by seat user) to `/report-result`, and the server keeps one report per game. "Rankings" on the Northgard menu
   (`rankingsMenu`, URL `/play/nort/rankings`) gets every result (`/rankings/nort,nort-adset`, names resolved: the seat's claimed name,
-  else the name typed for it) and works out Elo there (`Elo` in `hrf.scala`: start 1000, K 32 split over the other sides, a winning
+  else the name typed for it) and works out Elo there (`Elo` in `hrf.scala`: start 1000, Root's 1100 since 2026-11-27, which raised every Root rating by 100, as Elo moves only by rating differences (`MetaGame.rankingStart`; Root's tiers kept where they were), K 32 split over the other sides, a winning
   side beats each losing side, sides rated by their people's average; fewer than 5 games is "provisional", shown with "?"), only
   games with people on two sides or more, and never a game with a bot in it, in ratings or stats (its lobby's `bot` line, checked by `Ranking.list` on the server, so games already reported drop out too; owner, 2026-11-21). The games that ended before are in `good-game/ranking-seed.tsv` (found with
   `LiveCheck <hrf-games> ranking`; their times only keep the order).
@@ -1468,7 +1468,8 @@ server. No session can reach the server, and none needs to.
   Riverboats, Boat Builders, Riversteads, the water hirelings, the Ferry); water that is only scenery (the sea on some maps) says so
   (`waterAt`, `"view-water"` in `root/ui.scala`; asked for on 2026-10-30). Where the water is comes from the masks
   `<map>/map-water.webp` (a quarter of the map's size, red for river or lake, blue for scenery), traced by hand in
-  `root/tools/water-masks.py`; flooded clearings are tested against their flood images.
+  `root/tools/water-masks.py`; flooded clearings are tested against their flood images. A tap on a clearing (within `clearingAt`'s reach) never
+  shows it, even when no choice is about that clearing (2026-11-27: a river clearing tapped for an action brought up the river's info).
 - Tapping the Tundra map's blizzard, or one of the snowflakes marking the spots it may move to, says what it does: it blocks the
   way (path or river) between its two clearings, which aren't adjacent while it is there, and after every round it moves at random
   to one of its six spots, maybe the same (`"view-blizzard"` in `root/ui.scala`; asked for on 2026-10-31).
