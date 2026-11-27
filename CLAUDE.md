@@ -347,7 +347,7 @@ Nothing is built and the folder isn't in `common.sbt`. When built, keep it unlis
 Roxley says it may be public.
 
 John Company: Second Edition (Cole Wehrle, Wehrlegig Games; licensed CC BY-NC-SA 4.0; asked for on 2026-11-27, with Wehrlegig's
-encouragement) is parked the same way: `haunt-roll-fail/johnco/RULES.md` has the rules from the print-and-play rulebook,
+encouragement) is parked the same way, and may not be built (it is expected on Board Game Arena): `haunt-roll-fail/johnco/RULES.md` has the rules from the print-and-play rulebook,
 `johnco/HANDOFF.md` the materials, the licence, an existing digital table (jc2e.larnth.dev), the online design (table talk and
 non-binding deals on Discord, only binding transfers, promise cards and consents in the game) and the plan. Nothing is built.
 

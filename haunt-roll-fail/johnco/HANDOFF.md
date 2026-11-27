@@ -1,6 +1,7 @@
 # John Company: handoff
 
-Parked (2026-11-27), to be built after the games in progress. Asked for by the owner, who is on the Wehrlegig Discord: Cole Wehrle
+Parked (2026-11-27), prepared like Brass: Pittsburgh. The owner isn't sure it will be added: it is expected on Board Game Arena
+soon, which may make a version here unneeded. Decide before building. Asked for by the owner, who is on the Wehrlegig Discord: Cole Wehrle
 and Matt (Wehrlegig's public relations) said they'd love to see the game played more, and a group there plays it on Tabletop Simulator.
 
 `RULES.md` has the rules from the rulebook, in short, with the readings and the open questions.
