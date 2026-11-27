@@ -971,8 +971,8 @@ object Heckler {
             "STILL WAITING: a second edition on {name}'s turn, which has not yet occurred.",
             "{name}, the ink has dried on three pamphlets about your absence. Your move.")))
 
-    // COMPANY OF HEROES: the Sergeant Major, over the field radio
-    val sergeant = Voice("Sergeant Major", "", Map(
+    // COMPANY OF HEROES: the Sergeant Major, over the field radio (his picture the Urban Assault Company card's rifleman, 2026-11-27)
+    val sergeant = Voice("Sergeant Major", "lfg/webhooks/heckler-tactics.png", Map(
         "turn" -> List(
             "On your feet, {name}! It's your turn, and that's an order!",
             "{name}! Your squads are standing around like it's a parade. Move them!",

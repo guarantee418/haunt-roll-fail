@@ -1290,7 +1290,7 @@ server. No session can reach the server, and none needs to.
   turn pings from the game's heckler instead of the turns webhook's plain ping: one message, the ping with a jab on its second line, posted
   by the same webhook in the same thread under the heckler's own name and picture (a webhook post's `username` and `avatar_url`, `persona` in
   `Tournament.post`; `Heckler.ping`; asked for on 2026-11-25: no double pings), the jab fitting the ping's reason: Root's Court Crow (the Corvid character art in a jester's cap, peeking out of a trash can), Northgard's Ratatoskr (the Norse squirrel who
-  carries the eagle's insults down Yggdrasil), Pincer's Pamphleteer and Company of Heroes' Sergeant Major (`good-game/Heckler.scala`, its
+  carries the eagle's insults down Yggdrasil), Pincer's Pamphleteer and Company of Heroes' Sergeant Major (the Urban Assault Company commander card's rifleman, `heckler-tactics.png` by `webhook-avatars.py`; 2026-11-27) (`good-game/Heckler.scala`, its
   lines there; the jabs mock the play, never the person). The Court Crow also mocks, in the game's thread, what happens to a
   player with the role on anyone's turn (asked for the same day): a 3-0 roll against them, their own 0-3, an ambush, a Raze, a Revolt, a
   Lizard Convert or Sanctify, the Eyrie's Turmoil, a Corvid bomb, The Faithful's extra hit against them drawing the card that keeps it, a battle leaving them with nothing where they had 4 pieces or a building (`game.jestBattle`), still 0 VP at the third round, last alone when another reaches 25 VP, the Vagabond turning Hostile, the Knaves taking their warriors prisoner, and their own dominance card (2026-11-25). The Root game notes each event with its victim as it plays out, before the
