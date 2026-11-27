@@ -119,6 +119,8 @@ object TurnPings {
 
     // the emoji a game with no faction emojis leads its pings with
     val gameIcon = Map("pincer" -> "🥁 ", "tactics" -> "🎖️ ", "cyclades" -> "🏛️ ")
+    // the games whose clients give reasons (pincer/online.scala, tactics/online.scala; 2026-11-27)
+    val sideReasons = Set("pincer", "tactics")
 
     // 10 seconds for every wait (owner, 2026-11-24): it was a minute, and 30 seconds for a battle on another's turn (Tournament 1
     // Table A: the Duchy answered an ambush before the bot's ping, due 60 to 90 seconds in, came)
@@ -342,7 +344,7 @@ object TurnPings {
             }).distinctBy(_.user)
 
             if (seats.nonEmpty) {
-                val unit = if (rootMetas.contains(lobby.meta)) "VP" else if (lobby.meta.startsWith("nort")) "fame" else "points"
+                val unit = if (rootMetas.contains(lobby.meta) || lobby.meta == "tactics") "VP" else if (lobby.meta.startsWith("nort")) "fame" else if (lobby.meta == "pincer") "Royal Seals" else "points"
                 def points(s : S) = if (s.score == "D") "dominance" else if (s.score.isEmpty) "" else s.score + " " + unit
                 // each seat's faction (or clan) emoji before its name (2026-11-25, asked for): the report names the faction as the game
                 // shows it, so a Root faction is found by its label in the LFG catalog ("Vagabond (Thief)" by "Vagabond"), a clan by its
@@ -355,7 +357,8 @@ object TurnPings {
                         LfgSetup.catalog(Lfg.root.meta).flatMap(_.options.find(o => o.name.startsWith("IncludeFaction(") && o.label.trim.equalsIgnoreCase(name)))
                             .map(o => LfgSetup.emojiText(o.name)).getOrElse("")
                     }
-                    else ""
+                    // Pincer's colors and Company of Heroes' factions by the emoji their LFG picks show (2026-11-27)
+                    else Lfg.sideOf(lobby.meta, s.faction).map(_.emoji).filter(_.nonEmpty).map(_ + " ").getOrElse("")
                 } catch { case _ : Exception => "" }
                 val winners = seats.filter(_.won)
                 val ids = winners.flatMap(w => mentionOf(w.user))
@@ -548,6 +551,35 @@ object TurnPings {
             val name = if (nort) o else LfgSetup.catalog(Lfg.root.meta).map(_.label(key)).filter(_ != key).getOrElse(o)
             iconOf(o) + "**" + name + "**"
         } }
+        // PINCER AND COMPANY OF HEROES (2026-11-27, asked for): the game's icon, then the seat's color or faction emoji, and why
+        if (sideReasons.contains(lobby.meta)) {
+            def side(f : String) = Lfg.sideOf(lobby.meta, f)
+            val mine = faction.orElse(seat).flatMap(side).map(_.emoji).filter(_.nonEmpty).map(_ + " ").getOrElse("")
+            val vs = other.map(o => side(o).map(x => (if (x.emoji.nonEmpty) x.emoji + " " else "") + "**" + x.label + "**").getOrElse("**" + o + "**"))
+            def by(word : String) = vs.map(" " + word + " " + _).getOrElse("")
+            val words = (lobby.meta, tag) match {
+                case ("pincer", "setup") => "place your first colony"
+                case ("pincer", "defend") => "you're under attack ⚔️" + by("by") + ": retreat, fortify or take the hit"
+                case ("pincer", "counter") => "counter-action ⚔️" + by("against") + "?"
+                case ("pincer", "peace") => vs.map(_ + " offers peace 🕊️").getOrElse("a peace offer 🕊️")
+                case ("pincer", "surrender") => "pick a colony to keep 🏚️" + by("from")
+                case ("pincer", "prisoner") => "place a returned prisoner ⛓️"
+                case ("pincer", "revive") => "revive your frigate ⛵?"
+                case ("pincer", "founders") => "Founder's Oath 📜: pick the harvest" + by("for")
+                case ("pincer", "harvest") => "pick your harvest 🌾"
+                case ("tactics", "setup") => "time to set up"
+                case ("tactics", "ops") => "pick the Operation card 📋"
+                case ("tactics", "fire") => "Damage Phase: assign your fire 🎯"
+                case ("tactics", "brace") => "your targeted units can brace 🛡️"
+                case ("tactics", "smoke") => "smoke your vehicles 💨?"
+                case ("tactics", "retreat") => "Final Retreats 🏃"
+                case ("tactics", "demolish") => "demolitions 💥"
+                case ("tactics", "supply") => "Supply Phase: purchase and spawn 🏭"
+                case (_, "asked") => "you're needed"
+                case _ => "it's your turn"
+            }
+            return (head + mine, words)
+        }
         val (icon, words) = if (gameIcon.contains(lobby.meta)) (head, if (tag == "asked") "you're needed" else "it's your turn") else (nort, tag) match {
             // (the sword or axe right after "attack", "battle" or "fight", 2026-11-22, asked for; the Partisans card right after "Partisans", 2026-11-23; a plain Unicode 🏥 after "Field Hospitals", 2026-11-23, asked for; trading and Winter with plain Unicode ⚖️ and ❄️ after
             // the words, not the bot's badges, so the Northgard webhook can post them itself, 2026-11-23)

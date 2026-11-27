@@ -27,10 +27,27 @@ object Meta extends MetaGame { mmm =>
 
     val minPlayers = 2
 
-    val options = $[O]() ++ hiddenOptions
+    val options = $[O]() ++ RankingOption.all ++ hiddenOptions
+
+    // ranked or unranked, offered only online (online.scala); games made before it have neither
+    override def defaultsFor(n : Int, l : $[F]) = $(RankedGame)
 
     // Discord LFG games (good-game/Lfg.scala, /pincer; 2026-11-27): no options, two to four players, each picking a color on Join
     override def lfgPlayers = $(2, 3, 4)
+    override def lfgOptions : $[O] = $(RankedGame)
+
+    // Rankings, turn ping reasons and the Pamphleteer's jests (online.scala; 2026-11-27): a ladder of its own, each player a side,
+    // the Royal Seals the score; the games list shows each player's colony
+    override def ranking = |("pincer")
+    override def rankingSides(g : G, winners : $[Any]) = Online.rankSides(g, winners)
+    override def rankingSeat(g : G, f : F) = Online.rankSeat(g, f)
+    override def rankingFan(g : G) = Online.rankFan(g)
+    override def overview(g : G) = g.setup./~(f => glyph(f))
+    override def turnReason(g : G, f : Any, actions : $[Any]) : String = f match {
+        case f : Faction => TurnReasons.of(g, f, actions)
+        case _ => ""
+    }
+    override def jests(g : G) = Jests.report(g, f => turnSeat(g, f))
 
     // the Tutorial's practice game (tutorial.scala)
     override def hiddenOptions = $[O](TutorialOption)

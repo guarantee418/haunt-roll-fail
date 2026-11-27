@@ -364,10 +364,10 @@ object HRFR {
         "home-cavalry" -> "/hrf/webp2/pincer/images/piece/cavalry-blue.webp",
         "home-cannon" -> "/hrf/webp2/pincer/images/piece/cannon-yellow.webp",
         "home-frigate" -> "/hrf/webp2/pincer/images/piece/frigate-green.webp",
-        "home-us" -> "/hrf/webp2/tactics/images/emblem/us.webp",
-        "home-sherman" -> "/hrf/webp2/tactics/images/token/sherman-us.webp",
-        "home-panzer" -> "/hrf/webp2/tactics/images/token/panzer-iv-wehrmacht.webp",
-        "home-wehrmacht" -> "/hrf/webp2/tactics/images/emblem/wehrmacht.webp",
+        "home-us" -> "/hrf/webp2/tactics/images/emblem/us-home.webp",
+        "home-wehrmacht" -> "/hrf/webp2/tactics/images/emblem/wehrmacht-home.webp",
+        "home-british" -> "/hrf/webp2/tactics/images/emblem/british-home.webp",
+        "home-soviet" -> "/hrf/webp2/tactics/images/emblem/soviet-home.webp",
         "home-poseidon" -> "/hrf/webp2/cyclades/images/god/head-poseidon.webp",
         "home-ares" -> "/hrf/webp2/cyclades/images/god/head-ares.webp",
         "home-zeus" -> "/hrf/webp2/cyclades/images/god/head-zeus.webp",
@@ -693,7 +693,7 @@ class HRFUI(implicit resources : Resources) {
                 else if (m == pincer.Meta)
                     card(m, $("home-musketeer", "home-cavalry", "home-cannon", "home-frigate"), "Colonial powers trade, build and wage a gentleman's war", () => new HRFMetaUI(this, m, 0)(resources).withMeta())
                 else if (m == tactics.Meta)
-                    card(m, $("home-us", "home-sherman", "home-panzer", "home-wehrmacht"), "Squads and armor fight for ground, munitions and fuel", () => new HRFMetaUI(this, m, 0)(resources).withMeta())
+                    card(m, $("home-us", "home-wehrmacht", "home-british", "home-soviet"), "Squads and armor fight for ground, munitions and fuel", () => new HRFMetaUI(this, m, 0)(resources).withMeta())
                 else if (m == cyclades.Meta)
                     card(m, $("home-poseidon", "home-ares", "home-zeus", "home-athena"), "Greek cities bid for the gods' favor to raise two Metropolises", () => new HRFMetaUI(this, m, 0)(resources).withMeta())
                 else
@@ -1843,7 +1843,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             (playerCounts.num > 1).$(ZBasic(group, tag(Text("All games"), "rk-chip-text"), () => go(None), css("rk-chip") ++ n.none.$(ExternalStyle("rk-chip-on")) ++ $(xlo.pointer))) ++
             (playerCounts.num > 1).??(playerCounts./(k => ZBasic(group, tag(Text(k + " players"), "rk-chip-text"), () => go(|(k)), css("rk-chip") ++ n.has(k).$(ExternalStyle("rk-chip-on")) ++ $(xlo.pointer))))
 
-        def unit = meta.ranking.has("root").?("VP").|("fame")
+        def unit = meta.ranking.has("nort").?("fame").|(meta.ranking.has("pincer").?("Royal Seals").|("VP"))
 
         // what the numbers count comes after them
         def counted = heading("How this is counted")
@@ -2099,7 +2099,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             () => player(p, all), css("rk-row", (i < 3 && p.provisional.not).?("rk-row-top").|("rk-row-plain")) ++ yours.$(ExternalStyle("rk-row-yours")) ++ $(xlo.pointer))
         }
 
-        def explainRatings : Elem = "Elo ratings from finished online games with people on two sides or more (teams count as one side; bots and local games don't count). Everyone starts at " ~ Elo.start.round.toString.hl ~ "; a " ~ "?".hl ~ " marks fewer than " ~ Elo.provisional.hl ~ " games." ~ meta.ranking.has("root").??(" Root ratings count the games played from 2026-11-18.") ~ " Games with content not approved for ranked play (" ~ meta.ranking.has("root").?("fan, playtest or mirror factions, and fan maps, decks, hirelings or scenarios but Tidal Flats, Tundra, Gloom and Dawn and Dusk").|("the fan clans") ~ ") and games picked as Unranked don't count in the ratings; the stats count them."
+        def explainRatings : Elem = "Elo ratings from finished online games with people on two sides or more (teams count as one side; bots and local games don't count). Everyone starts at " ~ Elo.start.round.toString.hl ~ "; a " ~ "?".hl ~ " marks fewer than " ~ Elo.provisional.hl ~ " games." ~ meta.ranking.has("root").??(" Root ratings count the games played from 2026-11-18.") ~ (meta.ranking.has("root") || meta.ranking.has("nort")).?(" Games with content not approved for ranked play (" ~ meta.ranking.has("root").?("fan, playtest or mirror factions, and fan maps, decks, hirelings or scenarios but Tidal Flats, Tundra, Gloom and Dawn and Dusk").|("the fan clans") ~ ") and games picked as Unranked don't count in the ratings; the stats count them.").|(" Games picked as Unranked don't count in the ratings; the stats count them.")
 
         // Root's page, after rootelo: Leaderboard, Top Tables, Player's Journey, the stats and the Codex, as tabs
         def tabs(current : String, all : $[Elo.Player]) =
@@ -2909,7 +2909,8 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
         // what's in each game (2026-11-22, asked for): its map and factions as icons, from the overview a client reported (the server's
         // seventh field, Meta.overview), else worked out from its seats and options (the eighth and ninth, Meta.overviewLobby)
-        val overviewSources = HRF.metas.%(_.overviewIcons.any)./~{ m =>
+        // (every game's glyphs, Pincer's and Company of Heroes' too, 2026-11-27; the map icons of the games that have them)
+        val overviewSources = HRF.metas./~{ m =>
             val names = m.factions./~(f => m.glyph(f))./(_.toLowerCase).toSet
             m.assets./~(_.get).%(a => a.name.endsWith("-glyph") || names.contains(a.name.toLowerCase))./(a => a.name.toLowerCase -> ("webp2/" + m.path + "/images/" + a.copy(ext = "webp").src)) ++
             m.overviewIcons./((_, i) => ("lfg:" + i) -> ("webp2/lfg/emoji/" + i + ".png"))
