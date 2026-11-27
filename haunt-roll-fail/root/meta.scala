@@ -1797,6 +1797,21 @@ case object HideBoardTrackers extends TrackersOption {
 }
 
 
+// The rings around the clearings a choice can be picked by tapping on the map (root/ui.scala, `drawMap`); off by
+// default, as most players didn't like them (2026-11-27). Tapping works either way
+trait TapRingsOption extends hrf.Setting with OneOfGroup {
+    val group = "Tappable Clearings"
+}
+
+case object HideTapRings extends TapRingsOption {
+    val valueOn = "Not Outlined".hlb
+}
+
+case object ShowTapRings extends TapRingsOption {
+    val valueOn = "Outlined".hlb ~ " (Rings Around the Clearings a Tap Can Choose)".hl
+}
+
+
 trait CardPilesOption extends hrf.Setting with OneOfGroup {
     val group = "Card Piles"
 }
@@ -1888,11 +1903,11 @@ object Meta extends MetaGame {
     val name = "root"
     val label = "Root"
 
-    override def settingsList = super.settingsList ++ $(PromptAssignHits, AutoAssignHits, PromptAmbush, AutoAmbush, ShowRule, FlagRule, HideRule, StackWarriors, SeparateWarriors, ContrastRelics, ClassicRelics, ShowBoardTrackers, HideBoardTrackers, CardPilesInPanel, CardPilesOnMap, NoOutOfTurn, BasicOutOfTurn, DetailedOutOfTurn, HighlightClearings, HighlightNone, ShowPassScreen, NoPassScreen, EnglishLanguage, FrenchLanguage)
+    override def settingsList = super.settingsList ++ $(PromptAssignHits, AutoAssignHits, PromptAmbush, AutoAmbush, ShowRule, FlagRule, HideRule, StackWarriors, SeparateWarriors, ContrastRelics, ClassicRelics, ShowBoardTrackers, HideBoardTrackers, HideTapRings, ShowTapRings, CardPilesInPanel, CardPilesOnMap, NoOutOfTurn, BasicOutOfTurn, DetailedOutOfTurn, HighlightClearings, HighlightNone, ShowPassScreen, NoPassScreen, EnglishLanguage, FrenchLanguage)
     // the card piles on the map are the default (2026-11-24, owner), so the side panel saved while it was the default is moved there once
     override def settingsMoves = $(("card-piles-on-map", CardPilesInPanel.toString, CardPilesOnMap.toString))
 
-    override def settingsDefaults = super.settingsDefaults ++ $(AutoAssignHits, AutoAmbush, FlagRule, StackWarriors, ContrastRelics, ShowBoardTrackers, CardPilesOnMap, NoOutOfTurn, HighlightNone, ShowPassScreen, EnglishLanguage)
+    override def settingsDefaults = super.settingsDefaults ++ $(AutoAssignHits, AutoAmbush, FlagRule, StackWarriors, ContrastRelics, ShowBoardTrackers, HideTapRings, CardPilesOnMap, NoOutOfTurn, HighlightNone, ShowPassScreen, EnglishLanguage)
 
     // a Live Game is shown as JT drew the board (asked for on Discord, 2026-11-27, "a lively feel, faithful to the physical game"):
     // every warrior, the faded big warrior for the clearing's ruler, the board's relic tokens; each player can change them for the game

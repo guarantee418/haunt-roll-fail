@@ -15,7 +15,7 @@ import java.nio.file.Files
 //   Northgard         Ratatoskr (the Squirrel Clan's emblem), the squirrel of Norse myth who runs up and down Yggdrasil carrying insults between the eagle at
 //                     the top (Vedrfolnir) and the dragon at the roots (Nidhogg); so his jabs are what "the eagle says"
 //   Pincer            the Pamphleteer, an 18th-century broadsheet satirist
-//   Company of Heroes the Sergeant Major, over the field radio
+//   Company of Heroes the Assault Specialist (the Sergeant Major until 2026-11-27), over the field radio
 // The jabs make fun of the play, never the person, and keep to what a ping already says (nothing only the player may know).
 // Root's Court Crow also mocks what happens to a player on anyone's turn (a 3-0 roll against them, a Raze, a Revolt, a Lizard
 // conversion ...; jests, below, and root/jests.scala).
@@ -971,8 +971,8 @@ object Heckler {
             "STILL WAITING: a second edition on {name}'s turn, which has not yet occurred.",
             "{name}, the ink has dried on three pamphlets about your absence. Your move.")))
 
-    // COMPANY OF HEROES: the Sergeant Major, over the field radio
-    val sergeant = Voice("Sergeant Major", "", Map(
+    // COMPANY OF HEROES: the Assault Specialist (the Sergeant Major until 2026-11-27, asked for), over the field radio (his picture the Urban Assault Company card's rifleman, 2026-11-27)
+    val sergeant = Voice("Assault Specialist", "lfg/webhooks/heckler-tactics.png", Map(
         "turn" -> List(
             "On your feet, {name}! It's your turn, and that's an order!",
             "{name}! Your squads are standing around like it's a parade. Move them!",
@@ -985,5 +985,5 @@ object Heckler {
         "intro-lost" -> List("At ease, {name}. I read the after-action report on {game}: {score}, while {winner} took it with {top}. We'll be drilling that."),
         "reminder" -> List(
             "{name}! Are you still asleep in that foxhole? It's STILL your turn!",
-            "This is the Sergeant Major, {name}. The war is waiting. On YOU.")))
+            "This is the Assault Specialist, {name}. The war is waiting. On YOU.")))
 }

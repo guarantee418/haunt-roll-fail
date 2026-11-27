@@ -295,7 +295,7 @@ recomputed in `AdsetExpansion.assign`).
 Pincer: A Gentleman's War (Julian Birke, a work in progress the owner's team playtests; asked for on 2026-11-23) is in
 `haunt-roll-fail/pincer/` (meta `pincer`, URL `/play/pincer`, on the main menu since 2026-11-24: `HRF.menuMetas`), played from the
 rulebook's second draft with the art of the Tabletop Simulator mod 3778939778 (`pincer/tools/pincer-art.py`, images in
-`webp2/pincer/images/`). Tapping a player panel opens the mod's Player Reference card, and Build lists every building's cost above its choices (2026-11-24). On the main menu since 2026-11-24 (`HRF.menuMetas`). "How to Play" on its menu (and Company of Heroes') links the publisher's own pages and explains the site's controls, never the rules (`Meta.howToPlay`, `howToPlayLinks`, `howToPlayMenu` in `hrf.scala`, URL `/play/<meta>/how-to-play`; 2026-11-24). `pincer/RULES.md` has the rules as played and the draft's open questions (the Boar's War penalty
+`webp2/pincer/images/`). Tapping a player panel opens the mod's Player Reference card, and Build lists every building's cost above its choices (2026-11-24). On the main menu since 2026-11-24 (`HRF.menuMetas`). "How to Play" on its menu (and Company of Heroes') links the publisher's own pages and explains the site's controls, never the rules (`Meta.howToPlay`, `howToPlayLinks`, `howToPlayMenu` in `hrf.scala`, URL `/play/<meta>/how-to-play`; 2026-11-24). "Tutorial" on its menu (2026-11-27, asked for after Company of Heroes'; the core `tutorialMenu`, URL `/play/pincer/tutorial`) teaches the rules as played here in nine lessons (`Tutorial.lessons` in `pincer/tutorial.scala`), then a practice game as Red against the Green Easy bot (hidden `TutorialOption`) with a "Tutorial tip" above each choice (`Tutorial.tip`, `preinfo` in `pincer/ui.scala`), "Hide tips" and "Tutorial Lessons" as in Northgard's; How to Play points to it; `PINCER_TUTORIAL=1` in `pincer.Host` lists the choices with and without a tip. `pincer/RULES.md` has the rules as played and the draft's open questions (the Boar's War penalty
 isn't in it yet), `pincer/HANDOFF.md` the state, files and testing (`pincer.Host` bot games, `pincer.Dump`).
 
 Company of Heroes: The Board Game, 2nd Edition (Bad Crow Games; a work in progress the owner's team helps test; asked for on
@@ -811,7 +811,10 @@ server. No session can reach the server, and none needs to.
   score, stacked upwards when tied, with a count badge past 30. A clearing
   name that would cover the score tracker is drawn just above it instead
   (`nameOverTrack`). The in-game "Board Trackers" setting (`ShowBoardTrackers`, the
-  default, or `HideBoardTrackers`) hides both trackers and their markers. Official VP marker art (`webp2/root/images/vp/`, `officialVP` in
+  default, or `HideBoardTrackers`) hides both trackers and their markers. Tapping a clearing on the map picks the
+  choice about it (`tapKeys`, `tapClearing` in `root/ui.scala`; 2026-11-26), a choice alone on offer too (Battle in
+  Fen beside Cancel; 2026-11-27); the rings around the tappable clearings are drawn only with the in-game "Tappable
+  Clearings" setting `ShowTapRings` (`HideTapRings`, the default since 2026-11-27, as most players disliked them). Official VP marker art (`webp2/root/images/vp/`, `officialVP` in
   `root/ui.scala`) exists for the Homeland Twilight Council, Knaves and
   Lilypad Diaspora, cut from page 17 of `root-factions/`. The ten other Leder
   factions (Marquise, Eyrie, Alliance, Vagabond, Riverfolk, Lizards, Duchy,
@@ -1263,10 +1266,10 @@ server. No session can reach the server, and none needs to.
   online games get their posts and turn pings in their own forum (`TurnPings.webhookFor`: `HRF_DISCORD_NORT_TURNS_WEBHOOK` or the file
   `discord-nort-turns-webhook`, set by the tournament change `nort-turns <url>`); with none set they get none. Pincer and Company of Heroes
   (`pincer`, `tactics`) get theirs the same way in their own forums (`pincer-turns <url>`, `tactics-turns <url>`; `TurnPings.slots`;
-  2026-11-24), their pings led by a drum or a field radio emoji, as their clients give no reasons. The bot makes those webhooks itself,
-  with original personas, "Drum and Fife" and "Field Wireless" (avatars in `webp2/lfg/webhooks/`, drawn by
+  2026-11-24), their pings led by a drum or a medal emoji (🎖️, a field radio until 2026-11-27), as their clients give no reasons. The bot makes those webhooks itself,
+  with personas, "Drum and Fife" and "Field Wireless", since 2026-11-27 "The Major" (asked for, with the US Major's portrait from his unit token, `the-major.png`; `rename-webhook Field Wireless -> The Major | avatar the-major.png`) (avatars in `webp2/lfg/webhooks/`, drawn by
   `haunt-roll-fail/tools/webhook-avatars.py`): the tournament changes `webhooks`, `make-webhook <name> | in <channel> | avatar <file> |
-  for <turns channel>` (sets it as that turns channel without anyone copying its URL), `rename-webhook` and `test-ping <turns channel> | role <role>` (a "Test ping" thread through that webhook, mentioning the role) (`DiscordServer.scala`;
+  for <turns channel>` (sets it as that turns channel without anyone copying its URL), `rename-webhook <name> -> <new> [| avatar <file>]` and `test-ping <turns channel> | role <role>` (a "Test ping" thread through that webhook, mentioning the role) (`DiscordServer.scala`;
   the bot needs Manage Webhooks).
 - The bot's `/card <name> [game] [private]` (2026-11-22, asked for as a "bot to call cards and other art"): posts a Root or Northgard card,
   faction or clan board, quest, landmark, hireling or creature with its picture, the name suggested as it is typed (autocomplete). The list
@@ -1295,7 +1298,7 @@ server. No session can reach the server, and none needs to.
   turn pings from the game's heckler instead of the turns webhook's plain ping: one message, the ping with a jab on its second line, posted
   by the same webhook in the same thread under the heckler's own name and picture (a webhook post's `username` and `avatar_url`, `persona` in
   `Tournament.post`; `Heckler.ping`; asked for on 2026-11-25: no double pings), the jab fitting the ping's reason: Root's Court Crow (the Corvid character art in a jester's cap, peeking out of a trash can), Northgard's Ratatoskr (the Norse squirrel who
-  carries the eagle's insults down Yggdrasil), Pincer's Pamphleteer and Company of Heroes' Sergeant Major (`good-game/Heckler.scala`, its
+  carries the eagle's insults down Yggdrasil), Pincer's Pamphleteer and Company of Heroes' Assault Specialist (once the Sergeant Major; the Urban Assault Company commander card's rifleman, `heckler-tactics.png` by `webhook-avatars.py`; 2026-11-27) (`good-game/Heckler.scala`, its
   lines there; the jabs mock the play, never the person). The Court Crow also mocks, in the game's thread, what happens to a
   player with the role on anyone's turn (asked for the same day): a 3-0 roll against them, their own 0-3, an ambush, a Raze, a Revolt, a
   Lizard Convert or Sanctify, the Eyrie's Turmoil, a Corvid bomb, The Faithful's extra hit against them drawing the card that keeps it, a battle leaving them with nothing where they had 4 pieces or a building (`game.jestBattle`), still 0 VP at the third round, last alone when another reaches 25 VP, the Vagabond turning Hostile, the Knaves taking their warriors prisoner, and their own dominance card (2026-11-25). The Root game notes each event with its victim as it plays out, before the
