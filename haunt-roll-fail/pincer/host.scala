@@ -20,12 +20,24 @@ object Host extends hrf.host.BaseHost {
 
     override val limit = 60000
 
-    def askBot(g : G, f : F, actions : $[UserAction]) = new BotXX(f).ask(actions, 0)(g)
+    // PINCER_TUTORIAL=1 plays the Tutorial's practice game (its seating and options) and prints each kind of choice Red was offered
+    // with a tip ("TIP") or without ("NO TIP")
+    val tutorial = sys.env.get("PINCER_TUTORIAL") == Some("1")
+    var tipsSeen = Set[String]()
+
+    def askBot(g : G, f : F, actions : $[UserAction]) = {
+        if (tutorial && f == Tutorial.side && actions.any) {
+            val kinds = actions./(_.unwrap.getClass.getSimpleName).distinct.sorted.mkString(",")
+            val key = Tutorial.tip(g, f, actions).any.?("TIP ").|("NO TIP ") + kinds
+            if (tipsSeen.contains(key).not) { tipsSeen += key ; println(key) }
+        }
+        new BotXX(f).ask(actions, 0)(g)
+    }
 
     def factions = Faction.all
     def subjects = factions
 
-    def batch = $(() => new G(factions.take(2 + scala.util.Random.nextInt(3)).shuffle, $))
+    def batch = $(() => tutorial.?(new G(Tutorial.seating, Tutorial.options)).|(new G(factions.take(2 + scala.util.Random.nextInt(3)).shuffle, $)))
 
     def factionName(f : F) = f.name
     def nameWinner(f : F) = f.name
