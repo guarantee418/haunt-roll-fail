@@ -116,8 +116,8 @@ object SelfRoles extends BotCommand {
 
     // what each role is for, on the site
     def about(r : DiscordServer.Role) : String = r.name.toLowerCase match {
-        case "root-lfg" => "Pinged when a Root game looks for players"
-        case "ng-lfg" => "Pinged when a Northgard game looks for players"
+        case "root" | "root-lfg" => "Pinged when a Root game looks for players"
+        case "northgard" | "ng-lfg" => "Pinged when a Northgard game looks for players"
         case "pincer" => "Pinged when a Pincer game looks for players"
         case "coh" => "Pinged when a Company of Heroes game looks for players"
         case "cyclades" => "Pinged when a Cyclades game looks for players"
