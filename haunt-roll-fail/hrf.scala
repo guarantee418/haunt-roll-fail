@@ -135,7 +135,7 @@ object HRF {
 
     val rootMetas = $[MetaGame](root.Meta, root.MetaAdset, root.MetaMirror)
 
-    val menuMetas = $[MetaGame](root.Meta, nort.Meta, pincer.Meta, tactics.Meta)
+    val menuMetas = $[MetaGame](root.Meta, nort.Meta, pincer.Meta, tactics.Meta, cyclades.Meta)
 
     val html = dom.window.location.origin + "/play/"
     val script = dom.document.getElementById("script").asInstanceOf[dom.html.Script].src
@@ -280,6 +280,30 @@ object NoSwitches extends Switches {
     def disableSwitch(s : String) {}
 }
 
+// A game's own settings (Meta.gameSettings: Root's Live Game display; 2026-11-27): in that game they take the place of the
+// player's own settings of their groups; a player changing one of those groups in the game keeps the change for that game only
+// (<settingsKey>.game-settings.<lobby>, in memory for a game with no lobby), and the player's other settings stay theirs
+class GameSettings(val preset : $[Setting], all : $[Setting], key : |[String]) {
+    def mine(o : Setting) = preset.exists(_.group == o.group)
+
+    var own : $[Setting] = {
+        val saved : $[String] = key./(k => try { Local.get(k, "").split(' ').$ } catch { case e : Throwable => $[String]() }).|($)
+        saved./~(s => all.find(_.toString == s)).%(o => mine(o))
+    }
+
+    def effective(global : $[Setting]) : $[Setting] = global.%(o => mine(o).not) ++ preset.%(p => own.exists(_.group == p.group).not) ++ own
+
+    def save(selected : $[Setting]) {
+        own = selected.%(o => mine(o))
+        key.foreach(k => try { Local.set(k, own./(_.toString).mkString(" ")) } catch { case e : Throwable => })
+    }
+
+    def clear() {
+        own = $
+        key.foreach(k => try { Local.remove(k) } catch { case e : Throwable => })
+    }
+}
+
 trait Callbacks {
     def switches : Switches
     def canPlayAgain : Boolean
@@ -344,6 +368,10 @@ object HRFR {
         "home-sherman" -> "/hrf/webp2/tactics/images/token/sherman-us.webp",
         "home-panzer" -> "/hrf/webp2/tactics/images/token/panzer-iv-wehrmacht.webp",
         "home-wehrmacht" -> "/hrf/webp2/tactics/images/emblem/wehrmacht.webp",
+        "home-poseidon" -> "/hrf/webp2/cyclades/images/god/head-poseidon.webp",
+        "home-ares" -> "/hrf/webp2/cyclades/images/god/head-ares.webp",
+        "home-zeus" -> "/hrf/webp2/cyclades/images/god/head-zeus.webp",
+        "home-athena" -> "/hrf/webp2/cyclades/images/god/head-athena.webp",
 
         "battle" -> "/hrf/webp2/root/images/icon/battle.webp",
         "swap" -> "/hrf/webp2/root/images/icon/swap.webp",
@@ -666,6 +694,8 @@ class HRFUI(implicit resources : Resources) {
                     card(m, $("home-musketeer", "home-cavalry", "home-cannon", "home-frigate"), "Colonial powers trade, build and wage a gentleman's war", () => new HRFMetaUI(this, m, 0)(resources).withMeta())
                 else if (m == tactics.Meta)
                     card(m, $("home-us", "home-sherman", "home-panzer", "home-wehrmacht"), "Squads and armor fight for ground, munitions and fuel", () => new HRFMetaUI(this, m, 0)(resources).withMeta())
+                else if (m == cyclades.Meta)
+                    card(m, $("home-poseidon", "home-ares", "home-zeus", "home-athena"), "Greek cities bid for the gods' favor to raise two Metropolises", () => new HRFMetaUI(this, m, 0)(resources).withMeta())
                 else
                     card(m, $("home-wolf", "home-stag", "home-bear", "home-raven"), "Viking clans explore, build and conquer", () => new HRFMetaUI(this, m, 0)(resources).withMeta())
             ) ++
@@ -853,18 +883,25 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         }
     }
 
-    def editSettings(then : => Unit) {
+    def editSettings(then : => Unit) : Unit = editSettings(then, None)
+
+    def editSettings(then : => Unit, game : |[GameSettings]) {
         ui.overlay.pane.vis()
 
-        var ostate = OptionsState[Setting](meta.settingsList, $, settings, meta.settingsDefaults).checkDimmed()
+        var ostate = OptionsState[Setting](meta.settingsList, $, game./(_.effective(settings)).|(settings), meta.settingsDefaults).checkDimmed()
+
+        // the settings picked: a game's own go to the game, the rest are the player's
+        def keep(selected : $[Setting]) {
+            settings = game./(g => { g.save(selected) ; selected.%(o => g.mine(o).not) ++ settings.%(o => g.mine(o)) }).|(selected)
+            saveSettings(settings)
+            applySettings(settings)
+        }
 
         def ask() {
             def pick(o : Setting) {
                 if (ostate.enabled(o)) {
                     ostate = ostate.click(o)
-                    settings = ostate.selected
-                    saveSettings(settings)
-                    applySettings(settings)
+                    keep(ostate.selected)
                     ask()
                 }
             }
@@ -903,10 +940,11 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     })
                 } ++
                 $(ZBasic("", "Reset All Settings", () => {
-                    ostate = OptionsState[Setting](meta.settingsList, $, $, meta.settingsDefaults).checkDimmed()
-                    settings = ostate.selected
+                    settings = OptionsState[Setting](meta.settingsList, $, $, meta.settingsDefaults).checkDimmed().selected
                     saveSettings(settings)
                     applySettings(settings)
+                    game.foreach(_.clear())
+                    ostate = OptionsState[Setting](meta.settingsList, $, game./(_.effective(settings)).|(settings), meta.settingsDefaults).checkDimmed()
                     ask()
                 }, ZBasic.choice ++ $(xlo.fullwidth))) ++
                 $(ZBasic(" ", "Done".hh, () => {
@@ -3773,6 +3811,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
         val seating = seatingX.%(f => difficulties(f) != Off)
 
+        // the game's own display settings (Meta.gameSettings), kept per online game in this browser
+        val gameSettings = meta.gameSettings(options).some./(p => new GameSettings(p, meta.settingsList, HRF.lobby.%(_ => HRF.replay.not)./(meta.settingsKey + ".game-settings." + _)))
+
         val assets = meta.assets./~(_.get)
 
         val sources = assets./(a => a.name -> ("webp2/" + meta.path + "/images/" + a.copy(ext = "webp").src)).toMap
@@ -3867,12 +3908,12 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 }
                 def editSettings(onEdit : => Unit) = {
                     ui.uir.show()
-                    main.editSettings {
+                    main.editSettings({
                         ui.uir.hide()
                         onEdit
-                    }
+                    }, gameSettings)
                 }
-                def settings = main.settings
+                def settings = gameSettings./(_.effective(main.settings)).|(main.settings)
                 // "Main Menu" under "Report a Bug": loads the game's main menu afresh, so nothing of this game's UI
                 // is left over. Online and saved local games can be picked up again from there; a game kept only
                 // in memory (Training Grounds, URL-started games) asks first, as it would be lost

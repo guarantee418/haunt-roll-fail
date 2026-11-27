@@ -101,6 +101,10 @@ trait MetaBase {
     // for a default that changed after players had saved the old one
     def settingsMoves : $[(String, String, String)] = $
 
+    // A game's own display settings (Root's Live Game; 2026-11-27): shown in place of the player's own in that game, each still
+    // changeable there, the change kept for that game only (GameSettings in hrf.scala), so the player's other games keep theirs
+    def gameSettings(options : $[O]) : $[hrf.Setting] = $
+
     def settingsDefaults : $[hrf.Setting] = $(hrf.ShowTips, hrf.NormalSpacing, hrf.GameFontFace, hrf.NormalFontSize, hrf.TripleClickFullScreen, hrf.NormalScrollSpeed)
 
     // the display language: (name, text, image id), see hrf.elem.Translation

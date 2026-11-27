@@ -329,7 +329,7 @@ starting Infantry), and its units need no Tier Building; a brigade gives the mat
 is Commanders or brigades), at the card's price (`Brigade.price` in `costOf`).
 
 Cyclades (Bruno Cathala and Ludovic Maublanc, Matagot, 2009; asked for on 2026-11-27), the base game for 2 to 5
-players, is in `haunt-roll-fail/cyclades/` (meta `cyclades`, URL `/play/cyclades`; not on the main menu yet, `HRF.menuMetas`), with the
+players, is in `haunt-roll-fail/cyclades/` (meta `cyclades`, URL `/play/cyclades`, on the main menu since 2026-11-27: `HRF.menuMetas`), with the
 art of the Tabletop Simulator mods (`cyclades/tools/cyclades-art.py`, images in `webp2/cyclades/images/`): the 2-3 side, the 4-5 side
 and the 4-player board of the two halves (`Layouts` in `cyclades/board.scala`, isles named after the Cyclades, sea spaces by row and
 column), offerings with outbidding, the five gods, battles and retreats, the 17 Creatures and their figures, Metropolises. GP are
@@ -406,7 +406,7 @@ cd haunt-roll-fail && sbt fullOptJS
   the Dawn and Dusk deck are approved since 2026-11-22, and the Simple Landmarks and the Negabond (a second Vagabond, `approved`) since 2026-11-23 (owner). A ranked game with a bot gets a warning. The Discord bot's `/root` and
   `/northgard` take `ranked` (`LfgSetup.sections`), the catalog's tenth field marks each unapproved option (its menus say "makes the
   game unranked"), the post says Ranked or Unranked and why (`rankingLine`), and a Root Advanced Setup post always lists the factions in the draft by their emojis, picked or left as the defaults (`summary` in `LfgSetup.scala`; 2026-11-25), and a Ranked game with unapproved picks is created
-  Unranked (`rankedOptions`). Names are released or
+  Unranked (`rankedOptions`). The post (and the panel, and the started game's post) also says Live or Async, from the Live Game picked in the panel (`paceLine`, only for a catalog with `LiveGameMode`, so not Northgard's; 2026-11-27). Names are released or
   moved by committing `ranking-changes/<name>.txt` to `hrf-games` (`release <name>`, `rename <name> -> <new>`, `seat <user> <name>`, and `merge <name> -> <into>` for one player under two names, which gives `<into>` the first name's devices and seats and frees it, 2026-11-22;
   `Ranking.change`, applied once each by `Backup`, outcome in `<name>.result`).
   A name can have several player keys (each `names.tsv` row with a hash adds one, a row with an empty hash releases it), and
@@ -819,7 +819,10 @@ server. No session can reach the server, and none needs to.
   score, stacked upwards when tied, with a count badge past 30. A clearing
   name that would cover the score tracker is drawn just above it instead
   (`nameOverTrack`). The in-game "Board Trackers" setting (`ShowBoardTrackers`, the
-  default, or `HideBoardTrackers`) hides both trackers and their markers. Official VP marker art (`webp2/root/images/vp/`, `officialVP` in
+  default, or `HideBoardTrackers`) hides both trackers and their markers. Tapping a clearing on the map picks the
+  choice about it (`tapKeys`, `tapClearing` in `root/ui.scala`; 2026-11-26), a choice alone on offer too (Battle in
+  Fen beside Cancel; 2026-11-27); the rings around the tappable clearings are drawn only with the in-game "Tappable
+  Clearings" setting `ShowTapRings` (`HideTapRings`, the default since 2026-11-27, as most players disliked them). Official VP marker art (`webp2/root/images/vp/`, `officialVP` in
   `root/ui.scala`) exists for the Homeland Twilight Council, Knaves and
   Lilypad Diaspora, cut from page 17 of `root-factions/`. The ten other Leder
   factions (Marquise, Eyrie, Alliance, Vagabond, Riverfolk, Lizards, Duchy,
@@ -1084,6 +1087,14 @@ server. No session can reach the server, and none needs to.
   Auto Assign Hits is on by default and Ambush Bluff Mode off (`defaultsFor`; 2026-11-17), also when a browser's saved setup
   holds none of Auto Assign Hits, Live Game or the hits preset (`Meta.autoHitsOn`, in `completeSaved`): setups saved before the section
   never held Auto Assign Hits, as it was then always on, so it showed off, and held Bluff Mode, then the default.
+- Root's Live Game shows the map as JT drew it (asked for on Discord, 2026-11-27, root-feedback "Root live game options"): every
+  warrior (`SeparateWarriors`), the faded big warrior for a clearing's ruler (`ShowRule`) and the board's relic tokens (`ClassicRelics`),
+  in place of the player's own Warriors, Clearing Rule and Relics settings (`Meta.gameSettings` in `meta.scala`, Root's in
+  `root/meta.scala`; Adset and Mirror use Root's). Each player can change them under Interface for that game only: `GameSettings` in
+  `hrf.scala` keeps those groups' picks as `<settingsKey>.game-settings.<lobby>`, and `editSettings` saves the other groups as the
+  player's own, so their other games keep theirs; "Reset All Settings" clears the game's picks too. The Relics setting itself
+  (`ContrastRelics`, the default, or `ClassicRelics`, in every game) picks the high-contrast map tokens of 2026-11-24 or the board
+  tokens. Display only, so no game records change.
 - Root pass and play (asked for on 2026-10-17): in a local game with more than one human faction
   (`Callbacks.hotseat` in `hrf.scala`: a memory or localStorage journal), each time another human faction is asked
   the action pane shows "Pass to <faction>" and a "Show Hand and Choices" button instead of its hand and choices
@@ -1295,7 +1306,7 @@ server. No session can reach the server, and none needs to.
   turn pings from the game's heckler instead of the turns webhook's plain ping: one message, the ping with a jab on its second line, posted
   by the same webhook in the same thread under the heckler's own name and picture (a webhook post's `username` and `avatar_url`, `persona` in
   `Tournament.post`; `Heckler.ping`; asked for on 2026-11-25: no double pings), the jab fitting the ping's reason: Root's Court Crow (the Corvid character art in a jester's cap, peeking out of a trash can), Northgard's Ratatoskr (the Norse squirrel who
-  carries the eagle's insults down Yggdrasil), Pincer's Pamphleteer and Company of Heroes' Sergeant Major (`good-game/Heckler.scala`, its
+  carries the eagle's insults down Yggdrasil), Pincer's Pamphleteer and Company of Heroes' Assault Specialist (once the Sergeant Major; the Urban Assault Company commander card's rifleman, `heckler-tactics.png` by `webhook-avatars.py`; 2026-11-27) (`good-game/Heckler.scala`, its
   lines there; the jabs mock the play, never the person). The Court Crow also mocks, in the game's thread, what happens to a
   player with the role on anyone's turn (asked for the same day): a 3-0 roll against them, their own 0-3, an ambush, a Raze, a Revolt, a
   Lizard Convert or Sanctify, the Eyrie's Turmoil, a Corvid bomb, The Faithful's extra hit against them drawing the card that keeps it, a battle leaving them with nothing where they had 4 pieces or a building (`game.jestBattle`), still 0 VP at the third round, last alone when another reaches 25 VP, the Vagabond turning Hostile, the Knaves taking their warriors prisoner, and their own dominance card (2026-11-25). The Root game notes each event with its victim as it plays out, before the

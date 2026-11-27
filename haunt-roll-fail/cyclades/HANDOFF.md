@@ -1,6 +1,6 @@
 # Cyclades: handoff
 
-Meta `cyclades`, URL `/play/cyclades`; the base game, 2 to 5 players, with an Easy bot. Not on the main menu yet (`HRF.menuMetas`).
+Meta `cyclades`, URL `/play/cyclades`; the base game, 2 to 5 players, with an Easy bot. On the main menu since 2026-11-27 (`HRF.menuMetas`).
 RULES.md has the rules as played and the readings.
 
 ## Files
@@ -36,7 +36,7 @@ In a JVM project with the sources (see Pincer's HANDOFF.md, the same setup with 
 
 ## Next
 
-- The main menu card and How to Play (done) / a Tutorial, rankings, Discord pings (`TurnPings.slots`), as the other games have.
+- A Tutorial, rankings, Discord pings (`TurnPings.slots`), as the other games have.
 - Hidden GP (behind screens) for online games.
 - A better bot: it rarely fights or calls Creatures.
 - The expansions.

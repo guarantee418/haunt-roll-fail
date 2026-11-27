@@ -440,11 +440,12 @@ object Lfg {
     def message(p : Post) : String = {
         val label = p.kind.label
         // the options its host chose
-        val picks = if (p.game.nonEmpty || p.cancelled) "" else LfgSetup.catalog(p.meta).map(c => LfgSetup.rankingLine(c, p.options) + LfgSetup.summary(c, p.chosen, p.options)).getOrElse("")
+        val picks = if (p.game.nonEmpty || p.cancelled) "" else LfgSetup.catalog(p.meta).map(c => LfgSetup.rankingLine(c, p.options) + LfgSetup.paceLine(c, p.options) + LfgSetup.summary(c, p.chosen, p.options)).getOrElse("")
         val head = LfgSetup.emojiText(p.kind.emoji)
         val (text, bb) = p.game match {
             case Some(s) =>
                 (head + "✅ **" + label + ": " + p.title + "** has started with " + s.ids.size + " players: " + s.ids.map(mention).mkString(", ") + "\n" +
+                    LfgSetup.catalog(p.meta).map(c => LfgSetup.paceLine(c, p.options)).getOrElse("") +
                     "📩 Your seat link was sent to you by DM; **Get my link** gives it again (only you see it). 🔔 Your turns are pinged in the game's post in the games channel.\n" +
                     "👁️ Watch: <" + link(p, s.spectate) + ">",
                     buttons(button("Get my link", 1, "link", p.id, "🔗")))
