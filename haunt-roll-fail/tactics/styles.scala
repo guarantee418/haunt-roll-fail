@@ -22,6 +22,12 @@ package object elem {
         British --> color("#e8c86e")
         Soviet --> color("#f2708a")
         OKW --> color("#9fbde3")
+        // the second seats ("Wehrmacht II"): a paler shade of their first's
+        US2 --> color("#cfe8b0")
+        Wehrmacht2 --> color("#ffb8b0")
+        British2 --> color("#f4e0a8")
+        Soviet2 --> color("#f8b0c0")
+        OKW2 --> color("#cfe0f4")
 
         Manpower --> color("#d8d26a")
         Munitions --> color("#ff8a50")

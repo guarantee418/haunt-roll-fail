@@ -8,7 +8,7 @@ played and the choices made.
 
 ## State
 
-- Playable: two players, any two of the five core factions, or team games of three to five, Allies against Axis, or three on the 3 Way Free-for-all (RULES.md, Team games) (US Forces, Wehrmacht, British Forces, Soviet Forces, Oberkommando West;
+- Playable: two players, any two of the five core factions, or team games of three to six (3v3 on maps of three panels or more, a faction taking a second seat, "Wehrmacht II"), Allies against Axis, or three on the 3 Way Free-for-all (RULES.md, Team games) (US Forces, Wehrmacht, British Forces, Soviet Forces, Oberkommando West;
   thirty core Commanders, six a faction, and the 44 expansion Commanders of the five factions with the Expansion Commanders option, and the Lost Brigades with theirs), on the Mission Booklet's six 2-panel core missions (the setup's
   Map choice, `MapChoice`, Moro River by default: Moro River, Across the Don, Between Two Rivers, Ardennes Forest, Frozen Lake,
   Road to Moscow, with Ice, the Cathedral and multi-hex Buildings on the Ardennes panels); Local (hotseat), Quick Game and Play Online, with
@@ -125,4 +125,7 @@ booklet's pictures (pages 9 and 10). Moro River's first rows had the bridge poin
 - Setup's map picker (2026-11-25): the Map choices sit in one folder, in sections by the booklet's chapters (`MapChoice.sectionOf`),
   each a tile with a thumbnail (`Meta.optionTile`, `optionTileWide`). After adding or changing a map, run `sbt "runMain tactics.MapDump"`
   into a file and `tools/map-thumbs.py <file> webp2/tactics/images` for its thumbnail.
+- Desert Warfare (asked for on 2026-11-27, the owner is getting the files): the Afrika Korps, the desert panels and rules, and 4v4.
+  When DAK is in, 3v3 no longer needs a second seat; keep the seconds (`Faction.seconds`) so games made with them load. The Discord
+  LFG (`/coh`, `Lfg.coh`, `lfgPlayers`) still stops at 5 seats and offers no second seats.
 - A better bot.

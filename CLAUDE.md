@@ -313,7 +313,7 @@ setup's Commanders choice, `DrawCommanders`, 2026-11-24: `tactics/commanders.sca
 and every game made before the choice, which replay unchanged), with the Building
 Boards, map panels and books of the Tabletop Simulator mod 2314664989 (`tactics/tools/tactics-art.py`, images in
 `webp2/tactics/images/`; the map's lines read off the art by `tactics/tools/map-edges.py` and `map-data.py` into `Board.data`).
-Since 2026-11-24, three to five players play team games, Allies (US, British, Soviet) against Axis (Wehrmacht, OKW), sharing VPs
+Since 2026-11-24, three to five players play team games (six, 3v3, since 2026-11-27, on maps of three panels or more: a faction may take a second seat, "Wehrmacht II", `SecondFaction` in `tactics/game.scala`, playing its first's boards and art with "II" on its tokens, until the Desert Warfare expansion's Afrika Korps, whose files the owner is getting, is in), Allies (US, British, Soviet) against Axis (Wehrmacht, OKW), sharing VPs
 (3 more to end), sight and Control Points, 2 starting Infantry each, teams alternating turns and purchases (`teams`, `mates`, `foe`,
 `nextTurn`, `interleaved` in `tactics/game.scala`; two players are two teams and play as before), and three the Mission Booklet's
 3 Way Free-for-all on Moro River (`MoroRiverFFA`, `MapData.areas` and `trigger`; VP to every player who damaged a destroyed unit).

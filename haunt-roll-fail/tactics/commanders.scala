@@ -417,10 +417,10 @@ object Commander {
         TerrorDoctrineWest, TankDestroyerWest, StuGAssaultDoctrineOKW, StuGTacticsOKW, StormDoctrine, EncirclementDoctrine, JointOperationsDoctrine)
 
     // the core six of a faction (every game without the option, and every game made before it)
-    def of(f : Faction) = all.diff(expansion).%(_.faction == f)
+    def of(f : Faction) = all.diff(expansion).%(_.faction == f.base)
 
     // the Commanders a player draws from
-    def pool(f : Faction, options : $[BaseOption]) = options.has(ExpansionCommanders).?(all.%(_.faction == f)).|(of(f))
+    def pool(f : Faction, options : $[BaseOption]) = options.has(ExpansionCommanders).?(all.%(_.faction == f.base)).|(of(f))
 
     // the abilities spent at the start of a Maneuver Phase: CP, Munitions
     val opening = Map[Ability, (Int, Int)](ReconSweep -> (1, 1), P47Strike -> (2, 2), CombatGroupAdvance -> (1, 3), PanzerwerferBarrage -> (1, 1), FragmentationBomb -> (2, 2), ArmorBlitzkrieg -> (1, 3),
@@ -485,7 +485,7 @@ object Commander {
         case DozerCallIn => $(Dozer)
         case JacksonCallIn => $(Jackson)
         case StuGCallInFree | TargetWeakPoint => $(StuG)
-        case TankDesant => $((f == OKW).?(Volksgrenadiers : UnitType).|(Grenadiers))
+        case TankDesant => $((f.base == OKW).?(Volksgrenadiers : UnitType).|(Grenadiers))
         case LMG42Free => $(Grenadiers)
         case OberDefense => $(Obersoldaten)
         case VeteranKettenkrad => $(Kettenkrad)

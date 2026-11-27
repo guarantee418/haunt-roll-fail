@@ -27,6 +27,10 @@ trait Faction extends BasePlayer with Named with Styling with Record {
     def color : String
     // the side in a team game (2026-11-24): US, British and Soviet are Allies, the Wehrmacht and OKW Axis
     def axis : Boolean = false
+    // a second seat of a faction (2026-11-27): it plays its first's boards, units, Commanders and art (`id`), as the rulebook lets
+    // the same faction play twice in a team game; the first itself is its own base
+    def base : Faction = this
+    def second : Boolean = base != this
 }
 
 case object US extends Faction {
@@ -67,8 +71,26 @@ case object OKW extends Faction {
     def color = "#5d7a99"
 }
 
+// the second seats (2026-11-27, for 3v3 until the Desert Warfare expansion's Afrika Korps is in): "Wehrmacht II" and so on, a team game's
+// second player of a faction; the name, short and colour are its own, everything else its first's
+sealed abstract class SecondFaction(val first : Faction, val color : String) extends Faction {
+    def name = first.name + " II"
+    def short = first.short + "2"
+    def id = first.id
+    override def axis = first.axis
+    override def base = first
+}
+
+case object US2 extends SecondFaction(US, "#4f7a2a")
+case object Wehrmacht2 extends SecondFaction(Wehrmacht, "#9c2a24")
+case object British2 extends SecondFaction(British, "#9c7a2e")
+case object Soviet2 extends SecondFaction(Soviet, "#6e1028")
+case object OKW2 extends SecondFaction(OKW, "#3b5571")
+
 object Faction {
     val all = $[Faction](US, Wehrmacht, British, Soviet, OKW)
+    val seconds = $[Faction](US2, Wehrmacht2, British2, Soviet2, OKW2)
+    val seats = all ++ seconds
 }
 
 
@@ -282,7 +304,7 @@ object UnitType {
     // Jagdpanther): an OKW squad of the Wehrmacht's type, drawn with its own token
     lazy val shared = $[(UnitType, Faction)](StuG -> OKW, KingTiger -> OKW, Jagdpanther -> OKW, Stormtroopers -> OKW)
 
-    def of(f : Faction) = all.%(_.faction == f)
+    def of(f : Faction) = all.%(_.faction == f.base)
 }
 
 import UnitType._
@@ -909,7 +931,7 @@ object Tiers {
         case _ => Cost(0, 0, 0)
     }
 
-    def name(f : Faction, tier : Int) = (f, tier) @@ {
+    def name(f : Faction, tier : Int) = (f.base, tier) @@ {
         case (US, 1) => "US Headquarters"
         case (US, 2) => "Company Command Post"
         case (US, 3) => "Battalion Command Post"
@@ -989,7 +1011,7 @@ sealed abstract class MapChoice(val map : MapData, val text : String) extends Ga
     def valueOn = map.name.hl
     override val explain = $[Elem](text.txt)
     // who plays it: the free-for-alls their number, the skirmishes two, the rest two to five (teams)
-    def playersText = (map.areas.num > 2).?(map.areas.num + " players, each on their own").|((map.panels == 1).?("2 players").|("2 to 5 players"))
+    def playersText = (map.areas.num > 2).?(map.areas.num + " players, each on their own").|((map.panels == 1).?("2 players").|((map.panels * map.rows > 2).?("2 to 6 players").|("2 to 5 players")))
     def panelsText = (map.rows * map.panels > 1).?((map.rows * map.panels) + " panels" + (map.rows > 1).??(", square")).|("1 panel")
 }
 case object MoroRiverMap extends MapChoice(MoroRiver, "MR1 and MR2: a river with fords, tank traps and Buildings. Spawn Areas at the top and bottom. Starting stockpile 4 Manpower, 2 Munitions, 3 Fuel.")
@@ -1837,10 +1859,10 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         }
     }
 
-    def unlockable(f : Faction) : |[Int] = (f.tier < 3 && f != OKW).?(f.tier + 1).%(t => affordable(f, tierCost(f, t)))
+    def unlockable(f : Faction) : |[Int] = (f.tier < 3 && f.base != OKW).?(f.tier + 1).%(t => affordable(f, tierCost(f, t)))
 
     // OKW converts a SWS Supply Truck (on the map, not Retreating) into its next Tier Building, or into one it lost (one of each at a time)
-    def conversions(f : Faction) : $[UserAction] = (f == OKW).??(
+    def conversions(f : Faction) : $[UserAction] = (f.base == OKW).??(
         $(2, 3).%(t => t <= f.tier + 1 && tierBuildingOf(f, t).none && affordable(f, tierCost(f, t)))./~(t =>
             units(f).%(v => v.utype == SWSTruck && retreating.contains(v).not)./(v => ConvertAction(f, t, v))))
 
@@ -2451,7 +2473,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         (unlocked(f, VeteranKettenkrad) && unlocked(f, KettenkradCallIn).not && unlocked(f, KettenkradEngineers).not).$(Kettenkrad) ++
         // the Lost Brigades' own units
         unlocked(f, EliteGrenadierLeaders).$(EliteGrenadiers) ++ unlocked(f, CrocodileCallIn).$(Churchill) ++
-        unlocked(f, CommandPantherCallIn).??(UnitType.all.%(t => t.faction == f && t.isInstanceOf[CommandPanther]))
+        unlocked(f, CommandPantherCallIn).??(UnitType.all.%(t => t.faction == f.base && t.isInstanceOf[CommandPanther]))
 
     // the Lost Brigade a player may pick now (once, for its XP)
     def brigadePicks(f : Faction) : $[UserAction] = (brigades && brigadeOf.contains(f).not).??(brigadesDrawn.getOrElse(f, $[Brigade]()).%(b => f.stock(XP) >= b.xp)./(b => BrigadePickAction(f, b)))

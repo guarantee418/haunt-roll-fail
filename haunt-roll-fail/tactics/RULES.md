@@ -35,6 +35,13 @@ before, any two factions, and play as they did (`teamGame` in `game.scala` is fa
 
 - The team of the first seat is team 1 (the first Spawn Area); teammates share their team's Spawn Area (`teams`, `team`, `mates`,
   `enemies`, `foe`).
+- **3v3** (2026-11-27, the owner's ask, until the Desert Warfare expansion's Afrika Korps gives the Axis a third faction): six
+  players, three a side, on a map of three panels or more. With only two Axis factions, a faction may take a second seat ("Wehrmacht
+  II", `SecondFaction` in `game.scala`), as the rulebook lets the same faction play twice in a team game: it plays its first's boards,
+  units, Commanders, Lost Brigades and art, and its units are marked "II" on the map, with its own health badge colour. A second seat
+  needs its first in the game and three players or more (`validateFactionCombination`). The rules are the team rules below: shared
+  VPs, 2 starting Infantry each, alternating turns and purchases in seating order. The rulebook's team note doesn't cover 3v3, so
+  these are readings to check against Desert Warfare's 6-player rules once its files are in.
 - Teammates share VPs: a team's VPs are its players' together (`teamVP`), and the game ends at 3 more than the game length, 21,
   24 or 27 (`endVP`, p. 6). The 3 bonus VPs for the most Victory Point Control Points go to the team holding the most; a tie in
   VPs goes to the team that went first in the game. A unit destroyed gives its VP to the other team's first player (shared
