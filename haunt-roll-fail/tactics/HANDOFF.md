@@ -8,7 +8,7 @@ played and the choices made.
 
 ## State
 
-- Playable: two players, any two of the five core factions, or team games of three to five, Allies against Axis, or three on the 3 Way Free-for-all (RULES.md, Team games) (US Forces, Wehrmacht, British Forces, Soviet Forces, Oberkommando West;
+- Playable: two players, any two of the five core factions, or team games of three to six (3v3 on maps of three panels or more, a faction taking a second seat, "Wehrmacht II"), Allies against Axis, or three on the 3 Way Free-for-all (RULES.md, Team games) (US Forces, Wehrmacht, British Forces, Soviet Forces, Oberkommando West;
   thirty core Commanders, six a faction, and the 44 expansion Commanders of the five factions with the Expansion Commanders option, and the Lost Brigades with theirs), on the Mission Booklet's six 2-panel core missions (the setup's
   Map choice, `MapChoice`, Moro River by default: Moro River, Across the Don, Between Two Rivers, Ardennes Forest, Frozen Lake,
   Road to Moscow, with Ice, the Cathedral and multi-hex Buildings on the Ardennes panels); Local (hotseat), Quick Game and Play Online, with
@@ -125,4 +125,15 @@ booklet's pictures (pages 9 and 10). Moro River's first rows had the bridge poin
 - Setup's map picker (2026-11-25): the Map choices sit in one folder, in sections by the booklet's chapters (`MapChoice.sectionOf`),
   each a tile with a thumbnail (`Meta.optionTile`, `optionTileWide`). After adding or changing a map, run `sbt "runMain tactics.MapDump"`
   into a file and `tools/map-thumbs.py <file> webp2/tactics/images` for its thumbnail.
+- Desert Warfare (asked for on 2026-11-27): the source is Bad Crow's "3rd printing balance changes" sheet, a Google Doc the owner shared
+  (doc id `1djH2anwCN1RWDKUn64P5bt_xWIY_CyMDHOX1L2gP6v0`; read it with the Google Docs connector, its 324 pictures from their
+  `contentUri`s). Done: the DAK faction (its boards, units, art) and its 12 Commanders (`commanders.scala`, readings in RULES.md). To do, all on the
+  sheet: the DAK's 17 Lost Brigade cards; the other factions' new Commanders (Rocket pack, Universal German, Desert Rats, Stuart Honey pack, Stretch Goal box) and Lost
+  Brigades; Planes and the anti-air capability; Troop Transports (boats); Blitz Cubes; the Barricade; the Black Gold and Twin Beaches
+  panels (Fortifications, Anchors, Shorelines, permanent barbed wire) and 17 1v1 scenarios; and, when they come, its anti-air notes. The sheet's 15
+  new boards for the five core factions are, compared pixel by pixel on 2026-11-27, the very boards the site already plays (the mod
+  had them), and the code follows them, so its "board changes" list needs nothing. The owner's rule (2026-11-27): never replace what
+  is played; a printing's changes and new cards go in as setup options, like Northgard's Card edition (so the sheet's new Commanders
+  and Lost Brigades for the core factions go behind a "3rd printing" setup toggle, off for older games). 4v4 isn't on the sheet. Keep the
+  second seats (`Faction.seconds`) so games made with them load. The Discord LFG (`/coh`) stops at 5 seats and offers no second seats.
 - A better bot.

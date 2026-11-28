@@ -92,29 +92,33 @@ object Lfg {
     val pincerPicks = Picks("color", "Pick a color", List(Side("R", "Red", "🔴"), Side("G", "Green", "🟢"), Side("B", "Blue", "🔵"), Side("Y", "Yellow", "🟡")),
         List(("Random", "Random color", List("R", "G", "B", "Y"))))
 
-    // COMPANY OF HEROES (2026-11-27): any two factions, or three to five in teams, Allies (US, British, Soviet) against Axis (Wehrmacht,
+    // COMPANY OF HEROES (2026-11-27): any two factions, or three to six in teams (six, a 3v3, on a map of three panels or more) (the DAK since the same day), Allies (US, British, Soviet) against Axis (Wehrmacht,
     // OKW), as the setup screen checks (validateFactionSeatingOptions in tactics/meta.scala); the skirmishes are for two
     val allies = List("US", "BR", "SU")
-    val axis = List("WM", "OKW")
+    val axis = List("WM", "OKW", "DAK")
     val skirmishes = List("TheRiverMap", "FrozenPondMap")
+    // the maps of three panels or more, which six players need (a 3v3; 2026-11-27): their setup sections, from the site's catalog
+    def wideMap(o : String) = LfgSetup.catalog("tactics").flatMap(_.byName.get(o)).exists(x => x.group == "Map: Core panels, 3 panels" || x.group.startsWith("Map: Large Map Pack, 3") ||
+        x.group.startsWith("Map: Large Map Pack, 4") || x.group.startsWith("Map: Large Map Pack, square"))
     val cohPicks = Picks("faction", "Pick a faction",
-        List(Side("US", "US Forces", "🇺🇸"), Side("BR", "British Forces", "🇬🇧"), Side("SU", "Soviet Forces", "⭐"), Side("WM", "Wehrmacht", "🦅"), Side("OKW", "Oberkommando West", "🛡️")),
+        List(Side("US", "US Forces", "🇺🇸"), Side("BR", "British Forces", "🇬🇧"), Side("SU", "Soviet Forces", "⭐"), Side("WM", "Wehrmacht", "🦅"), Side("OKW", "Oberkommando West", "🛡️"), Side("DAK", "Deutsches Afrikakorps", "🌴")),
         List(("RandomAllies", "Random Allied faction", allies), ("RandomAxis", "Random Axis faction", axis), ("Random", "Random faction", allies ++ axis)),
         check = (ss, options) =>
             if (ss.size != 2 && options.exists(skirmishes.contains)) Some("That map is a skirmish, for two players.")
-            else if (ss.size > 2 && (!ss.exists(allies.contains) || !ss.exists(axis.contains))) Some("With three players or more the game is Allies (US, British, Soviet) against Axis (Wehrmacht, OKW): someone has to play the other side.")
+            else if (ss.size > 2 && (!ss.exists(allies.contains) || !ss.exists(axis.contains))) Some("With three players or more the game is Allies (US, British, Soviet) against Axis (Wehrmacht, OKW, DAK): someone has to play the other side.")
+            else if (ss.size > 5 && !options.exists(wideMap)) Some("A 3v3 needs a map of three panels or more: pick one of the 3-panel maps in /coh's map.")
             else None)
 
     // CYCLADES (2026-11-27): its players are its colors, 2 to 5
     val cycladesPicks = Picks("color", "Pick a color", List(Side("Red", "Red", "🔴"), Side("Yellow", "Yellow", "🟡"), Side("Blue", "Blue", "🔵"), Side("Black", "Black", "⚫"), Side("Green", "Green", "🟢")),
         List(("Random", "Random color", List("Red", "Yellow", "Blue", "Black", "Green"))))
 
-    val root = Kind("root-adset", "Root: Advanced Setup", "Root", "root", "Look for players for an online Root game (Advanced Setup) on the site", List("root-lfg"), "title")
-    val nortStd = Kind("nort", "Northgard", "Northgard", "northgard", "Look for players for an online Northgard game (standard, or Adset with a clan draft) on the site", List("ng-lfg", "northgard-lfg"), "title-nort", picks = Some(nortPicks))
-    val nort = Kind("nort-adset", "Northgard: Adset", "Northgard", "northgard", "Look for players for an online Northgard game (standard, or Adset with a clan draft) on the site", List("ng-lfg", "northgard-lfg"), "title-nort")
+    val root = Kind("root-adset", "Root: Advanced Setup", "Root", "root", "Look for players for an online Root game (Advanced Setup) on the site", List("root", "root-lfg"), "title")
+    val nortStd = Kind("nort", "Northgard", "Northgard", "northgard", "Look for players for an online Northgard game (standard, or Adset with a clan draft) on the site", List("northgard", "ng-lfg", "northgard-lfg"), "title-nort", picks = Some(nortPicks))
+    val nort = Kind("nort-adset", "Northgard: Adset", "Northgard", "northgard", "Look for players for an online Northgard game (standard, or Adset with a clan draft) on the site", List("northgard", "ng-lfg", "northgard-lfg"), "title-nort")
 
     val pincer = Kind("pincer", "Pincer", "Pincer", "pincer", "Look for players for an online game of Pincer: A Gentleman's War on the site", List("pincer-lfg", "pincer"), "title-pincer", maxSeats = 4, picks = Some(pincerPicks), panel = false, size = 2)
-    val coh = Kind("tactics", "Company of Heroes", "Company of Heroes", "coh", "Look for players for an online Company of Heroes game on the site", List("coh-lfg", "tactics-lfg", "coh"), "title-tactics", maxSeats = 5, picks = Some(cohPicks), size = 2)
+    val coh = Kind("tactics", "Company of Heroes", "Company of Heroes", "coh", "Look for players for an online Company of Heroes game on the site", List("coh-lfg", "tactics-lfg", "coh"), "title-tactics", maxSeats = 6, picks = Some(cohPicks), size = 2)
 
     // (a command with several kinds picks one with its "mode" option, the first by default)
     val cyclades = Kind("cyclades", "Cyclades", "Cyclades", "cyclades", "Look for players for an online game of Cyclades on the site", List("cyclades-lfg", "cyclades"), "title-cyclades", maxSeats = 5, picks = Some(cycladesPicks), panel = false, size = 2)
@@ -492,7 +496,7 @@ object Lfg {
     // posts), once, when it goes up; the post's edits ping no one. Looked up by the bot, for 10 minutes. Every version of the post
     // starts with the role's mention and allows it, so it stays highlighted after a Join or Leave (2026-11-21: the edits dropped it,
     // then kept the text but not the allowance, so nobody saw it highlighted); an edit notifies no one, so only the first one pings.
-    // Root's posts ping root-lfg, Northgard's ng-lfg (Kind.roles)
+    // Root's posts ping root-lfg, Northgard's ng-lfg (Kind.roles; renamed root and northgard on 2026-11-27, the old names kept as fallbacks)
     @volatile var roleCache : (Long, List[(String, String)]) = (0L, Nil)
 
     def role(k : Kind) : Option[String] = {

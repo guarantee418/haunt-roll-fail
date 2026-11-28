@@ -1,7 +1,7 @@
 package hrf
 //
-// THE ART INDEX for the Discord bot's /card command (good-game/Lookup.scala; asked for on 2026-11-22): every Root and Northgard card,
-// faction or clan board and the like, by its name in the game, with its image file. Run it in the JVM host project (see
+// THE ART INDEX for the Discord bot's /card command (good-game/Lookup.scala; asked for on 2026-11-22): every Root, Northgard, Pincer, Company of Heroes and Cyclades card,
+// faction or clan board, unit and the like, by its name in the game, with its image file. Run it in the JVM host project (see
 // nort/HANDOFF.md) after adding or renaming cards:
 //   sbt "runMain hrf.LookupIndex <haunt-roll-fail directory>"
 // It writes webp2/lfg/cards.tsv: game, kind, name, what it belongs to (a deck, a clan, ...), image path from the client's directory.
@@ -63,6 +63,13 @@ object LookupIndex {
             }
             root.Deck.frankenArt = false
             root.Deck.darkArt = false
+            // and the Capitalists and Anarchists deck's own art for its base cards (Sappers), drawn only while that deck is played
+            root.Deck.capitalistsArt = true
+            root.Deck.catalog.foreach {
+                case c : root.DeckCard if root.Deck.capitalistsArtIds.has(c.id.toLowerCase) => card(c).foreach(p => add("root", "card", c.name, deckOf(p), Some(p)))
+                case _ =>
+            }
+            root.Deck.capitalistsArt = false
 
             root.Quest.all.foreach(q => add("root", "quest", q.name + " (" + q.suit.name + ")", "Vagabond quest", src.get("quest:" + q.id)))
             $("ferry" -> "Ferry", "lost-city" -> "Lost City", "tower" -> "Tower", "mousehold" -> "Mousehold", "foxburrow" -> "Foxburrow", "rabbittown" -> "Rabbittown").foreach { case (id, n) =>
@@ -95,6 +102,45 @@ object LookupIndex {
             RaidCard.all.foreach(c => info("card", c.info, "Raid"))
             nort.Meta.clans.foreach(f => add("nort", "board", f.name + " Clan", "Clan board", src.get("board-" + f.style)))
             Warchief.printedBoards.foreach(f => add("nort", "board", f.name + " Clan", "Clan board, printed", src.get("board-" + f.style + "-print")))
+        }
+
+        // PINCER (2026-11-28, asked for: /card for every game): its resource and Maneuver cards, the Royal Seals, the Player Reference
+        {
+            import pincer._
+            val src = sources(pincer.Meta)
+            Resource.all.foreach(r => add("pincer", "card", r.name, "Resource card", src.get("card:" + r.image)))
+            Maneuver.all.foreach(m => add("pincer", "card", m.name, "Maneuver, " + m.resource.name + " deck", src.get("card:" + m.image)))
+            Seal.all.foreach { s =>
+                val kind = s match { case _ : Society => "Society" ; case _ : Company => "Company" ; case _ => "Badge" }
+                add("pincer", "seal", s.name, "Royal Seal, " + kind, src.get("seal:" + s.image))
+            }
+            add("pincer", "card", "Player Reference", "Reference card", src.get("card:reference"))
+        }
+
+        // COMPANY OF HEROES (2026-11-28): every faction's units, Commanders, Lost Brigades and Building Boards, and the Operations cards
+        {
+            import tactics._
+            val src = sources(tactics.Meta)
+            (UnitType.all./(t => t -> t.faction) ++ UnitType.shared).foreach { case (t, f) => add("tactics", "unit", t.name, f.name + " unit", src.get("token:" + t.id + "-" + f.id)) }
+            Commander.all.foreach(c => add("tactics", "commander", c.name, c.faction.name + " Commander", src.get("commander:" + c.id)))
+            Brigade.all.foreach(b => add("tactics", "brigade", b.name, b.faction.name + " Lost Brigade", src.get(b.image)))
+            Faction.all.foreach(f => 1.to(3).foreach(t => add("tactics", "board", f.name + " Tier " + t, "Building Board", src.get("board:" + Tiers.board(f, t)))))
+            0.until(Operations.designs.num).foreach(i => add("tactics", "card", "Operations card " + (i + 1), "Operations deck", src.get("ops:ops-" + i)))
+        }
+
+        // CYCLADES (2026-11-28): the Creatures (and the figures of those that stay on the board), the gods, buildings and cards
+        {
+            import cyclades._
+            val src = sources(cyclades.Meta)
+            Creature.all.foreach { c =>
+                add("cyclades", "creature", c.name, "Creature", src.get("creature:" + c.id))
+                if (c.figure) add("cyclades", "creature", c.name + " (figure)", "Creature figure", src.get("figure:" + c.id))
+            }
+            (God.main :+ Apollo).foreach(g => add("cyclades", "god", g.name, "God", src.get("god:" + g.id)))
+            Building.all.foreach(b => add("cyclades", "building", b.name, "Building, " + b.god.name, src.get("building:" + b.id)))
+            add("cyclades", "building", "Metropolis", "Building", src.get("building:metropolis"))
+            add("cyclades", "card", "Priest", "Card", src.get("card:priest"))
+            add("cyclades", "card", "Philosopher", "Card", src.get("card:philosopher"))
         }
 
         val file = Paths.get(dir, "webp2", "lfg", "cards.tsv")

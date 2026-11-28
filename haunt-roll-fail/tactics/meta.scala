@@ -23,7 +23,10 @@ object Meta extends MetaGame { mmm =>
     val name = "tactics"
     val label = "Company of Heroes"
 
-    val factions = Faction.all
+    // the five factions and their second seats ("Wehrmacht II", ...), for 3v3 team games (2026-11-27)
+    val factions = Faction.seats
+
+    override val maxPlayers = 6
 
     val minPlayers = 2
 
@@ -53,7 +56,7 @@ object Meta extends MetaGame { mmm =>
 
     // Discord LFG games (good-game/Lfg.scala, /coh; 2026-11-27): the site's defaults, two to five players, each picking a faction on Join
     override def lfgOptions : $[O] = (mandatoryFor(2, factions.take(2)) ++ completeSaved(2, factions.take(2), defaultsFor(2, factions.take(2)))).distinct
-    override def lfgPlayers = $(2, 3, 4, 5)
+    override def lfgPlayers = $(2, 3, 4, 5, 6)
 
     // Rankings, turn ping reasons and the Assault Specialist's jests (online.scala; 2026-11-27): a ladder of its own, a team one side,
     // its Victory Points the score; the games list shows the map, then each player's faction
@@ -75,7 +78,7 @@ object Meta extends MetaGame { mmm =>
 
     override val about = $[Elem](
         "Company of Heroes: The Board Game".hlb ~ ", 2nd Edition, by Bad Crow Games, licensed from SEGA and Relic Entertainment: a work in progress played here by a team helping to test it.",
-        "The rules are the core rulebook's Full Game Rules with its thirty core Commanders, the five factions' 44 expansion Commanders and their Lost Brigade Building Extensions as setup options (or its First Game Rules, a setup choice), the five factions' Building Boards (US Forces, Wehrmacht, British Forces, Soviet Forces, Oberkommando West) and the Mission Booklet's ten core missions (six on 2 panels, two skirmishes on 1, two team maps on 3) and every one of its Large Map Pack missions (on 2, 3 and 4 panels, in a row or square, four of them free-for-alls), two players, teams of up to five or a free-for-all of three to five; the art is from the Tabletop Simulator mod \"Company of Heroes - 2nd Edition\".",
+        "The rules are the core rulebook's Full Game Rules with its thirty core Commanders, the five factions' 44 expansion Commanders and their Lost Brigade Building Extensions as setup options (or its First Game Rules, a setup choice), the six factions' Building Boards (US Forces, Wehrmacht, British Forces, Soviet Forces, Oberkommando West, and the Desert Warfare expansion's Deutsches Afrikakorps, from Bad Crow's 3rd printing change sheet) and the Mission Booklet's ten core missions (six on 2 panels, two skirmishes on 1, two team maps on 3) and every one of its Large Map Pack missions (on 2, 3 and 4 panels, in a row or square, four of them free-for-alls), two players, teams of up to six (3v3, a faction taking a second seat) or a free-for-all of three to five; the art is from the Tabletop Simulator mod \"Company of Heroes - 2nd Edition\".",
         "© SEGA. Developed by Relic Entertainment Inc. SEGA, the SEGA logo, Relic Entertainment and Company of Heroes are either registered trademarks or trademarks of SEGA Corporation or its affiliates.",
     )
 
@@ -88,7 +91,7 @@ object Meta extends MetaGame { mmm =>
     override def howToPlay = $[(Elem, $[Elem])](
         ("The rules".txt, $[Elem](
             "The rules are Bad Crow Games', in the Rulebook linked above (the First Game Rules first, then the Full Game Rules). " ~ "Tutorial".hh ~ " on this menu teaches both, with a practice game for each. The site keeps to them for you, offering only the moves the rules allow.",
-            "Played here: any two of the five factions against each other, or team games of three to five players, Allies (US, British, Soviet) against Axis (Wehrmacht, OKW), on the ten core missions (two of them 1-panel skirmishes for two players, two 3-panel maps for teams) and all 53 Large Map Pack missions on 2, 3 and 4 panels, in a row or square (Hill 331, Trois Ponts, Stalingrad and Monastery panels), four of them free-for-alls for three to five players. " ~ "Optional Modular Bunkers".hh ~ " adds the bunkers some missions mark. The setup's " ~ "Rules".hh ~ " choice picks the Full Game Rules or the First Game Rules, " ~ "Commanders".hh ~ " whether they are drawn, " ~ "Map".hh ~ " the mission.",
+            "Played here: any two of the six factions (the Deutsches Afrikakorps from the Desert Warfare expansion) against each other, or team games of three to six players, Allies (US, British, Soviet) against Axis (Wehrmacht, OKW, DAK), six (3v3) on maps of three panels or more with a faction taking a second seat (\"Wehrmacht II\"), on the ten core missions (two of them 1-panel skirmishes for two players, two 3-panel maps for teams) and all 53 Large Map Pack missions on 2, 3 and 4 panels, in a row or square (Hill 331, Trois Ponts, Stalingrad and Monastery panels), four of them free-for-alls for three to five players. " ~ "Optional Modular Bunkers".hh ~ " adds the bunkers some missions mark. The setup's " ~ "Rules".hh ~ " choice picks the Full Game Rules or the First Game Rules, " ~ "Commanders".hh ~ " whether they are drawn, " ~ "Map".hh ~ " the mission.",
             "In a team game teammates share their VPs (the game ends at 3 more), their sight and their Control Points; each starts with 2 Infantry, the missions being 2-panel ones. Teams alternate turns and purchases; teammates, who play at the same time in the rulebook, take theirs one after another.",
         )),
         ("Starting a game".txt, $[Elem](
@@ -120,11 +123,22 @@ object Meta extends MetaGame { mmm =>
         "The " + n.head + " " + c.head + " the " + n.last
     }
 
-    // two players, any two factions; three to five play Allies (US, British, Soviet) against Axis (Wehrmacht, OKW), or three a
+    // two players, any two factions; three to six play Allies (US, British, Soviet) against Axis (Wehrmacht, OKW, DAK), or three a
     // free-for-all (2026-11-24)
+    // A second seat of a faction ("Wehrmacht II", 2026-11-27) only with its first and three players or more, as the rulebook lets
+    // the same faction play twice in a team game; six players at most, three a side, until the Desert Warfare expansion's 4v4
     def validateFactionCombination(factions : $[Faction]) =
         if (factions.num < 2)
             ErrorResult("Select two players or more")
+        else
+        if (factions.num > 6)
+            ErrorResult("Six players at most")
+        else
+        if (factions.%(_.second).exists(f => factions.has(f.base).not))
+            ErrorResult(factions.%(_.second).%(f => factions.has(f.base).not)./(f => f.name + " needs " + f.base.name).mkString(", "))
+        else
+        if (factions.num < 3 && factions.exists(_.second))
+            ErrorResult("A second seat of a faction is for games of three players or more")
         else
             InfoResult("Company of Heroes")
 
@@ -139,7 +153,13 @@ object Meta extends MetaGame { mmm =>
             InfoResult("Free-for-all: " + factions./(_.short).mkString(", "))
         else
         if (factions.num > 2 && (factions.exists(_.axis).not || factions.exists(_.axis.not).not))
-            ErrorResult("Team games: Allies (US, British, Soviet) against Axis (Wehrmacht, OKW), or a free-for-all mission")
+            ErrorResult("Team games: Allies (US, British, Soviet) against Axis (Wehrmacht, OKW, DAK), or a free-for-all mission")
+        else
+        if (factions.%(_.axis).num > 3 || factions.%(_.axis.not).num > 3)
+            ErrorResult("Team games: three players a side at most")
+        else
+        if (factions.num > 5 && options.of[MapChoice].single.exists(c => c.map.panels * c.map.rows < 3))
+            ErrorResult("3v3 needs a map of three panels or more")
         else
         if (factions.num > 2)
             InfoResult("Team game: " + factions.%(_.axis.not)./(_.short).mkString(" + ") + " against " + factions.%(_.axis)./(_.short).mkString(" + "))
