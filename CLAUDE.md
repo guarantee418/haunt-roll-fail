@@ -1295,7 +1295,9 @@ server. No session can reach the server, and none needs to.
   for <turns channel>` (sets it as that turns channel without anyone copying its URL), `rename-webhook <name> -> <new> [| avatar <file>]` and `test-ping <turns channel> | role <role>` (a "Test ping" thread through that webhook, mentioning the role) (`DiscordServer.scala`;
   the bot needs Manage Webhooks).
 - The bot's `/card <name> [game] [private]` (2026-11-22, asked for as a "bot to call cards and other art"): posts a Root or Northgard card,
-  faction or clan board, quest, landmark, hireling or creature with its picture, the name suggested as it is typed (autocomplete). The list
+  faction or clan board, quest, landmark, hireling or creature (and since 2026-11-28 Pincer's resource and Maneuver cards, Royal Seals and Player
+  Reference, Company of Heroes' units, Commanders, Lost Brigades, Building Boards and Operations cards, and Cyclades' Creatures and their figures,
+  gods, buildings and cards; `Lookup.games`) with its picture, the name suggested as it is typed (autocomplete). The list
   is `webp2/lfg/cards.tsv`, made from the games' cards and asset lists by `hrf.LookupIndex` (`haunt-roll-fail/lookup-index.scala`, JVM host
   project): run it again and commit the file after adding or renaming cards. Discord fetches the pictures from `/art/<path>`, which serves
   only the files that list names (`Lookup.artFile`). The bot's commands other than the LFG ones are `BotCommand`s in `BotCommands.all`
