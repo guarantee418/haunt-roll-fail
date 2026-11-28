@@ -162,7 +162,7 @@ object RuleLookup extends BotCommand {
     def registration = "{\"name\":\"rule\",\"type\":1,\"description\":\"Cite a rule: Root's by its Law of Root number or name, Northgard's by its name\",\"options\":[" +
         "{\"type\":3,\"name\":\"rule\",\"description\":\"A rule number (4.3.2) or name (pick from the suggestions)\",\"required\":true,\"autocomplete\":true,\"max_length\":100}," +
         "{\"type\":3,\"name\":\"game\",\"description\":\"Only this game's rules\",\"required\":false,\"choices\":[" +
-        Lookup.games.toList.map { case (v, n) => "{\"name\":" + Lfg.json(n) + ",\"value\":" + Lfg.json(v) + "}" }.mkString(",") + "]}," +
+        Lookup.ruleGames.toList.map { case (v, n) => "{\"name\":" + Lfg.json(n) + ",\"value\":" + Lfg.json(v) + "}" }.mkString(",") + "]}," +
         "{\"type\":5,\"name\":\"private\",\"description\":\"Show it only to me\",\"required\":false}]}"
 
     // a Law of Root number: 4, 4.3, 4.3.2, 2.1.1.I, H.2.1 (a dot or comma, any case)
@@ -196,14 +196,14 @@ object RuleLookup extends BotCommand {
 
     override def autocomplete(data : Lfg.J) = {
         val o = options(data)
-        val game = o.get("game").collect { case v : String => v }.filter(Lookup.games.contains)
+        val game = o.get("game").collect { case v : String => v }.filter(Lookup.ruleGames.contains)
         val typed = focused(data).filter(_._1 == "rule").map(_._2).getOrElse("")
         choices(search(typed, game).take(25).map(r => r.label -> ("@" + r.game + ":" + r.id)))
     }
 
     def run(uid : String, user : String, data : Lfg.J) = {
         val o = options(data)
-        val game = o.get("game").collect { case v : String => v }.filter(Lookup.games.contains)
+        val game = o.get("game").collect { case v : String => v }.filter(Lookup.ruleGames.contains)
         val typed = o.get("rule").collect { case v : String => v }.getOrElse("").trim
         val hidden = o.get("private").contains(true)
         // a suggestion picked is its game and id; anything else typed is searched
@@ -211,7 +211,7 @@ object RuleLookup extends BotCommand {
         val found = picked.map(List(_)).getOrElse(search(typed, game))
         found match {
             case Nil if rules.isEmpty => Lfg.privately("The rule lists aren't on the server yet.")
-            case Nil => Lfg.privately("No rule **" + Lfg.clean(typed) + "**" + game.map(g => " in " + Lookup.games(g)).getOrElse("") + ". Type a Law of Root number (4.3.2) or pick one of the suggestions.")
+            case Nil => Lfg.privately("No rule **" + Lfg.clean(typed) + "**" + game.map(g => " in " + Lookup.ruleGames(g)).getOrElse("") + ". Type a Law of Root number (4.3.2) or pick one of the suggestions.")
             case r :: _ =>
                 val embed = if (r.game == "root") {
                     // a section shows the rules under it by number and title
@@ -238,6 +238,8 @@ object Lookup {
     // the games the list has: its game field -> the name shown
     // (Pincer, Company of Heroes and Cyclades since 2026-11-28, asked for: /card for every game; /rule stays Root's and Northgard's)
     val games = scala.collection.immutable.ListMap("root" -> "Root", "nort" -> "Northgard", "pincer" -> "Pincer", "tactics" -> "Company of Heroes", "cyclades" -> "Cyclades")
+    // the games /rule has rulebooks for
+    val ruleGames = games.filter { case (g, _) => g == "root" || g == "nort" }
     val colors = Map("root" -> 0xd9792b, "nort" -> 0x5b8fb9, "pincer" -> 0x8b2e2e, "tactics" -> 0x5a6b3a, "cyclades" -> 0x2e86c1)
 
     // the same card in another deck's art (the Frankendeck's and the Dark Deck's ambushes ...) after the usual one
