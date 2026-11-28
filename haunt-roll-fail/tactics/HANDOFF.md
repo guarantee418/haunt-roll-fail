@@ -142,7 +142,10 @@ booklet's pictures (pages 9 and 10). Moro River's first rows had the bridge poin
     checked by hand, as the bots make every Jeep a Veteran Observer first.
   The core factions' 26 new Lost Brigades (pictures 69 to 94) are the setup's `ThirdPrintingBrigades` (`Brigade.printing`, `Brigade.of`
   takes the options; cards and the five new units' tokens by `tools/core-brigade-art.py`); `TACTICS_PRINTING=1` turns them on in
-  `tactics.Host` too, and `TACTICS_BRIGADE=<id>` forces one (Replay forces it the same way, `Host.forceDraw`).
+  `tactics.Host` too, and `TACTICS_BRIGADE=<id>` forces one (Dump and Replay force it at the same points, `Host.forceDraw`; with
+  no forced Commander, `TACTICS_XP=n` then gives that player n XP once the brigades are drawn). On 2026-11-28 each of the 26 was
+  played in two to four bot games that bought or built its units, every dump replaying valid; the Pathfinders' LMG beacon was checked
+  on a replayed game by hand, as the bots never spawn Riflemen next to a Pathfinder.
   To do, all on the sheet: Troop Transports (boats, cards 133-138); the Black Gold
   and Twin Beaches
   panels (Fortifications, Anchors, Shorelines, permanent barbed wire) and 17 1v1 scenarios. The sheet's 15

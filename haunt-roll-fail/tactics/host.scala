@@ -59,11 +59,18 @@ object Host extends hrf.host.BaseHost {
 
     // the forced Commander alone among those drawn, and the forced Lost Brigade among those drawn (Replay does the same after each
     // action, so its moves validate)
+    var boosted = Set[F]()
+
     def forceDraw(g : G) : Unit = {
         brigade.foreach { b =>
             g.setup.%(_.base == b.faction).foreach { f =>
                 if (g.brigadeOf.contains(f).not && g.brigadesDrawn.get(f).exists(_.has(b).not))
                     g.brigadesDrawn += f -> (b +: g.brigadesDrawn(f).drop(1))
+                // TACTICS_XP=n with no forced Commander: that player starts with n more XP once the brigades are drawn, to pick it early
+                if (commander.none && g.brigadesDrawn.contains(f) && g.brigadeOf.contains(f).not && boosted.contains(f).not) {
+                    boosted += f
+                    g.states(f).stock += XP -> (g.states(f).stock(XP) + sys.env.get("TACTICS_XP")./(_.toInt).|(0))
+                }
             }
         }
         forceCommander(g)
@@ -104,6 +111,8 @@ object Host extends hrf.host.BaseHost {
         g.explode(actions, false, None).find {
             case BrigadePickAction(_, x) => x == b
             case BrigadeStartAction(_, x, _) => x == b
+            // a forced brigade of more XP: no other brigade at the start
+            case BrigadeStartSkipAction(_, _) => b.xp > 0
             case StartPickAction(_, t, _) => units.has(t)
             case SpawnMenuAction(_, t) => units.has(t)
             case SpawnAction(_, t, _) => units.has(t)
@@ -164,6 +173,8 @@ object Dump {
             // the browser records the moves, and a Milestone's action too
             if ((a.isSoft.not && a.is[ExternalAction]) || milestone(continue))
                 out :+= Serialize.write(a.unwrap)
+            // the forced Commander and Lost Brigade at the same points as Replay
+            Host.forceDraw(game)
             continue = game.performContinue(|(continue), a, false).continue
             a = Host.askFaction(game, continue)
         }
