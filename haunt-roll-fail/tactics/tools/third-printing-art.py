@@ -36,7 +36,8 @@ CARDS = {35: 'breakthrough-offensive', 37: 'shock-army', 46: 'stug-assault-dak',
     48: 'polish-carpathian', 50: 'shock-assault', 51: 'logistical-supremacy', 52: 'artillery-support', 53: 'heavy-armor-support',
     54: 'polish-cavalry', 55: 'commonwealth-defense',
     41: 'army-in-exile', 40: 'rocketry-support', 66: 'field-support', 42: 'desperate-battle', 43: 'last-stand', 60: 'shock-motor',
-    61: 'airborne-troops', 34: 'luftwaffe-supply'}
+    61: 'airborne-troops', 34: 'luftwaffe-supply',
+    68: 'stalling-tactics', 65: 'demolition-engineers', 58: 'fortified-armor', 59: 'jaeger-armor', 62: 'overwatch-doctrine'}
 
 PANEL = {2: 485, 3: 805, 4: 1130}
 
@@ -46,7 +47,8 @@ TOKENS = [('panzerwerfer', 'wehrmacht', 35, 2, 'Y'), ('katyusha', 'soviet', 37, 
     ('ssf-canadians', 'british', 49, 2, 'G'), ('combat-engineers', 'soviet', 36, 3, 'G'),
     ('polish-lancer', 'british', 41, 2, 'G'), ('matilda', 'british', 48, 2, 'R'), ('black-prince', 'british', 48, 4, 'R'),
     ('canadian-shock', 'british', 55, 2, 'G'), ('anzac', 'british', 51, 2, 'G'), ('dingo', 'british', 53, 2, 'Y'), ('stuart', 'british', 54, 2, 'R'),
-    ('land-mattress', 'british', 40, 2, 'G'), ('land-mattress-emplacement', 'british', 40, 4, 'P')]
+    ('land-mattress', 'british', 40, 2, 'G'), ('land-mattress-emplacement', 'british', 40, 4, 'P'),
+    ('forward-repair', 'british', 65, 4, 'P'), ('panzer-iv-f1', 'wehrmacht', 58, 3, 'R')]
 
 def make(d, out):
     for n, ids in CARDS.items():

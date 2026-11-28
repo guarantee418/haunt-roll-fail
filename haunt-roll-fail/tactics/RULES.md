@@ -709,11 +709,29 @@ Bad Crow's "3rd printing balance changes" sheet's new rules, each a setup toggle
     Rifle, 5 Manpower 1 Munitions, on a visible hex, Double Slow, one a round, one free).
   - Wehrmacht **Luftwaffe Supply Doctrine** (Medical Airdrop, as Rally Points; Pak 43 Emplacement; Panzerwerfer, one free; JU52 Cargo Supply
     Drop: a purchase dropping a Weapon Team and a Pak 43 beside it, 4 Manpower 5 Munitions, Double Slow, one a round, one group free).
+  - The mines (US Fieldcraft, British and DAK Mine Field): Infantry with Wrenches of a player with one may pay 2 Munitions, once a round
+    for each Wrench, to leave an AP or HE die in its hex (not where an Assault is going on, nor a hex with a mine). It is a Maneuver Phase
+    action of its own, read as "when leaving a hex": the player then moves the unit. The mine stays until an enemy unit stands on the hex
+    at the start of a Damage Phase, and then strikes that hex with its die, as a Commander's strike does, and is gone. Mines are drawn on
+    the map (the die's icon), for both sides, as the dice on the table are.
+  - DAK **Stalling Tactics** (Mine Field, Panzerpioneer, Defensive Positions: 8-Rads have a Defense Die, one free; GrB Grenade Launcher:
+    Panzerpioneers and 8-Rads +1 HE, 8-Rads always Capture, one Panzerpioneer free). British **Demolition Engineers** (Mine Field; Royal
+    Engineers, one free; Engineer Detachments: Infantry Sections and Royal Engineers upgrade to +1 Flame and a Defense Die for 4 Munitions,
+    one Universal Carrier free; Forward Repair Assembly: the Soviet Forward Station's rules, built in a Building by Infantry Sections and
+    Royal Engineers). Wehrmacht **Fortified Armor Doctrine** (Side Skirts, as Vehicle Over Repair; Osttruppen; Command Panzer IV: the Panzer
+    IV Ausf. F1, a Panzer IV with 2 HE in place of its 2 AP, its board's upgrades, a Panzer IV for the limit; Command Radio Net: every other
+    Vehicle next to an F1 has 1 more Defense Die; one F1 free) and **Jaeger Armor Doctrine** (Early Warning: each Infantry Weapon Team gets
+    a free CP this turn, and those with no Wrench one this round, for setting up, packing up, turning or a Battlefield Defense; the site
+    doesn't stop that CP paying for a move; the Jaeger Sniper; For the Fatherland: a Heroic Sacrifice upgrade for 3 Munitions, and
+    Heroic Sacrifice Infantry destroyed on a Control Point its team holds gives its Manpower back; Spotting Scopes: a Vehicle that bought
+    its Munitions upgrade has +1 Sight, one Panzer IV with its AI Munitions upgrade free). OKW **Overwatch Doctrine** (Forward Receivers: Tier
+    Buildings +1 Health, the Battlegroup's Retreat Point and the Schwerer HQ's +2 Sight Spots Camo for 4 Munitions each; Goliath Tracked
+    Mine: an opening on a hex within 3 of a Tier Building, 2 HE there in the Damage Phase, hitting only enemies; For the Fatherland, one
+    Obersoldaten free; Valiant Assault: Obersoldaten have their AI XP and Speed upgrades, and Assault Operation's hold on points; one free).
   - Defense in Depth, Field Engineers and Advanced Fortifications (their engineers): spending its first CP of a round, the unit may leave
     Barbed Wire or a Tank Trap in its hex for nothing (read as "in the hex they are leaving": the player then moves it; Sandbags, which
     need a facing, and Barricades are left out); when it Assaults, it may remove one Battlefield Defense of the assaulted hex at once.
-  - The rest (Field Ordnance, Cavalry Support, the Stretch Goal Commanders but Engineering Corps, Special Operations, Shock Motor and
-    Airborne Troops) and the core factions' new Lost Brigades are still to come (`tools/third-printing-art.py` lists them by picture).
+  - The rest (Field Ordnance, Cavalry Support, Luftwaffe Ground Forces and Infantry Assault) and the core factions' new Lost Brigades are still to come (`tools/third-printing-art.py` lists them by picture).
 
 ## Units
 

@@ -459,6 +459,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
             }
         }
 
+        // the mines (3rd printing Commanders): the die left, in a corner of its hex
+        game.mines.foreach { case (h, (_, d)) =>
+            structures.add(Sprite($(ImageRect(new RawImage(img("dmg:" + d.id)), Rectangle(-24, -24, 48, 48), 1.0)), $))(Board.x(h) - 60, Board.y(h) + 55)
+        }
+
         game.barricades.foreach { case (h, e) =>
             structures.add(Sprite($(ImageRect(barricadeImage(e), Rectangle(-100, -105, 200, 210), 1.0)), $))(Board.x(h), Board.y(h))
         }

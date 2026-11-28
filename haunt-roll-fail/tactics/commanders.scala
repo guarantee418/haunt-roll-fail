@@ -439,6 +439,27 @@ case object RallyPoints extends Ability("Rally Points", "At the start of your Ma
 case object PanzerwerferCallInFree extends Ability("Panzerwerfer", "The Panzerwerfer can be bought. One spawns for free.")
 case object JU52Cargo extends Ability("JU52 Cargo Supply Drop", "Drop a Weapon Team and a Pak 43 Emplacement on visible adjacent non-Building hexes, Double Slow the first round, for 4 Manpower and 5 Munitions; one a round. One group drops for free.")
 case object AirborneGuardsParadrop extends Ability("Airborne Guards Paradrop", "Drop a Weapon Team (1 Manpower 5 Munitions) or Guards Rifle Infantry (5 Manpower 1 Munitions) on a visible non-Building hex, Double Slow the first round; one a round. One drops for free.")
+// mines (Field Ordnance's Fieldcraft, Demolition Engineers' and Stalling Tactics' Mine Field), Stalling Tactics (DAK), Demolition
+// Engineers (British), Fortified Armor and Jaeger Armor Doctrines (Wehrmacht), Overwatch Doctrine (OKW)
+case object Fieldcraft extends Ability("Fieldcraft", "Infantry may pay 2 Munitions, once a round for each Wrench, to leave an HE or AP die in its hex (not one with an enemy): it stays until an enemy unit is on that hex in a Damage Phase, and then strikes it.")
+case object MineField extends Ability("Mine Field", "Infantry may pay 2 Munitions, once a round for each Wrench, to leave an HE or AP die in its hex (not one with an enemy): it stays until an enemy unit is on that hex in a Damage Phase, and then strikes it.")
+case object MineFieldDAK extends Ability("Mine Field", "Infantry may pay 2 Munitions, once a round for each Wrench, to leave an HE or AP die in its hex (not one with an enemy): it stays until an enemy unit is on that hex in a Damage Phase, and then strikes it.")
+// the mines' strikes (no card): an AP or an HE die
+case object MineAP extends Ability("Mine (AP)", "An AP die left on a hex.")
+case object MineHE extends Ability("Mine (HE)", "An HE die left on a hex.")
+case object DefensivePositions extends Ability("Defensive Positions", "8-Rads have a Defense Die. One spawns for free.")
+case object GrBLauncher extends Ability("GrB Grenade Launcher", "Panzerpioneers and 8-Rads have +1 HE; 8-Rads always Capture. One Panzerpioneer spawns for free.")
+case object EngineerDetachments extends Ability("Engineer Detachments", "Infantry Sections and Royal Engineers can upgrade to +1 Flame and a Defense Die for 4 Munitions. One Universal Carrier spawns for free.")
+case object ForwardRepairAssembly extends Ability("Forward Repair Assembly", "Infantry Sections and Royal Engineers can turn an adjacent empty Building into a Forward Repair Assembly (3 health, a Wrench) for 2 Manpower; Vehicles may spawn next to it, Slow the first round. One at a time.")
+case object CommandPanzerIVCallIn extends Ability("Command Panzer IV", "Panzer IVs may spawn as Panzer IV Ausf. F1s, with 2 HE in place of their AP.")
+case object CommandRadioNet extends Ability("Command Radio Net", "In the Damage Phase every Vehicle next to a Panzer IV Ausf. F1 (not the F1 itself) has 1 more Defense Die. One F1 spawns for free.")
+case object EarlyWarning extends Ability("Early Warning", "At the start of your Maneuver Phase spend your very first 1 CP and 2 Munitions: every Infantry Weapon Team gets a free CP this turn, to set up, pack up, turn or build a Battlefield Defense as with a Wrench.")
+case object ForTheFatherland extends Ability("For the Fatherland", "Infantry can upgrade to Heroic Sacrifice for 3 Munitions; Infantry with Heroic Sacrifice destroyed on a Control Point its team holds gives its Manpower back.")
+case object ForTheFatherlandOKW extends Ability("For the Fatherland", "Infantry can upgrade to Heroic Sacrifice for 3 Munitions; Infantry with Heroic Sacrifice destroyed on a Control Point its team holds gives its Manpower back. One Obersoldaten spawns for free.")
+case object SpottingScopes extends Ability("Spotting Scopes", "Vehicles with their Munitions upgrade have +1 Sight. One Panzer IV with its AI Munitions upgrade spawns for free.")
+case object ForwardReceivers extends Ability("Forward Receivers", "Tier Buildings have +1 Health; the OKW Battlegroup can become a Retreat Point for 4 Munitions, the Schwerer Panzer HQ get +2 Sight and Spots Camo for 4 Munitions.")
+case object GoliathMine extends Ability("Goliath Tracked Mine", "At the start of your Maneuver Phase spend your very first 2 CP and 2 Munitions: a hex within 3 of one of your Tier Buildings takes 2 HE in the Damage Phase (only enemies).")
+case object ValiantAssault extends Ability("Valiant Assault", "Obersoldaten have their AI XP and Speed upgrades for free; one still standing neutralizes the Control Point it stands on or Assaulted this round and keeps the enemy from capturing it in the Supply Phase, even Pinned or after a failed Assault. One spawns for free.")
 
 case object CommandPantherCallIn extends Ability("Command Panther", "The Command Panther can be bought: 5 health, range 3, 2 AP and 2 AI turreted, Spots Camo. One at a time.")
 
@@ -556,6 +577,11 @@ case object LastStand extends Commander("last-stand", "Last Stand", DAK, $(Tier(
 case object ShockMotor extends Commander("shock-motor", "Shock Motor Heavy Tactics", Soviet, $(Tier(ArmoredVehicleDetection, 1), Tier(ShockTroopsAssault, 1), Tier(MechanizedSupport, 4, 2), Tier(VehicleCrewTraining, 3)))
 case object AirborneTroops extends Commander("airborne-troops", "Airborne Troops Tactics", Soviet, $(Tier(RallyPoints, 1), Tier(DShKCallIn, 3), Tier(GuardsRifleCallIn, 1), Tier(AirborneGuardsParadrop, 4)))
 case object LuftwaffeSupply extends Commander("luftwaffe-supply", "Luftwaffe Supply Doctrine", Wehrmacht, $(Tier(MedicalAirdrop, 1), Tier(Pak43Emplacement, 1), Tier(PanzerwerferCallInFree, 4, 2), Tier(JU52Cargo, 4)))
+case object StallingTactics extends Commander("stalling-tactics", "Stalling Tactics", DAK, $(Tier(MineFieldDAK, 1), Tier(PanzerpioneerCallIn, 1), Tier(DefensivePositions, 4, 2), Tier(GrBLauncher, 3)))
+case object DemolitionEngineers extends Commander("demolition-engineers", "Demolition Engineers", British, $(Tier(MineField, 1), Tier(RoyalEngineerSpawn, 3), Tier(EngineerDetachments, 4), Tier(ForwardRepairAssembly, 2)))
+case object FortifiedArmor extends Commander("fortified-armor", "Fortified Armor Doctrine", Wehrmacht, $(Tier(SideSkirts, 1), Tier(OsttruppenSquads, 3), Tier(CommandPanzerIVCallIn, 1, 3), Tier(CommandRadioNet, 4, 3)))
+case object JaegerArmor extends Commander("jaeger-armor", "Jaeger Armor Doctrine", Wehrmacht, $(Tier(EarlyWarning, 1), Tier(JaegerSniperFree, 3), Tier(ForTheFatherland, 1), Tier(SpottingScopes, 4, 3)))
+case object OverwatchDoctrine extends Commander("overwatch-doctrine", "Overwatch Doctrine", OKW, $(Tier(ForwardReceivers, 2), Tier(GoliathMine, 1, 2), Tier(ForTheFatherlandOKW, 3, 3), Tier(ValiantAssault, 3, 3)))
 case object SpecialOperationsUS extends Commander("special-operations-us", "Special Operations", US, $(Tier(MarkVehicle, 1), Tier(DevilsBrigadeSpawn, 3), Tier(M3LeeCallInPlain, 1, 3), Tier(AssaultOperation, 3)))
 case object SpecialOperationsBR extends Commander("special-operations-british", "Special Operations", British, $(Tier(MarkVehicle, 1), Tier(SSFCanadiansSpawn, 3), Tier(M3GrantCallInPlain, 1, 3), Tier(AssaultOperationBR, 3)))
 case object BreakthroughOffensive extends Commander("breakthrough-offensive", "Breakthrough Offensive", Wehrmacht, $(Tier(RapidProduction, 3), Tier(PanzerwerferCallIn, 1, 2), Tier(TigerCallInPlain, 1, 3), Tier(TigerAce, 5, 3)))
@@ -609,14 +635,16 @@ object Commander {
         IntelDisruptionWM, IntelDisruptionOKW, IntelDisruptionDAK, TankBusterWM, TankBusterOKW, TankBusterDAK, SpecialOperationsUS, SpecialOperationsBR,
         EngineeringCorps, DefenseInDepthDoctrine, AtlanticWall, ReserveArmy, ItalianInfantryCommander,
         PolishCarpathian, ShockAssaultRegiment, LogisticalSupremacy, ArtillerySupportBR, HeavyArmorSupport, PolishCavalry, CommonwealthDefense,
-        ArmyInExileCommander, RocketrySupport, FieldSupport, DesperateBattle, LastStand, ShockMotor, AirborneTroops, LuftwaffeSupply)
+        ArmyInExileCommander, RocketrySupport, FieldSupport, DesperateBattle, LastStand, ShockMotor, AirborneTroops, LuftwaffeSupply,
+        StallingTactics, DemolitionEngineers, FortifiedArmor, JaegerArmor, OverwatchDoctrine)
 
     // the 3rd printing's new Commanders of the core factions (the setup's ThirdPrintingCommanders)
     val printing = $[Commander](BreakthroughOffensive, ShockArmy,
         IntelDisruptionWM, IntelDisruptionOKW, IntelDisruptionDAK, TankBusterWM, TankBusterOKW, TankBusterDAK, SpecialOperationsUS, SpecialOperationsBR,
         EngineeringCorps, DefenseInDepthDoctrine, AtlanticWall, ReserveArmy, ItalianInfantryCommander,
         PolishCarpathian, ShockAssaultRegiment, LogisticalSupremacy, ArtillerySupportBR, HeavyArmorSupport, PolishCavalry, CommonwealthDefense,
-        ArmyInExileCommander, RocketrySupport, FieldSupport, DesperateBattle, LastStand, ShockMotor, AirborneTroops, LuftwaffeSupply)
+        ArmyInExileCommander, RocketrySupport, FieldSupport, DesperateBattle, LastStand, ShockMotor, AirborneTroops, LuftwaffeSupply,
+        StallingTactics, DemolitionEngineers, FortifiedArmor, JaegerArmor, OverwatchDoctrine)
 
     // the expansion Commanders (the setup's Expansion Commanders option)
     val expansion = $[Commander](LightCavalryCompany, HeavyCavalryCompany, TacticalSupportCompany, MotorPoolCompany, PathfinderCompany,
@@ -638,7 +666,7 @@ object Commander {
     def pool(f : Faction, options : $[BaseOption]) = options.has(ExpansionCommanders).?(all.diff(printing).%(_.faction == f.base)).|(of(f)) ++ options.has(ThirdPrintingCommanders).??(printing.%(_.faction == f.base))
 
     // the abilities spent at the start of a Maneuver Phase: CP, Munitions
-    val opening = Map[Ability, (Int, Int)](ItalianInfantry -> (1, 3), SmokeOperation -> (2, 2), NoManLeftBehind -> (2, 1), ArmyInExile -> (2, 1), PerimeterMonitor -> (1, 1), SLDFlares -> (1, 1), MedicalAirdrop -> (2, 1), RallyPoints -> (2, 1), StrategicMobility -> (1, 3), ReconSweep -> (1, 1), P47Strike -> (2, 2), CombatGroupAdvance -> (1, 3), PanzerwerferBarrage -> (1, 1), FragmentationBomb -> (2, 2), ArmorBlitzkrieg -> (1, 3),
+    val opening = Map[Ability, (Int, Int)](ItalianInfantry -> (1, 3), SmokeOperation -> (2, 2), NoManLeftBehind -> (2, 1), ArmyInExile -> (2, 1), EarlyWarning -> (1, 2), GoliathMine -> (2, 2), PerimeterMonitor -> (1, 1), SLDFlares -> (1, 1), MedicalAirdrop -> (2, 1), RallyPoints -> (2, 1), StrategicMobility -> (1, 3), ReconSweep -> (1, 1), P47Strike -> (2, 2), CombatGroupAdvance -> (1, 3), PanzerwerferBarrage -> (1, 1), FragmentationBomb -> (2, 2), ArmorBlitzkrieg -> (1, 3),
         ArtilleryEye -> (1, 1), IL2Strike -> (2, 2), BreakthroughTactics -> (1, 3), GrandAssault -> (1, 3), RapidConscription -> (2, 1), FortifiedCamo -> (1, 1),
         CombinedArms -> (2, 2), P47Strafing -> (2, 2), Outmaneuver -> (1, 3), HowitzerBarrage -> (1, 1),
         StukaStrafe -> (2, 2), MarkVehicle -> (1, 2), ReconPlane -> (1, 1), TacticalMovement -> (1, 3),
@@ -662,6 +690,11 @@ object Commander {
         case TankDesantDAK => $(AssaultGrenadiers)
         case MarderCallInFree | DisruptionBeacons => $(MarderIII)
         case FastDeploy => $(Jeep)
+        case DefensivePositions => $(EightRad)
+        case GrBLauncher => $(Panzerpioneer)
+        case EngineerDetachments => $(UniversalCarrier)
+        case CommandRadioNet => $(PanzerIVF1)
+        case ForTheFatherlandOKW | ValiantAssault => $(Obersoldaten)
         case SeekVengeance => $(PolishLancer)
         case VeteranSemovente => $(Semovente)
         case NebelwerferCallInFree => $(Nebelwerfer)
@@ -830,6 +863,9 @@ case class Strike(faction : Faction, ability : Ability, hexes : $[Hex]) extends 
         case IL2Strike => $(Attack(AP), Attack(AP))
         case StukaLoiter => $(Attack(AP), Attack(AP))
         case NebelwerferBarrage => $(Attack(HE))
+        case MineAP => $(Attack(AP))
+        case MineHE => $(Attack(HE))
+        case GoliathMine => $(Attack(HE), Attack(HE))
         case _ => $[Attack]()
     }
 }
