@@ -127,11 +127,11 @@ booklet's pictures (pages 9 and 10). Moro River's first rows had the bridge poin
   into a file and `tools/map-thumbs.py <file> webp2/tactics/images` for its thumbnail.
 - Desert Warfare (asked for on 2026-11-27): the source is Bad Crow's "3rd printing balance changes" sheet, a Google Doc the owner shared
   (doc id `1djH2anwCN1RWDKUn64P5bt_xWIY_CyMDHOX1L2gP6v0`; read it with the Google Docs connector, its 324 pictures from their
-  `contentUri`s). Done: the DAK faction (its boards, units, art), its 12 Commanders (`commanders.scala`, readings in RULES.md) and its 17 Lost Brigades
+  `contentUri`s). Done: the DAK faction (its boards, units, art), its 12 Commanders (`commanders.scala`, readings in RULES.md) and its 17 Lost Brigades, the Barricade and Blitz Cubes (setup toggles under "3rd printing", `Barricades`, `BlitzCubes`; RULES.md, 3rd printing; `TACTICS_BARRICADES=1`, `TACTICS_BLITZ=1` and `TACTICS_FORCE=<action kinds>` in `tactics.Host`)
   (`brigades.scala`, 2026-11-28; cards and tokens by `tools/dak-brigade-art.py` from the doc's public `export?format=zip`, whose pictures
   are numbered in document order in that script; `TACTICS_BRIGADE=<id>` makes `tactics.Host` draw, pick and buy that brigade). To do, all on the
   sheet: the other factions' new Commanders (Rocket pack, Universal German, Desert Rats, Stuart Honey pack, Stretch Goal box) and Lost
-  Brigades; Planes and the anti-air capability; Troop Transports (boats); Blitz Cubes; the Barricade; the Black Gold and Twin Beaches
+  Brigades; Planes and the anti-air capability; Troop Transports (boats); the Black Gold and Twin Beaches
   panels (Fortifications, Anchors, Shorelines, permanent barbed wire) and 17 1v1 scenarios; and, when they come, its anti-air notes. The sheet's 15
   new boards for the five core factions are, compared pixel by pixel on 2026-11-27, the very boards the site already plays (the mod
   had them), and the code follows them, so its "board changes" list needs nothing. The owner's rule (2026-11-27): never replace what

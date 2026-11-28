@@ -154,6 +154,34 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         i
     })
 
+    // a Barricade along an edge of a hex (3rd printing): dark timber with a red stripe, nearer the edge than sandbags
+    var barricadeImages = Map[Int, CanvasImage]()
+
+    def barricadeImage(e : Int) = barricadeImages.getOrElse(e, {
+        val canvas = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
+        canvas.width = 200
+        canvas.height = 210
+        val g = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
+        val w = Board.dx / 2
+        val s = Board.side
+        val corners = $((0.0, -s), (w, -s / 2), (w, s / 2), (0.0, s), (-w, s / 2), (-w, -s / 2))
+        val (ax, ay) = corners(e)
+        val (bx, by) = corners((e + 1) % 6)
+        g.lineCap = "round"
+        g.strokeStyle = "#3a2a18"
+        g.lineWidth = 18
+        g.beginPath()
+        g.moveTo(100 + ax * 0.9, 105 + ay * 0.9)
+        g.lineTo(100 + bx * 0.9, 105 + by * 0.9)
+        g.stroke()
+        g.strokeStyle = "#c0392b"
+        g.lineWidth = 5
+        g.stroke()
+        val i = new CanvasImage(canvas)
+        barricadeImages += e -> i
+        i
+    })
+
     // built barbed wire (a coil of wire across the hex's lower half) and tank traps (three steel hedgehogs in its upper half)
     lazy val wireImage : CanvasImage = {
         val canvas = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
@@ -429,6 +457,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
             l.foreach { e =>
                 structures.add(Sprite($(ImageRect(bagImage(e), Rectangle(-100, -105, 200, 210), 1.0)), $))(Board.x(h), Board.y(h))
             }
+        }
+
+        game.barricades.foreach { case (h, e) =>
+            structures.add(Sprite($(ImageRect(barricadeImage(e), Rectangle(-100, -105, 200, 210), 1.0)), $))(Board.x(h), Board.y(h))
         }
 
         // the units: a token, its health, and its status (set up, packed up, pinned); a passenger small on its vehicle

@@ -1252,6 +1252,26 @@ case object MudMap extends MapChoice(Mud, "Large Map Pack, HL2, MR1, MR2, HL1: M
 case object WinterSolsticeMap extends MapChoice(WinterSolstice, "Large Map Pack, SG1, SG2, AF1, AF2: Stalingrad and the snowy forest. Starting stockpile 3 Manpower, 5 Munitions, 1 Fuel.")
 case object SummerSolsticeMap extends MapChoice(SummerSolstice, "Large Map Pack, MO2, MR1, MR2, MO1: Moro River between two Monastery panels. Starting stockpile 2 Manpower, 3 Munitions, 4 Fuel.")
 
+// THE 3RD PRINTING (Bad Crow's "3rd printing balance changes" sheet, 2026-11-28): its new rules as setup toggles, off in older games
+// the Barricade (Battlefield defence): built by Infantry with a Wrench on one edge of its hex (1 CP); barbed wire and sandbags on that
+// edge: 2 Defense Dice of Cover to the hex against attacks across it, no move across it from either hex, but Assaults go across
+case object Barricades extends GameOption with ToggleOption {
+    val group = "3rd printing".txt
+    def valueOn = "Barricades".hl
+    override val explain = $[Elem]("Infantry with a Wrench may build a Barricade on one edge of its hex for 1 CP: it gives the hex 2 Defense Dice of Cover against attacks across that edge, and no unit moves across it from either hex, though Assaults may go across. Two damage to the hex destroys it, as other Battlefield Defenses (Full Game Rules only).".txt)
+    override def required(all : $[BaseOption]) = $($(FullGameRules))
+}
+
+// Blitz Cubes: in its team's first turn of each round a player may spend its turn's cubes as orange cubes, each moving one unit up to 2
+// hexes (a CP on that unit this round, and no defenses, setting up, packing up or Commander abilities with it); the orange cubes stay on
+// the unit, each taking a CP off what it may take in the later rounds, until removed, one a unit, at the start of the Damage Phase, the unit
+// then not attacking
+case object BlitzCubes extends GameOption with ToggleOption {
+    val group = "3rd printing".txt
+    def valueOn = "Blitz Cubes".hl
+    override val explain = $[Elem]("In its first turn of each round a player may spend up to 3 orange Blitz Cubes in place of its CP, each moving a unit up to 2 hexes. Orange cubes stay on the unit: each takes a CP off what it may spend in the later rounds (3 cubes: none) until one is removed at the start of the Damage Phase, the unit then not attacking.".txt)
+}
+
 // the booklet's optional Modular Bunkers (and the Hilltop Monastery's optional Victory Point), on the missions that mark them
 case object OptionalMapFeatures extends GameOption with ToggleOption {
     val group = "Map: options".txt
@@ -1360,6 +1380,11 @@ case class SetUpAction(self : Faction, squad : Squad, k : Int) extends BaseActio
 case class PackUpAction(self : Faction, squad : Squad, k : Int) extends BaseAction(squad, "in", (g : Game) => g.where(squad).elem)("Pack up to move", (g : Game) => g.costNote(squad, 1))
 // Full Game Rules: barbed wire (keeps Infantry out) and tank traps (keep Vehicles out), built on the unit's hex for 1 CP
 case class DefensesAction(self : Faction, squad : Squad, wire : Boolean, trap : Boolean, k : Int) extends BaseAction(squad, "builds in", (g : Game) => g.where(squad).elem, (g : Game) => g.costNote(squad, 1))((wire && trap).?("Barbed Wire and a Tank Trap").|(wire.?("Barbed Wire").|("a Tank Trap")).hl)
+case class BarricadeAction(self : Faction, squad : Squad, edge : Int, k : Int) extends BaseAction(squad, "builds a Barricade in", (g : Game) => g.where(squad).elem, (g : Game) => g.costNote(squad, 1))("on its", Sandbags.names(edge).hl, "edge")
+case class BlitzMoveAction(self : Faction, squad : Squad, path : $[Hex], k : Int) extends BaseAction(squad, "in", (g : Game) => g.where(squad).elem)("Blitz to", path.last, (path.num > 1).?(("(through " + path.head.name + ")").txt).|(Empty), "for an orange cube".spn(styles.small)) with HexKey { def hex = path.last }
+case class BlitzRestStepAction(order : $[Faction]) extends ForcedAction
+case class BlitzRestAction(self : Faction, squad : Squad, order : $[Faction]) extends BaseAction("Blitz Cubes: remove one, the unit not attacking")(squad, "in", (g : Game) => g.where(squad).elem, (g : Game) => ("(" + g.blitz.getOrElse(squad, 0) + " orange)").spn(styles.small)) with SquadKey
+case class BlitzRestDoneAction(self : Faction, order : $[Faction]) extends BaseAction(None)("Keep the orange cubes")
 case class SandbagsAction(self : Faction, squad : Squad, edge : Int, k : Int) extends BaseAction(squad, "builds Sandbags in", (g : Game) => g.where(squad).elem, (g : Game) => g.costNote(squad, 1))("Facing", Sandbags.facing(edge).hl)
 case class EndTurnAction(self : Faction, k : Int) extends BaseAction(None)("End turn", (g : Game) => (g.cpLeft > 0).?(("(forfeit " + g.cpLeft + " CP)").spn(styles.small) : Elem).|(Empty))
 
@@ -1589,6 +1614,14 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // built barbed wire and tank traps (Full Game Rules), not the map's permanent tank traps
     var wire = Set[Hex]()
     var traps = Set[Hex]()
+    // Barricades (3rd printing): a hex and the edge they stand on
+    var barricades = Set[(Hex, Int)]()
+    // Blitz Cubes (3rd printing): the orange cubes on each unit, those placed this round, and the units resting this Damage Phase
+    val blitzing = options.has(BlitzCubes)
+    var blitz = Map[Squad, Int]()
+    var blitzNow = Map[Squad, Int]()
+    var rested = Set[Squad]()
+    def barricading = full && options.has(Barricades)
     var control = Map[Hex, Faction]()
     var spawned = Map[UnitType, Int]()
 
@@ -1752,7 +1785,22 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def onBuilding(u : Squad) = inBuilding(where(u))
 
     // the most CP a unit may take a round (Slow takes one away)
-    def cap(u : Squad) = rangers(u).?(4).|(3) - slowOf(u) - slowed.get(u).has(round).??(doubleSlow.contains(u).?(2).|(1))
+    def cap(u : Squad) = rangers(u).?(4).|(3) - slowOf(u) - slowed.get(u).has(round).??(doubleSlow.contains(u).?(2).|(1)) - blitzing.??(blitz.getOrElse(u, 0) - blitzNow.getOrElse(u, 0))
+
+    // Blitz Cubes: the moves of up to 2 hexes an orange cube gives, in the team's first turn of the round (a Heavy Vehicle straight ahead
+    // in the Full Game Rules)
+    def blitzMoves(u : Squad, k : Int) : $[$[Hex]] = (blitzing && k < teams.num && cpLeft >= 1 && paidLeft(u) >= 1 && mayMove(u) && isPassenger(u).not && u.utype != KradScout &&
+        (full && (retreating.contains(u) || assaults.contains(u) || stance.contains(u))).not).??{
+        val h = where(u)
+        if (full && u.kind == HeavyVehicle) {
+            val e = facing.getOrElse(u, 0)
+            heavyStep(u, h, e).%(occupant(_).none).$./~(a => $($(a)) ++ heavyStep(u, a, e).%(occupant(_).none).$./(b => $(a, b)))
+        }
+        else {
+            val one = stepsFrom(u, h)
+            (one.%(occupant(_).none)./($(_)) ++ one./~(m => stepsFrom(u, m).%(n => n != h && occupant(n).none && one.has(n).not)./($(m, _)))).distinctBy(_.last)
+        }
+    }
 
     def onBoard(f : Faction, t : UnitType) = units(f).count(_.utype.chassis == t.chassis)
 
@@ -1813,11 +1861,12 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def canAssault(u : Squad, h : Hex) = (terrainAt(h) != Water || u.utype == DevilsBrigade) && (u.utype.vehicle.not || (inBuilding(h).not && (full && Board.traps.has(h)).not))
 
     // a hex with built Battlefield Defenses that two damage would destroy: sandbags, barbed wire, tank traps
-    def defended(h : Hex) = sandbags.contains(h) || wire.contains(h) || traps.contains(h)
+    def defended(h : Hex) = sandbags.contains(h) || wire.contains(h) || traps.contains(h) || barricades.exists(_._1 == h)
 
     // all Battlefield Defenses of a hex are destroyed together
     def destroyDefenses(h : Hex) {
-        val l = $[String]() ++ sandbags.contains(h).$("Sandbags") ++ wire.contains(h).$("Barbed Wire") ++ traps.contains(h).$("Tank Trap")
+        val l = $[String]() ++ sandbags.contains(h).$("Sandbags") ++ wire.contains(h).$("Barbed Wire") ++ traps.contains(h).$("Tank Trap") ++ barricades.exists(_._1 == h).$("Barricade")
+        barricades = barricades.filterNot(_._1 == h)
         sandbags -= h
         wire -= h
         traps -= h
@@ -1834,7 +1883,16 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         w.$(DefensesAction(f, u, true, false, k)) ++ t.$(DefensesAction(f, u, false, true, k)) ++ (w && t && wrenchesOf(u) >= 2).$(DefensesAction(f, u, true, true, k))
     }
 
-    def stepsFrom(u : Squad, h : Hex) = Board.neighbors(h).%(n => Board.joined(h, n) && canEnter(u, n))
+    def stepsFrom(u : Squad, h : Hex) = Board.neighbors(h).%(n => Board.joined(h, n) && barred(h, n).not && canEnter(u, n))
+
+    // a Barricade on the edge between two hexes, on either side: no move across it
+    def barred(a : Hex, b : Hex) = barricades.nonEmpty && barricades.exists { case (h, e) => (h == a && Board.toward(a, e).has(b)) || (h == b && Board.toward(b, e).has(a)) }
+
+    // the edges of its hex Infantry with a Wrench may barricade (1 CP): open edges with a hex past them and no Barricade yet
+    def barricadeChoices(f : Faction, u : Squad, k : Int) : $[UserAction] = (barricading && u.kind == Infantry && wrenchesOf(u) > 0 && onBuilding(u).not && isPassenger(u).not && assaultAt(where(u)).not && assaults.contains(u).not).??{
+        val h = where(u)
+        0.until(6).$.%(e => Board.toward(h, e).exists(n => Board.joined(h, n) && barred(h, n).not))./(e => BarricadeAction(f, u, e, k))
+    }
 
     // the moves of a unit standing in a hex: into an empty hex, or through an occupied one into an empty one (both CP at once)
     def moves(u : Squad) : $[$[Hex]] = {
@@ -1867,7 +1925,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 (u.utype == Kradschutzen && health(u) == 2 && passenger(u).none).??(moves(u)./(p => KradDropAction(f, u, p, k))))
             val s = setsUp(u).??(setUp.contains(u).?($(PackUpAction(f, u, k))).|((u.utype.noBuildingSetup && onBuilding(u)).not.??(0.until(6).$./(e => SetUpFacingAction(f, u, e, k)))))
             val b = (wrenchesOf(u) > 0 && onBuilding(u).not).??(0.until(6).$.%(e => Sandbags.edges(e).forall(sandbags.getOrElse(where(u), Set()).contains).not)./(e => SandbagsAction(f, u, e, k)))
-            m ++ s ++ b ++ defenseChoices(f, u, k) ++ noFireMode(u).$(NoFireModeAction(f, u, k)) ++ commanderActions(f, u, k)
+            m ++ s ++ b ++ defenseChoices(f, u, k) ++ barricadeChoices(f, u, k) ++ noFireMode(u).$(NoFireModeAction(f, u, k)) ++ commanderActions(f, u, k) ++ blitzMoves(u, k)./(p => BlitzMoveAction(f, u, p, k))
         }
         else
         if (isPassenger(u))
@@ -1877,7 +1935,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 (u.utype == Kradschutzen && health(u) == 2 && passenger(u).none).??(moves(u)./(p => KradDropAction(f, u, p, k))))
             val s = weaponTeam(u).??(setUp.contains(u).?($(PackUpAction(f, u, k))).|((u.utype.noBuildingSetup && onBuilding(u)).not.$(SetUpAction(f, u, k))))
             val b = (wrenchesOf(u) > 0 && onBuilding(u).not).??(0.until(6).$.%(e => Sandbags.edges(e).forall(sandbags.getOrElse(where(u), Set()).contains).not)./(e => SandbagsAction(f, u, e, k)))
-            m ++ s ++ b ++ noFireMode(u).$(NoFireModeAction(f, u, k))
+            m ++ s ++ b ++ noFireMode(u).$(NoFireModeAction(f, u, k)) ++ blitzMoves(u, k)./(p => BlitzMoveAction(f, u, p, k))
         }
     }
 
@@ -1945,7 +2003,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     // ATTACKS
 
-    def canFire(u : Squad) = pinned.contains(u).not && noFire.contains(u).not && decoyed.contains(u).not && (setsUp(u).not || setUp.contains(u)) && (isPassenger(u).not || weaponTeam(u).not) && (full && retreating.contains(u)).not
+    def canFire(u : Squad) = rested.contains(u).not && pinned.contains(u).not && noFire.contains(u).not && decoyed.contains(u).not && (setsUp(u).not || setUp.contains(u)) && (isPassenger(u).not || weaponTeam(u).not) && (full && retreating.contains(u)).not
 
     // the dice a unit puts on a target: all of them with a clear line, only the indirect ones over Buildings
     def diceOn(u : Squad, t : Squad) : $[Attack] = if (full) diceOnFull(u, t) else {
@@ -2000,7 +2058,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                         val lines = edges./~(e => Board.cover.get((h, e)))./(_.dice)
                         // Riflemen Field Defenses: 1 more behind Sandbags
                         val bags = edges.exists(e => sandbags.getOrElse(h, Set()).contains(e)).??(2 + ((riflemen(t) && unlocked(t.faction, RiflemenFieldDefenses)) || (t.utype == Conscripts && unlocked(t.faction, ConscriptPacks)) || ((t.utype == Panzerjaeger || t.utype == CoastalReservesVet) && unlocked(t.faction, CoastalWall))).??(1))
-                        (lines :+ bags).max
+                        // a Barricade on an edge crossed: 2
+                        val barricade = edges.exists(e => barricades.contains((h, e))).??(2)
+                        (lines :+ bags :+ barricade).max
                     }.maxOr(0)
             }
         }
@@ -2182,7 +2242,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // HEAVY VEHICLE MOVEMENT: one CP moves it one hex forward or backward, turning one hex side before or after, or turns it in place;
     // through an occupied hex it goes straight on to the next for two CP. Each choice: the path (only its own hex for a turn in place),
     // the side it then faces, and whether it is an Assault
-    def heavyStep(u : Squad, h : Hex, d : Int) : |[Hex] = Board.toward(h, d).%(n => Board.joined(h, n) && canAssault(u, n))
+    def heavyStep(u : Squad, h : Hex, d : Int) : |[Hex] = Board.toward(h, d).%(n => Board.joined(h, n) && barred(h, n).not && canAssault(u, n))
 
     def heavyOptions(u : Squad) : $[($[Hex], Int, Boolean)] = {
         val h = where(u)
@@ -2260,7 +2320,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         var i = 0
         while (front.any) {
             i += 1
-            front = front./~(h => Board.neighbors(h).%(n => Board.joined(h, n) && passable(u, n) && d.contains(n).not)).distinct
+            front = front./~(h => Board.neighbors(h).%(n => Board.joined(h, n) && barred(h, n).not && passable(u, n) && d.contains(n).not)).distinct
             front.foreach(n => d += n -> i)
         }
         d
@@ -2273,7 +2333,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         var path = $[Hex]()
         var going = d.contains(cur)
         while (going && path.num < 6 && cur != point) {
-            Board.neighbors(cur).%(n => Board.joined(cur, n) && d.get(n).has(d(cur) - 1)).sortBy(h => (h.r, h.c)).starting match {
+            Board.neighbors(cur).%(n => Board.joined(cur, n) && barred(cur, n).not && d.get(n).has(d(cur) - 1)).sortBy(h => (h.r, h.c)).starting match {
                 case Some(n) =>
                     path :+= n
                     cur = n
@@ -2321,7 +2381,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         var front = $(where(u))
         var found = $[Hex]()
         while (front.any && found.none) {
-            front = front./~(h => Board.neighbors(h).%(n => Board.joined(h, n) && passable(u, n) && seen.contains(n).not)).distinct
+            front = front./~(h => Board.neighbors(h).%(n => Board.joined(h, n) && barred(h, n).not && passable(u, n) && seen.contains(n).not)).distinct
             seen ++= front
             found = front.%(mayEnd(u, _))
         }
@@ -2385,7 +2445,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     }
 
     // BUILDINGS: 2 health; units may fire HE and Flame at one with no visible enemy (nor ally) in it
-    def shotChoices(u : Squad) : $[(Hex, $[Attack])] = (full && canFire(u) && hasSplash(u).not).??(Board.hexes.%(h => terrainAt(h) == Building || wire.contains(h) || traps.contains(h))./~{ h =>
+    def shotChoices(u : Squad) : $[(Hex, $[Attack])] = (full && canFire(u) && hasSplash(u).not).??(Board.hexes.%(h => terrainAt(h) == Building || wire.contains(h) || traps.contains(h) || barricades.exists(_._1 == h))./~{ h =>
         val d = Board.distance(where(u), h)
         // a Building takes HE and Flame; barbed wire and tank traps any damage assigned to them
         val dice = remaining(u).%(a => a.dmg == HE || a.dmg == Flame || terrainAt(h) != Building).%(a => a.indirect || lineClear(where(u), h)).%(a => fixedGun(u, a).not || inArc(u, h)).%(_ => smoke.contains(where(u)).not || d <= 1)
@@ -3127,6 +3187,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 raided = Set()
                 charged = Set()
                 decoyed = Set()
+                blitzNow = Map()
                 bonus = Map()
                 if (full) {
                     finalMoved = Set()
@@ -3206,6 +3267,18 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 moveSquad(u, path.last)
                 log(u, "moved from", from, "to", path.last, (path.num > 1).??("through " + path.head.name))
                 // Overwatch on each hex it moved onto
+                path.foreach(h => overwatch(u, h, None))
+                ManeuverAction(f, k)
+
+            case BlitzMoveAction(f, u, path, k) =>
+                val from = where(u)
+                noteLeave(u)
+                cpLeft -= 1
+                cp += u -> (cp.getOrElse(u, 0) + 1)
+                blitz += u -> (blitz.getOrElse(u, 0) + 1)
+                blitzNow += u -> (blitzNow.getOrElse(u, 0) + 1)
+                moveSquad(u, path.last)
+                log(u, "blitzed from", from, "to", path.last, (path.num > 1).??("through " + path.head.name), "with an orange cube")
                 path.foreach(h => overwatch(u, h, None))
                 ManeuverAction(f, k)
 
@@ -3530,6 +3603,12 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 log(u, "built", (w && t).?("Barbed Wire and a Tank Trap").|(w.?("Barbed Wire").|("a Tank Trap")), "in", where(u))
                 ManeuverAction(f, k)
 
+            case BarricadeAction(f, u, e, k) =>
+                spend(u, 1)
+                barricades += where(u) -> e
+                log(u, "built a Barricade in", where(u), "on its", Sandbags.names(e), "edge")
+                ManeuverAction(f, k)
+
             case SandbagsAction(f, u, e, k) =>
                 spend(u, 1)
                 sandbags += where(u) -> (sandbags.getOrElse(where(u), Set()) ++ Sandbags.edges(e))
@@ -3554,6 +3633,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 log(DoubleLine)
                 log("Damage Phase")
                 demolished = Set()
+                rested = Set()
                 // a Sherman Dozer assaulting destroys the Sandbags of the hex it assaults
                 assaults.toList.foreach { case (u, d) =>
                     if (u.utype == Dozer && pos.contains(d) && sandbags.contains(where(d))) {
@@ -3561,10 +3641,38 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                         log(u, "destroyed the Sandbags in", where(d))
                     }
                 }
+                if (blitzing)
+                    BlitzRestStepAction(turnOrder)
+                else
                 if (abilities)
                     SmokeStepAction(turnOrder)
                 else
                     AssignNextAction(1, turnOrder)
+
+            // Blitz Cubes: at the start of the Damage Phase, before pins, a unit may take off one of its orange cubes and not attack
+            case BlitzRestStepAction(Nil) =>
+                if (abilities)
+                    SmokeStepAction(turnOrder)
+                else
+                    AssignNextAction(1, turnOrder)
+
+            case BlitzRestStepAction(order @ (f :: rest)) =>
+                val l = units(f).%(u => blitz.getOrElse(u, 0) > 0 && rested.contains(u).not)
+                if (l.none)
+                    BlitzRestStepAction(rest)
+                else {
+                    current = f
+                    Ask(f).each(l)(u => BlitzRestAction(f, u, order)).add(BlitzRestDoneAction(f, rest))
+                }
+
+            case BlitzRestAction(f, u, order) =>
+                blitz += u -> (blitz(u) - 1)
+                rested += u
+                log(u, "took off an orange cube and won't attack")
+                BlitzRestStepAction(order)
+
+            case BlitzRestDoneAction(f, rest) =>
+                BlitzRestStepAction(rest)
 
             // Commanders' Smoke: at the start of the Damage Phase, vehicles may pay 2 Munitions to Smoke their hex
             case SmokeStepAction(Nil) =>
@@ -3796,7 +3904,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 }
 
                 // two or more damage dice on a hex (each splash die once for each unit it hits there and once for the hex) destroy its Sandbags
-                (sandbags.keys.$ ++ wire ++ traps).distinct.foreach { x =>
+                (sandbags.keys.$ ++ wire ++ traps ++ barricades.toList.map(_._1)).distinct.foreach { x =>
                     val direct = assignments.%(a => pos.get(a.target).has(x))./(_.dice.num).sum
                     val shot = shots.%(_.hex == x)./(_.dice.num).sum
                     val splash = splashes.%(s => area(s.hex).has(x))./(s => s.n * (1 + splashed(s.attacker, s.hex).%(t => where(t) == x).num)).sum

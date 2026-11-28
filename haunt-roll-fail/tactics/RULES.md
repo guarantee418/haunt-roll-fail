@@ -594,6 +594,24 @@ Lost Brigade (8.0), a Command Panther of each faction ("Captured" for the Allies
     three figures on the card), 3 Manpower 2 Fuel, a Panzer III for the limit.
   - The DAK's Elefant has 4 AP, as both its cards print (the Wehrmacht's has 3): a fourth AP for the DAK's, the Commanders' too.
 
+## 3rd printing
+
+Bad Crow's "3rd printing balance changes" sheet's new rules, each a setup toggle in the "3rd printing" section (off in every older game):
+
+- **Barricades** (`Barricades`, Full Game Rules only; 2026-11-28): Infantry with a Wrench builds one on an edge of its hex for 1 CP (not in
+  a Building, a Transport or an Assault). It is barbed wire and Sandbags on that edge: Infantry in the hex gets 2 Defense Dice of Cover
+  against attacks across that edge, and no unit moves across it from either hex (the builder neither), a Retreat neither; Assaults go
+  across it. Two damage to the hex destroys it with the hex's other Battlefield Defenses, and units may fire at it as at barbed wire.
+  Readings: the Cover goes only to the hex it was built in ("to the hex on the side it's placed on"); a Heavy Vehicle can't drive across
+  it, an Assault on foot can.
+- **Blitz Cubes** (`BlitzCubes`; 2026-11-28): in its team's first turn of each round a player may spend any of the turn's 3 cubes as
+  orange cubes: each moves one unit up to 2 hexes (through an occupied hex into an empty one, as a 2 CP move; a Heavy Vehicle in the Full
+  Game Rules straight ahead, keeping its facing), Overwatch as usual. It is also a CP on that unit this round. It builds nothing, sets
+  up or packs up nothing and pays for no Commander ability. The orange cubes stay on the unit: each takes a CP off what it may spend
+  in the later rounds (with 3, none). At the start of the Damage Phase, before pins, each unit with orange cubes may take one off and
+  then doesn't attack. Readings: the orange cubes are the turn's own 3 cubes ("instead of the regular CP"), the first turn is each team's
+  first turn of the round, and the cubes placed this round don't lower the unit's cap until the next round.
+
 ## Units
 
 From the Building Boards in the mod (`UnitType` in `game.scala`; the boards are in the game's "Building Boards" overlay):
