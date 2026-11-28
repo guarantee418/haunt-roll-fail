@@ -657,7 +657,23 @@ Bad Crow's "3rd printing balance changes" sheet's new rules, each a setup toggle
   - British **Special Operations**: Mark Vehicle; SSF Canadians (an Infantry Section, with its upgrades, that takes +1 AI or AP for nothing
     once, crosses water and gets 3 Defense Dice in a Destroyed Building, 4 Manpower); M3 Grant (as the Lee with 1 AI and Sight 3); Assault
     Operation (the same, with the Infantry Section's XP Health and either Munitions upgrade).
-  - The rest (Field Ordnance, Cavalry Support, Luftwaffe Supply, Reserve Army, Defense in Depth, Atlantic Wall, Rocketry Support, Army in
+  - US **Engineering Corps**: Fast Deploy (Rapid Production; one Jeep free), Assault Engineers (the plain call-in), Field Engineers, M3 Lee
+    (one free). OKW **Defense in Depth**: Defense in Depth, Precision Strike (a Veterancy option of Stuka Halftracks and LeFH 18s for 1 XP:
+    the Strafing Fire second target; not with the Stuka's Splash, nor Splash after it; one Stuka with it free), Hull Down (Sturmpioneers),
+    Big Rocket Boom (the Sturmtiger's XP Range upgrade free; one free). OKW **Atlantic Wall**: Coastal Wall (Sturmpioneers 1 more Defense
+    Die behind Sandbags or a Barricade), LeFH 18 Artillery (the existing ability), Coastal Reserves (a Sturmpioneer Veterancy option, +2
+    Health for 2 XP; one with it free), Precision Strike (one LeFH 18 with it built free next to a Sturmpioneer).
+    Soviet **Reserve Army**: Combat Engineers (a unit of their own, as with the other "spawn as" Commanders: 4 health, range 2, 2 AI of
+    which 1 Close Range, 2 Wrenches, no Speed Die, Conscripts' Flame XP and one Health Munitions upgrade left; 4 Manpower), Katyusha (one
+    free), Advanced Fortifications, Reserve Conscription (once a Supply Phase, 5 Munitions: each Infantry takes one Munitions Health
+    upgrade it has left, then every Infantry Reinforces 1; two Conscripts free). DAK **Italian Infantry**: Italian Infantry (the opening
+    marks three Control Points, picked one at a time; the player's Infantry on one in the Damage Phase gets 1 more Defense Die, stacking
+    with Cover), Guastatori, Bersaglieri (one free), Off Shore Support (Guastatori and Bersaglieri get a Health and an AI upgrade free; two
+    SdKfz 250 free).
+  - Defense in Depth, Field Engineers and Advanced Fortifications (their engineers): spending its first CP of a round, the unit may leave
+    Barbed Wire or a Tank Trap in its hex for nothing (read as "in the hex they are leaving": the player then moves it; Sandbags, which
+    need a facing, and Barricades are left out); when it Assaults, it may remove one Battlefield Defense of the assaulted hex at once.
+  - The rest (Field Ordnance, Cavalry Support, Luftwaffe Supply, Rocketry Support, Army in
     Exile, the DAK's Desperate Battle and Last Stand, the Desert Rats', Stuart Honey and Stretch Goal
     Commanders) and the core factions' new Lost Brigades are still to come (`tools/third-printing-art.py` lists them by picture).
 

@@ -31,14 +31,15 @@ ALL = {32: 'Field Ordnance (US)', 33: 'Cavalry Support (US)', 34: 'Luftwaffe Sup
 # the cards played, by picture (a universal German card is each German faction's Commander)
 CARDS = {35: 'breakthrough-offensive', 37: 'shock-army', 46: 'stug-assault-dak', 47: 'stug-tactics-dak',
     44: ['intel-disruption-wehrmacht', 'intel-disruption-okw', 'intel-disruption-dak'], 45: ['tank-buster-wehrmacht', 'tank-buster-okw', 'tank-buster-dak'],
-    56: 'special-operations-us', 49: 'special-operations-british'}
+    56: 'special-operations-us', 49: 'special-operations-british',
+    57: 'engineering-corps', 38: 'defense-in-depth', 39: 'atlantic-wall', 36: 'reserve-army', 67: 'italian-infantry'}
 
 PANEL = {2: 485, 3: 805, 4: 1130}
 
 # the token, its faction, the picture and panel its portrait is on, its kind
 TOKENS = [('panzerwerfer', 'wehrmacht', 35, 2, 'Y'), ('katyusha', 'soviet', 37, 3, 'Y'),
     ('marder-iii', 'wehrmacht', 44, 2, 'R'), ('marder-iii', 'okw', 44, 2, 'R'), ('m3-lee', 'us', 56, 3, 'R'), ('m3-grant', 'british', 49, 3, 'R'),
-    ('ssf-canadians', 'british', 49, 2, 'G')]
+    ('ssf-canadians', 'british', 49, 2, 'G'), ('combat-engineers', 'soviet', 36, 3, 'G')]
 
 def make(d, out):
     for n, ids in CARDS.items():

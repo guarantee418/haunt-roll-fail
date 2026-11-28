@@ -374,6 +374,22 @@ case object SSFCanadiansSpawn extends Ability("SSF Canadians", "SSF Canadians ca
 case object M3GrantCallIn extends Ability("M3 Grant", "The M3 Grant can be bought: 3 health, range 3, Sight 3, 1 fixed AI, 1 turreted AP, 2 fixed HE. One spawns for free.")
 case object M3GrantCallInPlain extends Ability("M3 Grant", "The M3 Grant can be bought: 3 health, range 3, Sight 3, 1 fixed AI, 1 turreted AP, 2 fixed HE.")
 case object AssaultOperationBR extends Ability("Assault Operation", "SSF Canadians take their Infantry Section XP Health upgrade and either Munitions upgrade for free. An SSF Canadian still standing neutralizes the Control Point it stands on or Assaulted this round and keeps the enemy from capturing it in the Supply Phase, even Pinned or after a failed Assault. One spawns for free.")
+// Engineering Corps (US), Defense in Depth and Atlantic Wall (OKW), Reserve Army (Soviet), Italian Infantry (DAK)
+case object FastDeploy extends Ability("Fast Deploy", "Spending its first CP of a round to leave a Spawn Area, a Vehicle may move once more for free, as with a Speed Die. One Jeep spawns for free.")
+case object FieldEngineers extends Ability("Field Engineers", "Assault Engineers spending their first CP of a round may leave Barbed Wire or a Tank Trap in the hex they leave; Assaulting, they may remove one Battlefield Defense from the hex.")
+case object DefenseInDepth extends Ability("Defense in Depth", "Sturmpioneers spending their first CP of a round may leave Barbed Wire or a Tank Trap in the hex they leave; Assaulting, they may remove one Battlefield Defense from the hex.")
+case object PrecisionStrike extends Ability("Precision Strike", "Stuka Halftracks and LeFH 18s have a Veterancy option for 1 XP: their damage may also go, in full, to a second unit next to the target (not with the Stuka's Splash upgrade). One Stuka with it spawns for free.")
+case object PrecisionStrikeLeFH extends Ability("Precision Strike", "Stuka Halftracks and LeFH 18s have a Veterancy option for 1 XP: their damage may also go, in full, to a second unit next to the target (not with the Stuka's Splash upgrade). One LeFH 18 with it is built for free next to a Sturmpioneer.")
+case object OKWHullDown extends Ability("Hull Down", "Sturmpioneers may spend 1 CP to sandbag an adjacent Vehicle: 2 Defense Dice until it moves.")
+case object BigRocketBoom extends Ability("Big Rocket Boom", "Sturmtigers have their XP Range upgrade for free. One spawns for free.")
+case object OKWCoastalWall extends Ability("Coastal Wall", "Sturmpioneers get 1 more Defense Die from Sandbags or a Barricade.")
+case object OKWCoastalReserves extends Ability("Coastal Reserves", "Sturmpioneers have a Veterancy option: +2 Health for 2 XP. One spawns with it for free.")
+case object CombatEngineerSpawn extends Ability("Combat Engineers", "Conscripts may spawn as Combat Engineers: 4 health (a Munitions Health upgrade), range 2, 2 AI of which 1 Close Range Firepower, 2 Wrenches, no Speed Die.")
+case object KatyushaCallInFree extends Ability("Katyusha", "The Katyusha can be bought. One spawns for free.")
+case object AdvancedFortifications extends Ability("Advanced Fortifications", "Combat Engineers spending their first CP of a round may leave Barbed Wire or a Tank Trap in the hex they leave; Assaulting, they may remove one Battlefield Defense from the hex.")
+case object ReserveConscription extends Ability("Reserve Conscription", "Once a Supply Phase, for 5 Munitions every Infantry with a Munitions Health upgrade left takes one, and every Infantry Reinforces 1 health. Two Conscripts spawn for free.")
+case object ItalianInfantry extends Ability("Italian Infantry", "At the start of your Maneuver Phase spend your very first 1 CP and 3 Munitions to mark three Control Points: your Infantry on them in the Damage Phase gets 1 more Defense Die this round.")
+case object OffShoreSupport extends Ability("Off Shore Support", "Guastatori and Bersaglieri have a Health and an AI upgrade for free. Two SdKfz 250s spawn for free.")
 
 case object CommandPantherCallIn extends Ability("Command Panther", "The Command Panther can be bought: 5 health, range 3, 2 AP and 2 AI turreted, Spots Camo. One at a time.")
 
@@ -471,6 +487,11 @@ sealed abstract class TankBusterDoctrine(f : Faction) extends Commander("tank-bu
 case object TankBusterWM extends TankBusterDoctrine(Wehrmacht)
 case object TankBusterOKW extends TankBusterDoctrine(OKW)
 case object TankBusterDAK extends TankBusterDoctrine(DAK)
+case object EngineeringCorps extends Commander("engineering-corps", "Engineering Corps", US, $(Tier(FastDeploy, 3), Tier(AssaultEngineerSpawnPlain, 1), Tier(FieldEngineers, 1), Tier(M3LeeCallIn, 4, 3)))
+case object DefenseInDepthDoctrine extends Commander("defense-in-depth", "Defense in Depth", OKW, $(Tier(DefenseInDepth, 1), Tier(PrecisionStrike, 4, 2), Tier(OKWHullDown, 1), Tier(BigRocketBoom, 5, 3)))
+case object AtlanticWall extends Commander("atlantic-wall", "Atlantic Wall", OKW, $(Tier(OKWCoastalWall, 1), Tier(LeFH18Ability, 1), Tier(OKWCoastalReserves, 3), Tier(PrecisionStrikeLeFH, 3)))
+case object ReserveArmy extends Commander("reserve-army", "Reserve Army", Soviet, $(Tier(CombatEngineerSpawn, 1), Tier(KatyushaCallInFree, 4, 2), Tier(AdvancedFortifications, 1), Tier(ReserveConscription, 5)))
+case object ItalianInfantryCommander extends Commander("italian-infantry", "Italian Infantry", DAK, $(Tier(ItalianInfantry, 1), Tier(GuastatoriCallIn, 1), Tier(BersaglieriCallInFree, 3), Tier(OffShoreSupport, 5, 2)))
 case object SpecialOperationsUS extends Commander("special-operations-us", "Special Operations", US, $(Tier(MarkVehicle, 1), Tier(DevilsBrigadeSpawn, 3), Tier(M3LeeCallInPlain, 1, 3), Tier(AssaultOperation, 3)))
 case object SpecialOperationsBR extends Commander("special-operations-british", "Special Operations", British, $(Tier(MarkVehicle, 1), Tier(SSFCanadiansSpawn, 3), Tier(M3GrantCallInPlain, 1, 3), Tier(AssaultOperationBR, 3)))
 case object BreakthroughOffensive extends Commander("breakthrough-offensive", "Breakthrough Offensive", Wehrmacht, $(Tier(RapidProduction, 3), Tier(PanzerwerferCallIn, 1, 2), Tier(TigerCallInPlain, 1, 3), Tier(TigerAce, 5, 3)))
@@ -521,11 +542,13 @@ object Commander {
         DesertSkorpion, ItalianCoastal,
         ItalianLightSupport, ItalianDesertRaid, DAKAssaultSupportDoctrine, ItalianTankAssaultCommander,
         StuGAssaultDoctrineDAK, StuGTacticsDAK, BreakthroughOffensive, ShockArmy,
-        IntelDisruptionWM, IntelDisruptionOKW, IntelDisruptionDAK, TankBusterWM, TankBusterOKW, TankBusterDAK, SpecialOperationsUS, SpecialOperationsBR)
+        IntelDisruptionWM, IntelDisruptionOKW, IntelDisruptionDAK, TankBusterWM, TankBusterOKW, TankBusterDAK, SpecialOperationsUS, SpecialOperationsBR,
+        EngineeringCorps, DefenseInDepthDoctrine, AtlanticWall, ReserveArmy, ItalianInfantryCommander)
 
     // the 3rd printing's new Commanders of the core factions (the setup's ThirdPrintingCommanders)
     val printing = $[Commander](BreakthroughOffensive, ShockArmy,
-        IntelDisruptionWM, IntelDisruptionOKW, IntelDisruptionDAK, TankBusterWM, TankBusterOKW, TankBusterDAK, SpecialOperationsUS, SpecialOperationsBR)
+        IntelDisruptionWM, IntelDisruptionOKW, IntelDisruptionDAK, TankBusterWM, TankBusterOKW, TankBusterDAK, SpecialOperationsUS, SpecialOperationsBR,
+        EngineeringCorps, DefenseInDepthDoctrine, AtlanticWall, ReserveArmy, ItalianInfantryCommander)
 
     // the expansion Commanders (the setup's Expansion Commanders option)
     val expansion = $[Commander](LightCavalryCompany, HeavyCavalryCompany, TacticalSupportCompany, MotorPoolCompany, PathfinderCompany,
@@ -547,7 +570,7 @@ object Commander {
     def pool(f : Faction, options : $[BaseOption]) = options.has(ExpansionCommanders).?(all.diff(printing).%(_.faction == f.base)).|(of(f)) ++ options.has(ThirdPrintingCommanders).??(printing.%(_.faction == f.base))
 
     // the abilities spent at the start of a Maneuver Phase: CP, Munitions
-    val opening = Map[Ability, (Int, Int)](ReconSweep -> (1, 1), P47Strike -> (2, 2), CombatGroupAdvance -> (1, 3), PanzerwerferBarrage -> (1, 1), FragmentationBomb -> (2, 2), ArmorBlitzkrieg -> (1, 3),
+    val opening = Map[Ability, (Int, Int)](ItalianInfantry -> (1, 3), ReconSweep -> (1, 1), P47Strike -> (2, 2), CombatGroupAdvance -> (1, 3), PanzerwerferBarrage -> (1, 1), FragmentationBomb -> (2, 2), ArmorBlitzkrieg -> (1, 3),
         ArtilleryEye -> (1, 1), IL2Strike -> (2, 2), BreakthroughTactics -> (1, 3), GrandAssault -> (1, 3), RapidConscription -> (2, 1), FortifiedCamo -> (1, 1),
         CombinedArms -> (2, 2), P47Strafing -> (2, 2), Outmaneuver -> (1, 3), HowitzerBarrage -> (1, 1),
         StukaStrafe -> (2, 2), MarkVehicle -> (1, 2), ReconPlane -> (1, 1), TacticalMovement -> (1, 3),
@@ -570,6 +593,11 @@ object Commander {
         case RapidProduction => $(Kubelwagen)
         case TankDesantDAK => $(AssaultGrenadiers)
         case MarderCallInFree | DisruptionBeacons => $(MarderIII)
+        case FastDeploy => $(Jeep)
+        case BigRocketBoom => $(Sturmtiger)
+        case KatyushaCallInFree => $(Katyusha)
+        case ReserveConscription => $(Conscripts, Conscripts)
+        case OffShoreSupport => $(SdKfz250, SdKfz250)
         case M3LeeCallIn => $(M3Lee)
         case M3GrantCallIn => $(M3Grant)
         case AssaultOperation => $(DevilsBrigade)

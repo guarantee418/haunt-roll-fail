@@ -50,7 +50,7 @@ object Host extends hrf.host.BaseHost {
     val brigade = sys.env.get("TACTICS_BRIGADE")./(id => Brigade.all.find(_.id == id).get)
 
     // TACTICS_FORCE=BarricadeAction,... : a choice of those kinds is taken whenever offered (to exercise a rarely picked rule); Aircraft buys
-    // and fires planes, Unit:<unit id> buys that unit
+    // and fires planes, Unit:<unit id> buys that unit, Effect:<effect> takes that upgrade
     val force = sys.env.get("TACTICS_FORCE")./(_.split(",").toList).|(Nil)
 
     // TACTICS_COMMANDER=<id> (with TACTICS_EXPANSION=1 or TACTICS_PRINTING=1 for those Commanders): each player of its faction has it among
@@ -83,6 +83,8 @@ object Host extends hrf.host.BaseHost {
         case _ => false
     }) || (a.unwrap match {
         case SpawnMenuAction(_, t) => force.contains("Unit:" + t.id)
+        case UpgradeAction(_, _, _, e) => force.contains("Effect:" + e)
+        case UpgradesMenuAction(f) => force.exists(_.startsWith("Effect:")) && g.upgrades(f).exists { case (_, _, e) => force.contains("Effect:" + e) }
         case SpawnAction(_, t, _) => force.contains("Unit:" + t.id)
         case _ => false
     })))) || brigade.%(_.faction == f.base)./~{ b =>
