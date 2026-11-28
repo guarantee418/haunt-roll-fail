@@ -576,6 +576,23 @@ Lost Brigade (8.0), a Command Panther of each faction ("Captured" for the Allies
   - Elite Grenadier Squad Leaders: 4 health, range 3, 2 AI (the boxed figure read as a second AI die) and 1 HE (the green
     explosion), Camouflage and a Wrench, 4 Manpower 3 Munitions.
   - Command Panther: 5 health, range 3, 2 AP and 2 AI turreted, Spots Camo, 3 Manpower 5 Fuel, one at a time.
+- The Deutsches Afrikakorps' seventeen (2026-11-28; the change sheet's "Lost brigades: Dak" cards, its sixteen and a Command Panther):
+  105 Howitzer (2 XP), 210/22 Artillery Emplacement (2), Bersaglieri (0, one as starting Infantry), Command Panther (3), Elefant (3),
+  Guastatori (0, one), Kradschützen (1), L6/40 (1), Marder III (1), Nebelwerfer (1), Panzerpioneer (0, one), Semovente (1), Veteran G43
+  Stormtroopers (3), StuG III G (1), Veteran Coastal Reserves (2), Veteran Flammpanzer III (2), Veteran Tank Busters (2). Readings:
+  - The units the DAK Commanders already bring are those units (the cards print the same figures), at the card's price.
+  - Marder III: 2 health, range 4, 2 fixed AP, 2 Manpower 3 Fuel. Veteran Tank Busters: 5 health, range 3, 3 AP, a Speed Die,
+    4 Manpower 3 Munitions.
+  - Nebelwerfer: an Infantry Weapon Team, 4 health, range 2 to 5, 1 indirect Flame and 1 indirect HE (one curved arrow over both), no
+    Capture (the red sign), no Setup in Buildings or Transports, 5 Manpower 1 Fuel. "Targets two units adjacent to each other" is the
+    Centaur's Strafing Fire: its damage may go, in full, to a second unit next to its target (the sheet's FAQ: each target takes the
+    HE, rolled for each).
+  - Veteran Coastal Reserves: a unit of its own (a Panzerjaeger with Coastal Reserves' Health, its AP and its Camouflage): 5 health,
+    range 3, 1 AI 1 AP, a Wrench, Camouflage, 4 Manpower 3 Munitions; it counts as a Panzerjaeger for the 210/22, Hull Down and
+    Coastal Wall.
+  - Veteran Flammpanzer III: the Flammpanzer III with Heroic Sacrifice and both AI Munitions upgrades (3 AI turreted, the star and the
+    three figures on the card), 3 Manpower 2 Fuel, a Panzer III for the limit.
+  - The DAK's Elefant has 4 AP, as both its cards print (the Wehrmacht's has 3): a fourth AP for the DAK's, the Commanders' too.
 
 ## Units
 

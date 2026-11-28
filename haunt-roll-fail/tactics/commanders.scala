@@ -340,6 +340,14 @@ case object DAKReconPlane extends Ability("Recon Plane", "At the start of your M
 case object ElefantCallInPlain extends Ability("Elefant Call-In", "The Elefant can be bought.")
 case object ItalianTankAssault extends Ability("Italian Tank Assault", "At the start of your Maneuver Phase spend your very first 1 CP and 3 Munitions: every Vehicle may make a free move this turn.")
 
+// the DAK Lost Brigades' own abilities (2026-11-28, brigades.scala)
+case object Artillery21022Plain extends Ability("210/22 Artillery Emplacement", "Panzerjaegers, Guastatori and Panzerpioneers can build the 210/22 Artillery Emplacement (4 health, range 4 to 6, 3 indirect HE) for 5 Manpower.")
+case object MarderCallIn extends Ability("Marder III", "The Marder III can be bought: 2 health, range 4, 2 fixed AP.")
+case object NebelwerferCallIn extends Ability("Nebelwerfer", "The Nebelwerfer can be bought: 4 health, range 2 to 5, 1 indirect Flame and 1 indirect HE, a Weapon Team with no Capture that can't set up in Buildings or Transports; its damage may also go, in full, to a second unit next to its target.")
+case object VeteranCoastalReserves extends Ability("Veteran Coastal Reserves", "Veteran Coastal Reserves can be bought: 5 health, range 3, 1 AI and 1 AP, a Wrench, Camouflage (Panzerjaegers with their Coastal Reserves Health).")
+case object VeteranFlammpanzers extends Ability("Veteran Flammpanzer III", "The Flammpanzer III can be bought, with Heroic Sacrifice and both AI Munitions upgrades: 3 health, range 2, 1 Flame and 3 AI turreted, a Speed Die (a Panzer III for the limit).")
+case object TankBustersCallIn extends Ability("Veteran Tank Busters", "Veteran Tank Busters can be bought: 5 health, range 3, 3 AP, a Speed Die.")
+
 case object CommandPantherCallIn extends Ability("Command Panther", "The Command Panther can be bought: 5 health, range 3, 2 AP and 2 AI turreted, Spots Camo. One at a time.")
 
 

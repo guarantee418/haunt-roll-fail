@@ -12,7 +12,7 @@ import hrf.logger._
 
 // Headless bot games on the JVM (see HANDOFF.md): `sbt "runMain tactics.Host"`, TACTICS_GAMES games of two Easy bots
 // (default 20), each checking that every recorded action writes and parses back. TACTICS_RULES=first plays the First Game Rules,
-// anything else the Full Game Rules (here, in Dump and in Replay), with Commanders unless TACTICS_COMMANDERS=0; TACTICS_MAP=<id> plays that mission's map (moro, don, rivers, ardennes, frozen, moscow, moroffa); TACTICS_FACTIONS=BR,OKW (US, WM, BR, SU, OKW) the factions; TACTICS_EXPANSION=1 adds the expansion Commanders, TACTICS_BRIGADES=1 the Lost Brigades, TACTICS_OPTIONAL=1 the optional Modular Bunkers.
+// anything else the Full Game Rules (here, in Dump and in Replay), with Commanders unless TACTICS_COMMANDERS=0; TACTICS_MAP=<id> plays that mission's map (moro, don, rivers, ardennes, frozen, moscow, moroffa); TACTICS_FACTIONS=BR,OKW (US, WM, BR, SU, OKW) the factions; TACTICS_EXPANSION=1 adds the expansion Commanders, TACTICS_BRIGADES=1 the Lost Brigades (TACTICS_BRIGADE=<id> forcing one), TACTICS_OPTIONAL=1 the optional Modular Bunkers.
 object Rules {
     // TACTICS_FACTIONS=BR,OKW plays those two (the first goes first in the seating); US and Wehrmacht by default
     def factions : $[Faction] = sys.env.get("TACTICS_FACTIONS")./(_.split(",").toList./(x => Meta.parseFaction(x).get)).|($(US, Wehrmacht))
@@ -41,7 +41,29 @@ object Host extends hrf.host.BaseHost {
                 case None => if (tipsSeen.contains("-" + kinds).not) { tipsSeen += "-" + kinds ; println("NO TIP " + kinds) }
             }
         }
-        new BotXX(f).ask(actions, 0)(g)
+        forced(g, f, actions)./(a => hrf.compute.Just(a) : hrf.compute.Compute[UserAction]).|(new BotXX(f).ask(actions, 0)(g))
+    }
+
+    // TACTICS_BRIGADE=<id> (with TACTICS_BRIGADES=1): each player of that brigade's faction has it among the three drawn (once the
+    // draw is made, so a 0 XP one comes up in the purchases), picks it as soon as it may, and buys or builds its units whenever offered;
+    // the picks and purchases are printed ("BRIGADE ...")
+    val brigade = sys.env.get("TACTICS_BRIGADE")./(id => Brigade.all.find(_.id == id).get)
+
+    def forced(g : G, f : F, actions : $[UserAction]) : |[UserAction] = brigade.%(_.faction == f.base)./~{ b =>
+        if (g.brigadeOf.contains(f).not && g.brigadesDrawn.get(f).exists(_.has(b).not))
+            g.brigadesDrawn += f -> (b +: g.brigadesDrawn(f).drop(1))
+        val units = b.unit.any.?(b.unit.$).|(g.calledIn(f).%(t => t.builtBy.any))
+        actions.find {
+            case BrigadePickAction(_, x) => x == b
+            case BrigadeStartAction(_, x, _) => x == b
+            case StartPickAction(_, t, _) => units.has(t)
+            case SpawnMenuAction(_, t) => units.has(t)
+            case SpawnAction(_, t, _) => units.has(t)
+            case BuildMenuAction(_, t) => units.has(t)
+            case EmplaceMenuAction(_, t) => units.has(t)
+            case BuildAction(_, _, t, _) => units.has(t)
+            case _ => false
+        }./{ a => if (a.isSoft.not) println("BRIGADE " + f.short + " " + Serialize.write(a)) ; a }
     }
 
     def factions = Rules.factions

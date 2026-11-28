@@ -319,11 +319,12 @@ object UnitType {
         Hetzer,
         EliteGrenadiers, CommandPantherUS, CommandPantherWM, CommandPantherBR, CommandPantherSU, CommandPantherOKW,
         AssaultGrenadiers, Panzerjaeger, Flakvierling, SdKfz250, StuGD, EightRad, PanzerIII, Flak88, CommandTiger,
-        FlammpanzerIII, Kradschutzen, KradScout, Semovente, Bersaglieri, Howitzer105, Guastatori, Panzerpioneer, Artillery210, L640)
+        FlammpanzerIII, Kradschutzen, KradScout, Semovente, Bersaglieri, Howitzer105, Guastatori, Panzerpioneer, Artillery210, L640,
+        MarderIII, Nebelwerfer, CoastalReservesVet, TankBusters, CommandPantherDAK)
 
     // the Wehrmacht units the OKW's expansion Commanders bring too (the StuG Pack's shared Commanders, and the ECC's King Tiger and
     // Jagdpanther): an OKW squad of the Wehrmacht's type, drawn with its own token
-    lazy val shared = $[(UnitType, Faction)](StuG -> OKW, KingTiger -> OKW, Jagdpanther -> OKW, Stormtroopers -> OKW, Elefant -> DAK, MGBunker -> DAK)
+    lazy val shared = $[(UnitType, Faction)](StuG -> OKW, KingTiger -> OKW, Jagdpanther -> OKW, Stormtroopers -> OKW, Elefant -> DAK, MGBunker -> DAK, StuG -> DAK, Stormtroopers -> DAK)
 
     def of(f : Faction) = all.%(_.faction == f.base)
 }
@@ -707,7 +708,7 @@ case object Panzerpioneer extends UnitType("Panzerpioneer", DAK, 1, Infantry, 5,
 case object Artillery210 extends UnitType("210/22 Artillery Emplacement", DAK, 1, Emplacement, 4, 4, 6, $(heIndirect, heIndirect, heIndirect), Cost(5, 0, 0), $) {
     override def id = "artillery21022"
     override def commander = true
-    override def builtBy = $(Panzerjaeger, Guastatori, Panzerpioneer)
+    override def builtBy = $(Panzerjaeger, Guastatori, Panzerpioneer, CoastalReservesVet)
 }
 // two spawn for each one bought; a No-Fire mode to Capture
 case object L640 extends UnitType("L6/40 Light Tank", DAK, 2, HeavyVehicle, 1, 1, 2, $(ai), Cost(2, 0, 3), $) {
@@ -716,6 +717,35 @@ case object L640 extends UnitType("L6/40 Light Tank", DAK, 2, HeavyVehicle, 1, 1
     override def speed = 1
     override def captureMode = true
     override def limit = 6
+}
+
+// THE DAK LOST BRIGADES' OWN UNITS (2026-11-28, read off the change sheet's cards; brigades.scala)
+case object MarderIII extends UnitType("Marder III", DAK, 2, HeavyVehicle, 2, 1, 4, $(ap, ap), Cost(2, 0, 3), $) {
+    override def id = "marder-iii"
+    override def commander = true
+    override def fixed = $(AP)
+}
+// a Weapon Team with indirect Flame and HE, range 2 to 5, no Capture, no Setup in Buildings (nor in Transports, as no passenger sets
+// up); "targets two units adjacent to each other": its damage may go, in full, to a second unit next to its target (the Centaur's
+// Strafing Fire; the change sheet's FAQ: each target takes its HE, rolled for each)
+case object Nebelwerfer extends UnitType("Nebelwerfer", DAK, 2, Infantry, 4, 2, 5, $(flameIndirect, heIndirect), Cost(5, 0, 1), $) {
+    override def commander = true
+    override def weaponTeam = true
+    override def noBuildingSetup = true
+    override def capture = false
+    override def strafing = true
+}
+// a Panzerjaeger with its Coastal Reserves Health, its AP and its Camouflage
+case object CoastalReservesVet extends UnitType("Veteran Coastal Reserves", DAK, 1, Infantry, 5, 1, 3, $(ai, ap), Cost(4, 3, 0), $) {
+    override def id = "coastal-reserves"
+    override def commander = true
+    override def wrenches = 1
+    override def innate = $(Camouflage)
+}
+case object TankBusters extends UnitType("Veteran Tank Busters", DAK, 1, Infantry, 5, 1, 3, $(ap, ap, ap), Cost(4, 3, 0), $) {
+    override def id = "tank-busters"
+    override def commander = true
+    override def speed = 1
 }
 
 // THE BRITISH, SOVIET AND OKW COMMANDER UNITS (Faction Guide pages 22, 28 and 35)
@@ -1061,6 +1091,7 @@ case object CommandPantherWM extends CommandPanther(Wehrmacht, "Command Panther"
 case object CommandPantherBR extends CommandPanther(British, "Captured Command Panther")
 case object CommandPantherSU extends CommandPanther(Soviet, "Captured Command Panther")
 case object CommandPantherOKW extends CommandPanther(OKW, "Command Panther")
+case object CommandPantherDAK extends CommandPanther(DAK, "Command Panther")
 
 // the cost of unlocking a Tier Building (on the back of its board), the same for every faction
 object Tiers {
@@ -1968,7 +1999,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                         val edges = Board.crossed(h, x)
                         val lines = edges./~(e => Board.cover.get((h, e)))./(_.dice)
                         // Riflemen Field Defenses: 1 more behind Sandbags
-                        val bags = edges.exists(e => sandbags.getOrElse(h, Set()).contains(e)).??(2 + ((riflemen(t) && unlocked(t.faction, RiflemenFieldDefenses)) || (t.utype == Conscripts && unlocked(t.faction, ConscriptPacks)) || (t.utype == Panzerjaeger && unlocked(t.faction, CoastalWall))).??(1))
+                        val bags = edges.exists(e => sandbags.getOrElse(h, Set()).contains(e)).??(2 + ((riflemen(t) && unlocked(t.faction, RiflemenFieldDefenses)) || (t.utype == Conscripts && unlocked(t.faction, ConscriptPacks)) || ((t.utype == Panzerjaeger || t.utype == CoastalReservesVet) && unlocked(t.faction, CoastalWall))).??(1))
                         (lines :+ bags).max
                     }.maxOr(0)
             }
@@ -2546,7 +2577,11 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         case StuG => unlocked(u.faction, TargetWeakPoint).$(AddAttack(UnitType.ap)) ++ unlocked(u.faction, TurretlessTerror).$(Camouflage)
         // the DAK's
         case Flak88 if unlocked(u.faction, VeteranGunners) => $(HealthUp, RemoveSlow, AddAttack(UnitType.ap))
-        case PanzerIII | FlammpanzerIII if unlocked(u.faction, VeteranPanzerIIIs) => $(AddAttack(UnitType.ai), AddAttack(UnitType.ai), DefenseUp)
+        // Veteran Panzer IIIs, and the Lost Brigade's Veteran Flammpanzer III (Heroic Sacrifice and both AI upgrades)
+        case PanzerIII | FlammpanzerIII if unlocked(u.faction, VeteranPanzerIIIs) || (u.utype == FlammpanzerIII && unlocked(u.faction, VeteranFlammpanzers)) =>
+            $(AddAttack(UnitType.ai), AddAttack(UnitType.ai)) ++ unlocked(u.faction, VeteranPanzerIIIs).$(DefenseUp) ++ (u.utype == FlammpanzerIII && unlocked(u.faction, VeteranFlammpanzers)).$(HeroicSacrifice)
+        // the DAK's Elefant has 4 AP (its cards), the Wehrmacht's 3
+        case Elefant if u.faction.base == DAK => $(AddAttack(UnitType.ap))
         case Semovente if unlocked(u.faction, CamouflageNetting) => $(Camouflage)
         case Guastatori if unlocked(u.faction, SmokeAndCover) => $(DefenseUp)
         case CommandTiger if unlocked(u.faction, CounterOffensive) => $(SpotsCamo)
@@ -2677,8 +2712,11 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         (unlocked(f, HowitzerCallIn) || unlocked(f, HowitzerBreda)).$(Howitzer105) ++
         (unlocked(f, GuastatoriCallIn) || unlocked(f, GuastatoriCallInFree)).$(Guastatori) ++
         (unlocked(f, PanzerpioneerCallIn) || unlocked(f, PanzerpioneerCallInFree)).$(Panzerpioneer) ++
-        unlocked(f, Artillery21022).$(Artillery210) ++ unlocked(f, L640CallIn).$(L640) ++
-        (unlocked(f, ElefantCallInPlain) && unlocked(f, ElefantCallIn).not).$(Elefant)
+        (unlocked(f, Artillery21022) || unlocked(f, Artillery21022Plain)).$(Artillery210) ++ unlocked(f, L640CallIn).$(L640) ++
+        (unlocked(f, ElefantCallInPlain) && unlocked(f, ElefantCallIn).not).$(Elefant) ++
+        // the DAK Lost Brigades' units
+        unlocked(f, MarderCallIn).$(MarderIII) ++ unlocked(f, NebelwerferCallIn).$(Nebelwerfer) ++ unlocked(f, VeteranCoastalReserves).$(CoastalReservesVet) ++
+        unlocked(f, TankBustersCallIn).$(TankBusters) ++ (unlocked(f, VeteranFlammpanzers) && unlocked(f, FlammpanzerCallIn).not).$(FlammpanzerIII)
 
     // the Lost Brigade a player may pick now (once, for its XP)
     def brigadePicks(f : Faction) : $[UserAction] = (brigades && brigadeOf.contains(f).not).??(brigadesDrawn.getOrElse(f, $[Brigade]()).%(b => f.stock(XP) >= b.xp)./(b => BrigadePickAction(f, b)))
@@ -2793,7 +2831,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         // Armored Assault Tactics' Recon Mode, Emergency War Speed: a free move for a vehicle after its first CP
         (u.utype.vehicle && unlocked(f, ReconMode) && cp.getOrElse(u, 0) == 1 && raided.contains(u).not && f.stock(Munitions) >= 2).$(ReconModeAction(f, u, k)) ++
         (u.utype.vehicle && unlocked(f, EmergencyWarSpeed) && cp.getOrElse(u, 0) == 1 && raided.contains(u).not && health(u) > 1).$(WarSpeedAction(f, u, k)) ++
-        (((u.utype == Grenadiers || u.utype == Osttruppen || u.utype == PanzerGrenadiers) && unlocked(f, HullDown)) || ((u.utype == Panzerjaeger || u.utype == Guastatori || u.utype == Panzerpioneer) && unlocked(f, DAKHullDown))).&&(pointsLeft(u) >= 1 && isPassenger(u).not).??(
+        (((u.utype == Grenadiers || u.utype == Osttruppen || u.utype == PanzerGrenadiers) && unlocked(f, HullDown)) || ((u.utype == Panzerjaeger || u.utype == CoastalReservesVet || u.utype == Guastatori || u.utype == Panzerpioneer) && unlocked(f, DAKHullDown))).&&(pointsLeft(u) >= 1 && isPassenger(u).not).??(
             Board.neighbors(where(u))./~(occupant).%(v => v.faction == f && v.utype.vehicle && hullDown.contains(v).not)./(v => HullDownAction(f, u, v, k))) ++
         (u.kind == Infantry && (unlocked(f, RaidPoint) || unlocked(f, RallyPoint)) && cp.getOrElse(u, 0) == 1 && raided.contains(u).not && f.stock(Munitions) >= 1).$(RaidPointAction(f, u, k)) ++
         // Bersaglieri: its first CP of the round spent leaving a Spawn Area or a Transport, a free move
