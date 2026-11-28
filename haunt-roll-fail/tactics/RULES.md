@@ -611,6 +611,25 @@ Bad Crow's "3rd printing balance changes" sheet's new rules, each a setup toggle
   in the later rounds (with 3, none). At the start of the Damage Phase, before pins, each unit with orange cubes may take one off and
   then doesn't attack. Readings: the orange cubes are the turn's own 3 cubes ("instead of the regular CP"), the first turn is each team's
   first turn of the round, and the cubes placed this round don't lower the unit's cap until the next round.
+- **Planes and anti-air** (`Planes`, Full Game Rules only; 2026-11-28; the sheet's Planes rules and its eighteen plane cards, three
+  a faction: Anti-Tank, Bomber and Recon; the P47 Thunderbolt for the US, the Stuka JU-87 for the three German factions, the IL-2
+  for the Soviets and the Hawker Typhoon for the British). A plane (`Aircraft` in `game.scala`, kind `Plane`): 2 health, range 2, 1 AI
+  forward, a Speed Die, 2 Fuel, one at a time; the Recon has +2 Sight and Spots Camo. Each player's three cards lie by its Commander
+  (the sheet's first way; the other, shuffling them into the Lost Brigade deck, isn't played); once a game, in the purchases, one is
+  unlocked for its 2 XP, then bought (spawned in the Spawn Area, facing a hex side) for 2 Fuel.
+  - It moves only forward: each CP (or its Speed Die) flies it one hex and turns it one hex side or not, or two hexes straight on, over
+    anything (Buildings, water, impassable lines, units, Barricades) onto an empty hex. It never captures, neutralizes, retreats, sets
+    up, assaults or is assaulted (the sheet: its "hover" over units isn't played in TTS either; one unit a hex, as there).
+  - It fires forward only. The Anti-Tank and the Bomber may pay 3 Munitions for an attack of 2 AP or 2 HE in place of its AI (the
+    sheet's rules say "instead of their standard 1 AI damage", the cards "add": the rules are followed).
+  - Only AI damages it, and only from an anti-air unit (the sheet's list: the Willys Jeep, M4A3 Sherman, SdKfz 222, Ostwind, M3A1 Scout
+    Car, SU-76 with its HE as AI, Bofors, Centaur, Flak 37 emplacement, Schwerer Panzer HQ with its AP as AI, and the DAK's Flakvierling
+    and 88mm FLAK 36), in range and seen, in its arc if set up or a fixed gun; a set-up unit must be set up. Splash, strikes and the rest
+    do nothing to it (`Matrix`). It rolls a Defense Die for each AI, as a Light Vehicle.
+  - Anti-air Overwatch: each hex a plane flies onto in the range of an enemy anti-air unit (one that sets up only set up and in its
+    arc; not pinned) deals it 1 damage, once for the hex however many cover it.
+  - Readings: the Command Tiger's marker never goes on a plane (it isn't a Vehicle); the 88mm FLAK 36, with only AP, gives Overwatch but
+    can't fire at a plane.
 
 ## Units
 
