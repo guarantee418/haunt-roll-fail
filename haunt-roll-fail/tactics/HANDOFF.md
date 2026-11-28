@@ -146,10 +146,14 @@ booklet's pictures (pages 9 and 10). Moro River's first rows had the bridge poin
   no forced Commander, `TACTICS_XP=n` then gives that player n XP once the brigades are drawn). On 2026-11-28 each of the 26 was
   played in two to four bot games that bought or built its units, every dump replaying valid; the Pathfinders' LMG beacon was checked
   on a replayed game by hand, as the bots never spawn Riflemen next to a Pathfinder.
-  To do, all on the sheet: Troop Transports (boats, cards 133-138); the Black Gold
-  and Twin Beaches
-  panels (Fortifications, Anchors, Shorelines, permanent barbed wire) and 17 1v1 scenarios. The sheet's 15
-  new boards for the five core factions are, compared pixel by pixel on 2026-11-27, the very boards the site already plays (the mod
+  The boats, the new maps and their scenarios (2026-11-28): Troop Transports (`TroopTransports`, `TroopTransport` in `game.scala`, cards and
+  tokens by `tools/boat-art.py`); Black Gold's Fortifications, Twin Beaches' Sea, Anchorages and permanent barbed wire (`board.scala`); the
+  17 1v1 scenarios in the Map folder's "3rd printing" section (`MapChoice.printing`), made by `tools/missions-printing.py` from the mod's
+  panels (the mod's July 2026 save has the Black Gold and Twin Beaches panels and three of the bags; its BSON save was turned to JSON) and the
+  sheet's pictures; `map-edges.py` has a beach mode for the shorelines and wire. `tactics.Host` takes `TACTICS_TRANSPORTS=1`. Each map was
+  played by bots with the boats forced (`TACTICS_FORCE=BoatUnlockAction,Unit:troop-transport,EmbarkAction`), every dump replaying valid.
+  Nothing on the sheet is left but its new solo tokens (pictures 139 to 141 and 296 to 303), for a solo mode the site doesn't have.
+  The sheet's 15 new boards for the five core factions are, compared pixel by pixel on 2026-11-27, the very boards the site already plays (the mod
   had them), and the code follows them, so its "board changes" list needs nothing. The owner's rule (2026-11-27): never replace what
   is played; a printing's changes and new cards go in as setup options, like Northgard's Card edition (so the sheet's new Commanders
   and Lost Brigades for the core factions go behind a "3rd printing" setup toggle, off for older games). 4v4 isn't on the sheet. Keep the

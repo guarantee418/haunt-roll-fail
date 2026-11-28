@@ -1526,6 +1526,23 @@ case object OpposingFaithsFourMap extends MapChoice(OpposingFaithsFour, "Large M
 case object TwoHilltopsMap extends MapChoice(TwoHilltops, "Large Map Pack, HL1, HL2, HL2r, HL1r: Four Hill 331 panels; each team spawns along its edge and on one side. Starting stockpile 4 Manpower, 4 Munitions, 6 Fuel.")
 case object FrozenForkMap extends MapChoice(FrozenFork, "Large Map Pack, SG2, SG1, SG2, SG1: Four Stalingrad panels. Starting stockpile 3 Manpower, 3 Munitions, 3 Fuel.")
 case object SixBridgesMap extends MapChoice(SixBridges, "Large Map Pack, TP2r, TP1r, TP1, TP2: Four Trois Ponts panels, the river crossed six times. Starting stockpile 5 Manpower, 4 Munitions, 3 Fuel.")
+case object BlackGoldMap extends MapChoice(BlackGold, "3rd printing, BG1, BG2: The oil fields, with their Fortifications. Starting stockpile 2 Manpower, 2 Munitions, 6 Fuel.")
+case object TwinBeachesMap extends MapChoice(TwinBeaches, "3rd printing, TB1, TB2: The two beaches; Team 2 may unlock Troop Transports. Starting stockpile 5 Manpower, 3 Munitions, 4 Fuel.")
+case object AcrossMoroRiverMap extends MapChoice(AcrossMoroRiver, "3rd printing, MR1, TB1: Moro River and a beach; Team 2 may unlock Troop Transports. Starting stockpile 4 Manpower, 4 Munitions, 3 Fuel.")
+case object ElAlameinMap extends MapChoice(ElAlamein, "3rd printing, BG2, BG1: Both Black Gold panels. Starting stockpile 4 Manpower, 2 Munitions, 3 Fuel.")
+case object IronHillMap extends MapChoice(IronHill, "3rd printing, BG2, HL2r: Black Gold and Hill 331 turned round. Starting stockpile 5 Manpower, 4 Munitions, 5 Fuel.")
+case object DesertsEdgeMap extends MapChoice(DesertsEdge, "3rd printing, MR1r, BG1: Moro River turned round and Black Gold. Starting stockpile 4 Manpower, 3 Munitions, 5 Fuel.")
+case object BattleOfTheScheldtMap extends MapChoice(BattleOfTheScheldt, "3rd printing, TB2, TB1: Both Twin Beaches panels; each team spawns along its edge. Starting stockpile 5 Manpower, 3 Munitions, 3 Fuel.")
+case object KasserinePassMap extends MapChoice(KasserinePass, "3rd printing, HL2r, BG1r: Hill 331 and Black Gold, both turned round. Starting stockpile 4 Manpower, 3 Munitions, 3 Fuel.")
+case object OperationCrusaderMap extends MapChoice(OperationCrusader, "3rd printing, HL1, BG2: Hill 331 and Black Gold; both teams spawn on the left. Starting stockpile 5 Manpower, 4 Munitions, 4 Fuel.")
+case object TobrukMap extends MapChoice(Tobruk, "3rd printing, BG1, TB1: Black Gold and a beach, a Destroyed Building between them at the bottom; each team spawns along its edge. Starting stockpile 4 Manpower, 2 Munitions, 2 Fuel.")
+case object MarethLineMap extends MapChoice(MarethLine, "3rd printing, TB2, BG2: A beach and Black Gold, a Destroyed Building between them at the bottom; each team spawns along its edge. Starting stockpile 3 Manpower, 4 Munitions, 3 Fuel.")
+case object OperationHuskyMap extends MapChoice(OperationHusky, "3rd printing, TB2, MR2: A beach and Moro River. Starting stockpile 5 Manpower, 4 Munitions, 3 Fuel.")
+case object SainteMereEgliseMap extends MapChoice(SainteMereEglise, "3rd printing, MO1r, TB2: The Monastery turned round and a beach; the church tower's Manpower and Munitions point goes when the tower is destroyed; each team spawns along its edge. Starting stockpile 5 Manpower, 2 Munitions, 4 Fuel.")
+case object SalernoMap extends MapChoice(Salerno, "3rd printing, MR2r, TB1: Moro River turned round and a beach. Starting stockpile 4 Manpower, 3 Munitions, 3 Fuel.")
+case object ClosedPortMap extends MapChoice(ClosedPort, "3rd printing, MO2, TB2: The Monastery and a beach; Team 2 spawns at both bottom corners. Starting stockpile 6 Manpower, 2 Munitions, 4 Fuel.")
+case object SeasideVillageMap extends MapChoice(SeasideVillage, "3rd printing, TP1, TB2: Trois Ponts and a beach; Team 2 spawns at both bottom corners. Starting stockpile 4 Manpower, 6 Munitions, 3 Fuel.")
+case object StormTheBeachMap extends MapChoice(StormTheBeach, "3rd printing, TP2, TB1: Trois Ponts and a beach. Starting stockpile 6 Manpower, 4 Munitions, 4 Fuel.")
 case object HillThreeThirtyOneFFAMap extends MapChoice(HillThreeThirtyOneFFA, "Large Map Pack, HL1, HL2: Three players, each on their own; the Bunker is a Destroyed Building, three Buildings below it. Starting stockpile 6 Manpower, 2 Munitions, 4 Fuel.")
 case object CologneFFAMap extends MapChoice(CologneFFA, "Large Map Pack, TP1, TP2, MO1r: Four players, each on their own, one in each corner. Starting stockpile 6 Manpower, 4 Munitions, 4 Fuel.")
 case object LorraineMap extends MapChoice(Lorraine, "Large Map Pack, MR1, MR2 / HL1, HL2: Moro River above Hill 331; the Spawn Areas are the left and right edges. Starting stockpile 5 Manpower, 4 Munitions, 3 Fuel.")
@@ -1614,7 +1631,8 @@ object MapChoice {
     val all = $[MapChoice](MoroRiverMap, AcrossTheDonMap, BetweenTwoRiversMap, ArdennesForestMap, FrozenLakeMap, RoadToMoscowMap, MoroRiverFFAMap, TheRiverMap, FrozenPondMap, BetweenTwoRiversWideMap, ArdennesForestWideMap,
         HillThreeThirtyOneMap, PloiestiOutskirtsMap, VerrieresRidgeMap, TroisPontsMap, CaenMap, CarentanMap, StalingradMap, BulgeMap, LeningradMap, MongolianTrainStationMap,
         CathedralMissionMap, CologneMissionMap, DesertOasisMap, NoMansLandMap, MoscowOutskirtsMap, OpposingFaithsMap, SemoisMap, HinderdamMap, AncientFieldsMap, AirfieldMissionMap, HilltopMonasteryMap, BudapestMap, SiegeOfLeningradMap, OpposingFaithsThreeMap, TheWideFrontMap, TroisPontsThreeMap, TwoIslandsMap, CologneFourMap, TroisPontsMonasteryMap, HillMonasteryMap, VengeanceMap, OpposingFaithsFourMap, TwoHilltopsMap, FrozenForkMap, SixBridgesMap, HillThreeThirtyOneFFAMap, CologneFFAMap,
-        LorraineMap, RailsAndMetalMap, StHilaireMap, WinterStormMap, TheVolgaMap, RaceToRomeMap, StMarieDuMontMap, CologneFiveFFAMap, HillSixSixTwoFFAMap, ARiverTooFarMap, RaceAcrossTheRhineMap, FrozenRiverMap, FrozenRiverFourMap, MudMap, WinterSolsticeMap, SummerSolsticeMap)
+        LorraineMap, RailsAndMetalMap, StHilaireMap, WinterStormMap, TheVolgaMap, RaceToRomeMap, StMarieDuMontMap, CologneFiveFFAMap, HillSixSixTwoFFAMap, ARiverTooFarMap, RaceAcrossTheRhineMap, FrozenRiverMap, FrozenRiverFourMap, MudMap, WinterSolsticeMap, SummerSolsticeMap,
+        BlackGoldMap, TwinBeachesMap, AcrossMoroRiverMap, ElAlameinMap, IronHillMap, DesertsEdgeMap, BattleOfTheScheldtMap, KasserinePassMap, OperationCrusaderMap, TobrukMap, MarethLineMap, OperationHuskyMap, SainteMereEgliseMap, SalernoMap, ClosedPortMap, SeasideVillageMap, StormTheBeachMap)
 }
 
 // THE ICE MATRIX (Full Game Rules 10.4): how many dice a unit attacked on an Ice tile rolls for each damage type assigned to it

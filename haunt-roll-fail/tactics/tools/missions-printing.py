@@ -7,8 +7,8 @@
 # Each map's panels were found by matching the sheet's picture with the panels' art (turned round or not); the cover lines are read by
 # map-edges.py in its beach mode (the brown shorelines, and the permanent barbed wire symbols apart); the Spawn Areas are the sheet's blue
 # (Team 1) and red (Team 2) bars, with the half row behind a bar, or its circles, one hex each; the Control Points are the sheet's counters,
-# read by hand off the pictures (the counter finder this script started from missed some on the green panels), but Black Gold's, Twin
-# Beaches' and Across Moro River's, which come from their bags in the mod. The new panels' features were read by hand (2026-11-28):
+# read by hand off the pictures (the counter finder this script started from missed some on the green panels), but Black Gold's and
+# Across Moro River's, which come from their bags in the mod (Twin Beaches' bag holds its counters twice). The new panels' features were read by hand (2026-11-28):
 #   Black Gold: Buildings, Destroyed Buildings, tank traps, and the Fortifications (ringed light blue).
 #   Twin Beaches: Buildings, tank traps, the Sea (the water and beach hexes inside the brown shorelines, which every unit may enter and
 #   only Troop Transports keep to) and the Anchorages (water ringed in red with an anchor: only Troop Transports enter them).
@@ -52,7 +52,8 @@ def pts(s): return dict(kv.split(':') for kv in s.split())
 M = [
     ('blackgold', 'BlackGold', 'Black Gold', 308, [('BG1', 0), ('BG2', 0)], (2, 2, 6), None, 'Components - 6VP Black Gold - 2 Panels Stockpiles 2/2/6', None,
         'the oil fields, with their Fortifications'),
-    ('twinbeaches', 'TwinBeaches', 'Twin Beaches', 309, [('TB1', 0), ('TB2', 0)], (5, 3, 4), None, 'Components - 7VP Twin Beaches - 2 Panels Stockpiles 5/3/4', [1],
+    ('twinbeaches', 'TwinBeaches', 'Twin Beaches', 309, [('TB1', 0), ('TB2', 0)], (5, 3, 4),
+        pts('3,2:VM 3,8:VF 3,5:UU 3,11:VU 5,6:VU 5,9:MF 5,0:VU 6,4:FF 7,2:VF 7,5:MU 7,8:MF 8,11:VM'), 'Components - 7VP Twin Beaches - 2 Panels Stockpiles 5/3/4', [1],
         'the two beaches; Team 2 may unlock Troop Transports'),
     ('acrossmoro', 'AcrossMoroRiver', 'Across Moro River', 310, [('MR1', 0), ('TB1', 0)], (4, 4, 3), None, 'Components - 7VP Across Moro River- 2 Panels Stockpiles 4/3/3', [1],
         'Moro River and a beach; Team 2 may unlock Troop Transports'),

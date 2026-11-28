@@ -462,6 +462,10 @@ object Board {
     def closed = current.closed
     def traps = current.traps
     def bunkers = current.bunkers
+    def boats = current.boats
+    def wet(h : Hex) = current.wet(h)
+    def tower = current.tower
+    def wired(a : Hex, b : Hex) = current.wired(a, b)
     def points = current.points
     def neighbors = current.neighbors
     def adjacent(a : Hex, b : Hex) = current.adjacent(a, b)
