@@ -126,12 +126,20 @@ booklet's pictures (pages 9 and 10). Moro River's first rows had the bridge poin
   each a tile with a thumbnail (`Meta.optionTile`, `optionTileWide`). After adding or changing a map, run `sbt "runMain tactics.MapDump"`
   into a file and `tools/map-thumbs.py <file> webp2/tactics/images` for its thumbnail.
 - Desert Warfare (asked for on 2026-11-27): the source is Bad Crow's "3rd printing balance changes" sheet, a Google Doc the owner shared
-  (doc id `1djH2anwCN1RWDKUn64P5bt_xWIY_CyMDHOX1L2gP6v0`; read it with the Google Docs connector, its 324 pictures from their
-  `contentUri`s). Done: the DAK faction (its boards, units, art), its 12 Commanders (`commanders.scala`, readings in RULES.md) and its 17 Lost Brigades, the Barricade, Blitz Cubes and Planes with anti-air (setup toggles under "3rd printing", `Barricades`, `BlitzCubes`, `Planes`; RULES.md, 3rd printing; plane tokens by `tools/plane-art.py`; `TACTICS_BARRICADES=1`, `TACTICS_BLITZ=1`, `TACTICS_PLANES=1` and `TACTICS_FORCE=<action kinds>` in `tactics.Host`)
-  (`brigades.scala`, 2026-11-28; cards and tokens by `tools/dak-brigade-art.py` from the doc's public `export?format=zip`, whose pictures
-  are numbered in document order in that script; `TACTICS_BRIGADE=<id>` makes `tactics.Host` draw, pick and buy that brigade). To do, all on the
-  sheet: the other factions' new Commanders (Rocket pack, Universal German, Desert Rats, Stuart Honey pack, Stretch Goal box) and Lost
-  Brigades; Troop Transports (boats); the Black Gold and Twin Beaches
+  (doc id `1djH2anwCN1RWDKUn64P5bt_xWIY_CyMDHOX1L2gP6v0`). It is public: `https://docs.google.com/document/d/<id>/export?format=txt` gives
+  its text and `export?format=zip` its HTML with all 324 pictures; the art scripts number the pictures in document order from 1. Done:
+  - the DAK faction (its boards, units, art) and its 12 Commanders (`commanders.scala`, readings in RULES.md);
+  - its 17 Lost Brigades (`brigades.scala`, 2026-11-28; cards and tokens by `tools/dak-brigade-art.py`; `TACTICS_BRIGADE=<id>` makes
+    `tactics.Host` draw, pick and buy one);
+  - setup toggles under "3rd printing" (RULES.md, 3rd printing): the Barricade (`Barricades`), Blitz Cubes (`BlitzCubes`), Planes with
+    anti-air (`Planes`, tokens by `tools/plane-art.py`) and the first new Commanders (`ThirdPrintingCommanders`: Breakthrough Offensive,
+    Shock Army; and with the DAK's expansion Commanders its StuG Assault Doctrine and StuG Tactics; cards and tokens by
+    `tools/third-printing-art.py`, whose `ALL` names every Commander picture). `tactics.Host` takes `TACTICS_BARRICADES=1`,
+    `TACTICS_BLITZ=1`, `TACTICS_PLANES=1`, `TACTICS_PRINTING=1`, `TACTICS_COMMANDER=<id>` (draws only that card) and
+    `TACTICS_FORCE=<action kinds>` (also `Aircraft`, `Unit:<id>`).
+  To do, all on the sheet: the other new Commanders (RULES.md, 3rd printing, lists them) and the core factions' new Lost Brigades (pictures
+  69 to 94: US 69-72, Wehrmacht 73-76, Soviet 77-80, OKW 81-85, British 86-94); Troop Transports (boats, cards 133-138); the Black Gold
+  and Twin Beaches
   panels (Fortifications, Anchors, Shorelines, permanent barbed wire) and 17 1v1 scenarios. The sheet's 15
   new boards for the five core factions are, compared pixel by pixel on 2026-11-27, the very boards the site already plays (the mod
   had them), and the code follows them, so its "board changes" list needs nothing. The owner's rule (2026-11-27): never replace what

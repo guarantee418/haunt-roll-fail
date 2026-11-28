@@ -348,6 +348,20 @@ case object VeteranCoastalReserves extends Ability("Veteran Coastal Reserves", "
 case object VeteranFlammpanzers extends Ability("Veteran Flammpanzer III", "The Flammpanzer III can be bought, with Heroic Sacrifice and both AI Munitions upgrades: 3 health, range 2, 1 Flame and 3 AI turreted, a Speed Die (a Panzer III for the limit).")
 case object TankBustersCallIn extends Ability("Veteran Tank Busters", "Veteran Tank Busters can be bought: 5 health, range 3, 3 AP, a Speed Die.")
 
+// the 3rd printing's Commanders (2026-11-28; the change sheet's "New commanders", behind the setup's ThirdPrintingCommanders toggle for the
+// core factions; the DAK's versions of the universal German ones are with its expansion Commanders)
+case object RapidProduction extends Ability("Rapid Production", "Spending its first CP of a round to leave a Spawn Area, a Vehicle may move once more for free, as with a Speed Die. One Kubelwagen spawns for free.")
+case object PanzerwerferCallIn extends Ability("Panzerwerfer", "The Panzerwerfer can be bought: 3 health, range 2 to 4, 2 indirect HE, a Speed Die; it sets up with a Firing Arc like a Weapon Team, and its damage may also go, in full, to a second unit next to its target.")
+case object TigerCallInPlain extends Ability("Tiger Call-In", "The Tiger can be bought.")
+case object TigerAce extends Ability("Tiger Ace", "Tigers have a Veterancy option: +1 Range for 2 XP. One Tiger spawns for free.")
+case object HM38Mortars extends Ability("HM-38 120mm Mortars", "The Mortar's Splash XP upgrade costs 1 XP. One Mortar spawns with it for free.")
+case object KatyushaCallIn extends Ability("Katyusha", "The Katyusha can be bought: 2 health, range 2 to 5, 1 indirect Flame and 1 indirect HE, a Speed Die, Slow; it sets up with a Firing Arc like a Weapon Team, and its damage may also go, in full, to a second unit next to its target.")
+case object StuGCallInDAK extends Ability("StuG III G Call-In", "The StuG III G can be bought.")
+case object StuGCallInFreeDAK extends Ability("StuG III G Call-In", "The StuG III G can be bought. One StuG III D or G spawns for free.")
+case object TankDesantDAK extends Ability("Tank Desant Tactics", "Infantry gain +2 Defense Dice next to a Heavy Vehicle (not in a Building, no stacking with other Cover). One Assault Grenadier spawns for free.")
+case object TargetWeakPointDAK extends Ability("Target Weak Point", "StuG III Gs have +1 AP and StuG III Ds +1 HE. One StuG III D or G spawns for free.")
+case object TurretlessTerrorDAK extends Ability("Turretless Terror", "StuG III Ds and Gs have Camouflage. One Stormtrooper spawns for free (it counts toward the one a round).")
+
 case object CommandPantherCallIn extends Ability("Command Panther", "The Command Panther can be bought: 5 health, range 3, 2 AP and 2 AI turreted, Spots Camo. One at a time.")
 
 
@@ -432,6 +446,12 @@ case object SovietIndustryTactics extends Commander("soviet-industry", "Soviet I
 // the OKW expansion Commanders (Faction Guide pages 36 and 37); the StuG Pack's two are the Wehrmacht's cards
 case object TerrorDoctrineWest extends Commander("terror-west", "Terror Doctrine West", OKW, $(Tier(TerrorWestOber, 1), Tier(RecoupLosses, 2), Tier(OberDefense, 4, 3), Tier(KingTigerCallIn, 5, 3)))
 case object TankDestroyerWest extends Commander("tank-destroyer-west", "Tank Destroyer West", OKW, $(Tier(MarkVehicle, 1), Tier(PanzerfusilierCallInPlain, 1), Tier(PumaCallIn, 4, 2), Tier(JagdpantherCallIn, 4, 3)))
+// the DAK's versions of the universal German StuG Commanders (the change sheet's "Universal German commanders")
+case object StuGAssaultDoctrineDAK extends Commander("stug-assault-dak", "StuG Assault Doctrine", DAK, $(Tier(StuGCloseRange, 1), Tier(StuGCallInDAK, 1, 2), Tier(TankDesantDAK, 3), Tier(TargetWeakPointDAK, 4, 2)))
+case object StuGTacticsDAK extends Commander("stug-tactics-dak", "StuG Tactics", DAK, $(Tier(StormtrooperSpawn, 2), Tier(StuGCallInFreeDAK, 4, 2), Tier(FragmentationBomb, 1), Tier(TurretlessTerrorDAK, 3)))
+// the 3rd printing's new core Commanders
+case object BreakthroughOffensive extends Commander("breakthrough-offensive", "Breakthrough Offensive", Wehrmacht, $(Tier(RapidProduction, 3), Tier(PanzerwerferCallIn, 1, 2), Tier(TigerCallInPlain, 1, 3), Tier(TigerAce, 5, 3)))
+case object ShockArmy extends Commander("shock-army", "Shock Army", Soviet, $(Tier(HM38Mortars, 3), Tier(PenalBattalionCallIn, 1), Tier(KatyushaCallIn, 1, 2), Tier(T3485CallIn, 4, 3)))
 case object StuGAssaultDoctrineOKW extends Commander("stug-assault-okw", "StuG Assault Doctrine", OKW, StuGAssaultDoctrine.tiers)
 case object StuGTacticsOKW extends Commander("stug-tactics-okw", "StuG Tactics", OKW, StuGTactics.tiers)
 case object StormDoctrine extends Commander("storm", "Storm Doctrine", OKW, $(Tier(VeteranKettenkrad, 3), Tier(LeFH18Ability, 1), Tier(StukaStrafe, 1), Tier(HetzerCallIn, 4, 3)))
@@ -476,7 +496,11 @@ object Commander {
         TerrorDoctrineWest, TankDestroyerWest, StuGAssaultDoctrineOKW, StuGTacticsOKW, StormDoctrine, EncirclementDoctrine, JointOperationsDoctrine,
         ArmoredWarfareSupport, ArmoredAirpowerSupport, ItalianCombinedArmor, ItalianCombinedArms, ItalianFieldEngineers, DefensiveWarfare,
         DesertSkorpion, ItalianCoastal,
-        ItalianLightSupport, ItalianDesertRaid, DAKAssaultSupportDoctrine, ItalianTankAssaultCommander)
+        ItalianLightSupport, ItalianDesertRaid, DAKAssaultSupportDoctrine, ItalianTankAssaultCommander,
+        StuGAssaultDoctrineDAK, StuGTacticsDAK, BreakthroughOffensive, ShockArmy)
+
+    // the 3rd printing's new Commanders of the core factions (the setup's ThirdPrintingCommanders)
+    val printing = $[Commander](BreakthroughOffensive, ShockArmy)
 
     // the expansion Commanders (the setup's Expansion Commanders option)
     val expansion = $[Commander](LightCavalryCompany, HeavyCavalryCompany, TacticalSupportCompany, MotorPoolCompany, PathfinderCompany,
@@ -488,13 +512,14 @@ object Commander {
         FrontalAssaultDoctrine, GuardsMotorTactics, UrbanDefenseTactics, UrbanAssaultTactics, CounterattackTactics, HeroesOfStalingrad,
         SiegeMilitia, FrontlineTactics, SpetsnazBrigade, TerrorTactics, ShockRifleTactics, SovietIndustryTactics,
         TerrorDoctrineWest, TankDestroyerWest, StuGAssaultDoctrineOKW, StuGTacticsOKW, StormDoctrine, EncirclementDoctrine, JointOperationsDoctrine,
-        ItalianLightSupport, ItalianDesertRaid, DAKAssaultSupportDoctrine, ItalianTankAssaultCommander)
+        ItalianLightSupport, ItalianDesertRaid, DAKAssaultSupportDoctrine, ItalianTankAssaultCommander,
+        StuGAssaultDoctrineDAK, StuGTacticsDAK)
 
     // the core six (the DAK's eight) of a faction (every game without the option, and every game made before it)
-    def of(f : Faction) = all.diff(expansion).%(_.faction == f.base)
+    def of(f : Faction) = all.diff(expansion).diff(printing).%(_.faction == f.base)
 
     // the Commanders a player draws from
-    def pool(f : Faction, options : $[BaseOption]) = options.has(ExpansionCommanders).?(all.%(_.faction == f.base)).|(of(f))
+    def pool(f : Faction, options : $[BaseOption]) = options.has(ExpansionCommanders).?(all.diff(printing).%(_.faction == f.base)).|(of(f)) ++ options.has(ThirdPrintingCommanders).??(printing.%(_.faction == f.base))
 
     // the abilities spent at the start of a Maneuver Phase: CP, Munitions
     val opening = Map[Ability, (Int, Int)](ReconSweep -> (1, 1), P47Strike -> (2, 2), CombatGroupAdvance -> (1, 3), PanzerwerferBarrage -> (1, 1), FragmentationBomb -> (2, 2), ArmorBlitzkrieg -> (1, 3),
@@ -516,7 +541,10 @@ object Commander {
         case EliteATCrew => $(ATGun)
         case VeteranOstwinds => $(Ostwind)
         case IncendiaryMortars => $(WMortar)
-        case TigerCallIn => $(Tiger)
+        case TigerCallIn | TigerAce => $(Tiger)
+        case RapidProduction => $(Kubelwagen)
+        case TankDesantDAK => $(AssaultGrenadiers)
+        case TurretlessTerrorDAK => $(Stormtroopers)
         case MG42ArmoredCars => $(SdKfz222)
         case Mechanized222Surge => $(SdKfz222, PanzerGrenadiers)
         case GermanIndustry => $(Kubelwagen)
@@ -624,6 +652,14 @@ case object NoCommanders extends CommandersChoice("No Commanders", "No Commander
 
 // the expansion packs' Commanders (Elite Commanders Collection, Pathfinder, StuG, Eastern Reinforcements, Lost Brigades), drawn with the
 // core ones (2026-11-24); only with Draw three Commanders
+// the 3rd printing's new Commanders of the core factions, drawn with the others (2026-11-28; only with Draw three Commanders)
+case object ThirdPrintingCommanders extends GameOption with ToggleOption {
+    val group = "3rd printing".txt
+    def valueOn = "New Commanders".hl
+    override val explain = $[Elem]("The players also draw from the 3rd printing's new Commanders of the core factions (from Bad Crow's change sheet; Breakthrough Offensive and Shock Army so far).".txt)
+    override def required(all : $[BaseOption]) = $($(DrawCommanders))
+}
+
 case object ExpansionCommanders extends GameOption with ToggleOption {
     val group = CommandersChoice.group
     def valueOn = "Expansion Commanders".hl

@@ -328,6 +328,7 @@ object UnitType {
         AssaultGrenadiers, Panzerjaeger, Flakvierling, SdKfz250, StuGD, EightRad, PanzerIII, Flak88, CommandTiger,
         FlammpanzerIII, Kradschutzen, KradScout, Semovente, Bersaglieri, Howitzer105, Guastatori, Panzerpioneer, Artillery210, L640,
         MarderIII, Nebelwerfer, CoastalReservesVet, TankBusters, CommandPantherDAK,
+        Panzerwerfer, Katyusha,
         P47AntiTank, P47Bomber, P47Recon, StukaAntiTankWM, StukaBomberWM, StukaReconWM, IL2Bomber, IL2AntiTank, IL2Recon,
         StukaAntiTankOKW, StukaBomberOKW, StukaReconOKW, TyphoonBomber, TyphoonAntiTank, TyphoonRecon, StukaAntiTankDAK, StukaBomberDAK, StukaReconDAK)
 
@@ -1117,6 +1118,20 @@ case object CommandPantherSU extends CommandPanther(Soviet, "Captured Command Pa
 case object CommandPantherOKW extends CommandPanther(OKW, "Command Panther")
 case object CommandPantherDAK extends CommandPanther(DAK, "Command Panther")
 
+// THE 3RD PRINTING COMMANDERS' UNITS (2026-11-28, read off their cards): rocket launchers that set up with a Firing Arc like a Weapon
+// Team, and whose damage may also go, in full, to a second unit next to the target ("targets two units adjacent to each other")
+case object Panzerwerfer extends UnitType("Panzerwerfer", Wehrmacht, 2, LightVehicle, 3, 2, 4, $(heIndirect, heIndirect), Cost(1, 0, 4), $) {
+    override def commander = true
+    override def weaponTeam = true
+    override def strafing = true
+}
+case object Katyusha extends UnitType("Katyusha", Soviet, 2, LightVehicle, 2, 2, 5, $(flameIndirect, heIndirect), Cost(1, 0, 4), $) {
+    override def commander = true
+    override def weaponTeam = true
+    override def strafing = true
+    override def slow = 1
+}
+
 // THE 3RD PRINTING'S PLANES (2026-11-28, the change sheet's "Plane cards", three of each faction): 2 health, range 2, 1 forward AI, a Speed
 // Die, 2 Fuel, one at a time; the Anti-Tank and the Bomber may fire 2 forward AP or HE instead for 3 Munitions (`alt`, paid in TargetAction),
 // the Recon has +2 Sight and Spots Camo. Unlocked for 2 XP (`planeOf`), one for the game
@@ -1552,6 +1567,7 @@ case class FreeNextAction(f : Faction) extends ForcedAction
 case class FreeSpawnAction(self : Faction, t : UnitType, hex : Hex) extends BaseAction("Free", (g : Game) => g.freeNote)(Images.token(Squad(self, t, 0)) ~ t.elem, "in", hex) with HexKey
 case class DefensiveStanceAction(self : Faction, squad : Squad, k : Int) extends BaseAction(squad, "in", (g : Game) => g.where(squad).elem)("Defensive Stance", "(Heavy Cover this round, no more CP)".spn(styles.small), (g : Game) => g.costNote(squad, 1))
 case class KradDropAction(self : Faction, squad : Squad, path : $[Hex], k : Int) extends BaseAction(squad, "in", (g : Game) => g.where(squad).elem)("Move to", path.last, "leaving a rider in", (g : Game) => g.where(squad).elem, "(1 Health)".spn(styles.small), (g : Game) => g.costNote(squad, path.num)) with HexKey { def hex = path.last }
+case class RapidProductionAction(self : Faction, squad : Squad, k : Int) extends BaseAction(squad, "in", (g : Game) => g.where(squad).elem)("Rapid Production: a free move")
 case class BersaglieriDashAction(self : Faction, squad : Squad, k : Int) extends BaseAction(squad, "in", (g : Game) => g.where(squad).elem)("Bersaglieri: a free move")
 case class SalvageKitsAction(self : Faction) extends BaseAction("Commander")("Salvage Kits: pay", 2.hlb, Munitions.icon, "for", 1.hlb, Fuel.icon)
 case class BattlefieldSalvageAction(self : Faction, r : Res) extends BaseAction("Battlefield Salvage", (g : Game) => ("(" + g.salvage.getOrElse(self, 0) + " left)").spn(styles.small))("Take", 1.hlb, r.icon, "for", 1.hlb, XP.icon)
@@ -2684,7 +2700,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             val base = (shells.any && inBuilding(h)).?(max(0, base0 - 1)).|(base0)
             // Commanders: Defensive Stance is Heavy Cover even in an Assault; Armor Tactician 2 dice next to a Heavy Vehicle (not in a
             // Building, no stacking with other Cover)
-            val tactician = t.kind == Infantry && inBuilding(h).not && (unlocked(t.faction, ArmorTactician) || unlocked(t.faction, TankDesant) || unlocked(t.faction, InfantryTankSupport)) && units(t.faction).exists(v => v.kind == HeavyVehicle && isPassenger(v).not && Board.adjacent(where(v), h))
+            val tactician = t.kind == Infantry && inBuilding(h).not && (unlocked(t.faction, ArmorTactician) || unlocked(t.faction, TankDesant) || unlocked(t.faction, TankDesantDAK) || unlocked(t.faction, InfantryTankSupport)) && units(t.faction).exists(v => v.kind == HeavyVehicle && isPassenger(v).not && Board.adjacent(where(v), h))
             val cover = (l.any && (stance.contains(t) || tactician || holdsLine(t))).?(max(base, 2)).|(base)
             val frontal = (t.kind == HeavyVehicle && l.exists(a => where(a.attacker) != h && a.dice.exists(_.dmg == AP) && inArc(t, where(a.attacker)))).??(2)
             val hull = (hullDown.contains(t) && l.any).??(2)
@@ -2759,7 +2775,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         case Volksgrenadiers if unlocked(u.faction, EncirclementVolks) => $(HealthUp, HealthUp)
         case Centaur if unlocked(u.faction, VeteranCentaurs) => $(AddAttacks(UnitType.ai), SpotsCamo)
         case Commandos if unlocked(u.faction, GammonBombs) => $(Camouflage)
-        case StuG => unlocked(u.faction, TargetWeakPoint).$(AddAttack(UnitType.ap)) ++ unlocked(u.faction, TurretlessTerror).$(Camouflage)
+        case StuG => (unlocked(u.faction, TargetWeakPoint) || unlocked(u.faction, TargetWeakPointDAK)).$(AddAttack(UnitType.ap)) ++ (unlocked(u.faction, TurretlessTerror) || unlocked(u.faction, TurretlessTerrorDAK)).$(Camouflage)
+        case StuGD => unlocked(u.faction, TargetWeakPointDAK).$(AddAttack(UnitType.he)) ++ unlocked(u.faction, TurretlessTerrorDAK).$(Camouflage)
         // the DAK's
         case Flak88 if unlocked(u.faction, VeteranGunners) => $(HealthUp, RemoveSlow, AddAttack(UnitType.ap))
         // Veteran Panzer IIIs, and the Lost Brigade's Veteran Flammpanzer III (Heroic Sacrifice and both AI upgrades)
@@ -2798,7 +2815,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         // the DAK's
         (unlocked(u.faction, BredaBolster) && u.utype == Bersaglieri).$((29, Slot(false, 4, $(BredaUp)))) ++
         (unlocked(u.faction, ReconTractor) && u.utype == SdKfz250 && has(u, MortarRefit).not).$((30, Slot(false, 2, $(SpotsCamo)))) ++
-        (unlocked(u.faction, CoastalReserves) && u.utype == Panzerjaeger).$((31, Slot(false, 3, $(HealthTwo))))
+        (unlocked(u.faction, CoastalReserves) && u.utype == Panzerjaeger).$((31, Slot(false, 3, $(HealthTwo)))) ++
+        // the 3rd printing's
+        (unlocked(u.faction, TigerAce) && u.utype == Tiger).$((32, Slot(true, 2, $(RangeUp))))
     )
 
     def slotAt(u : Squad, i : Int) : Slot = (i < 10).?(u.utype.upgrades(i)).|(commanderSlots(u).find(_._1 == i).get._2)
@@ -2814,6 +2833,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         else if (i == 0 && u.utype == WMortar && unlocked(f, IncendiaryMortars)) 1
         else if (i == 1 && u.utype == SniperSquad && unlocked(f, RangedTactics)) max(0, s.cost - 2)
         else if (i == 1 && u.utype == SovietMortar && unlocked(f, VeteranMortars)) max(0, s.cost - 2)
+        else if (i == 0 && u.utype == SovietMortar && unlocked(f, HM38Mortars)) min(s.cost, 1)
         else if (i == 1 && u.utype == UniversalCarrier && unlocked(f, WASPFlamethrower)) max(0, s.cost - 1)
         else if (i == 1 && u.utype == InfantrySection && unlocked(f, TankHunters)) max(0, s.cost - 2)
         // Superior Fire Drills: the Flakvierling's and the Panzer III's AI Munitions upgrades
@@ -2899,6 +2919,10 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         (unlocked(f, PanzerpioneerCallIn) || unlocked(f, PanzerpioneerCallInFree)).$(Panzerpioneer) ++
         (unlocked(f, Artillery21022) || unlocked(f, Artillery21022Plain)).$(Artillery210) ++ unlocked(f, L640CallIn).$(L640) ++
         (unlocked(f, ElefantCallInPlain) && unlocked(f, ElefantCallIn).not).$(Elefant) ++
+        // the 3rd printing Commanders' units
+        unlocked(f, PanzerwerferCallIn).$(Panzerwerfer) ++ unlocked(f, KatyushaCallIn).$(Katyusha) ++
+        ((unlocked(f, TigerCallInPlain) || unlocked(f, TigerAce)) && unlocked(f, TigerCallIn).not).$(Tiger) ++
+        ((unlocked(f, StuGCallInDAK) || unlocked(f, StuGCallInFreeDAK) || unlocked(f, TargetWeakPointDAK)) && unlocked(f, StuGCallIn).not && unlocked(f, StuGCallInFree).not && unlocked(f, TargetWeakPoint).not).$(StuG) ++
         // the plane unlocked (3rd printing)
         planeOf.get(f).$ ++
         // the DAK Lost Brigades' units
@@ -3024,6 +3048,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         // Bersaglieri: its first CP of the round spent leaving a Spawn Area or a Transport, a free move
         (u.utype == Bersaglieri && cp.getOrElse(u, 0) == 1 && raided.contains(u).not && isPassenger(u).not && mayMove(u) &&
             leftFrom.get(u).exists { case (h, inside, r) => r == round && (inside || Board.spawn(team(f)).has(h)) }).$(BersaglieriDashAction(f, u, k)) ++
+        // Rapid Production: a Vehicle's first CP of the round spent leaving a Spawn Area, a free move
+        (u.utype.vehicle && unlocked(f, RapidProduction) && cp.getOrElse(u, 0) == 1 && raided.contains(u).not && isPassenger(u).not && mayMove(u) &&
+            leftFrom.get(u).exists { case (h, _, r) => r == round && Board.spawn(team(f)).has(h) }).$(RapidProductionAction(f, u, k)) ++
         ((u.utype == SniperSquad || u.utype == GuardsRifle) && unlocked(f, Decoy) && cp.getOrElse(u, 0) == 2 && paidLeft(u) >= 1 && decoyed.contains(u).not && mayMove(u) && isPassenger(u).not).$(DecoyAction(f, u, k)) ++
         (u.utype.vehicle && (unlocked(f, StepOnIt) || unlocked(f, WMBreakthrough) || unlocked(f, OKWBreakthrough) || unlocked(f, PanzerStorm) || unlocked(f, FlakAssault)) && cp.getOrElse(u, 0) == 1 && raided.contains(u).not && f.stock(Munitions) >= 2).$(StepOnItAction(f, u, k)) ++
         // Cavalry Riflemen: after a move, a free Assault on an adjacent hex, once a round
@@ -3155,6 +3182,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             case Pak251 => List((List(Halftrack), "spawn", |(AddAttacks(UnitType.ap))))
             case HowitzerBreda => List((List(Bersaglieri), "spawn", |(BredaUp)))
             case CoastalReserves => List((List(Panzerjaeger), "spawn", |(HealthTwo)))
+            case HM38Mortars => List((List(SovietMortar), "spawn", |(SplashUp)))
+            case StuGCallInFreeDAK | TargetWeakPointDAK => List((List(StuG, StuGD), "spawn", None))
             case Artillery21022 => List((List(Artillery210), "builder", None))
             case _ => Commander.free(a, f).toList./(t => (List(t), "spawn", None))
         }
@@ -3547,6 +3576,12 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 val r = createSquad(f, KradScout, from)
                 log(u, "moved from", from, "to", path.last, "leaving", r, "in", from)
                 path.foreach(h => overwatch(u, h, None))
+                ManeuverAction(f, k)
+
+            case RapidProductionAction(f, u, k) =>
+                raided += u
+                bonus += u -> (bonus.getOrElse(u, 0) + 1)
+                log(u, "may move once more for free (Rapid Production)")
                 ManeuverAction(f, k)
 
             case BersaglieriDashAction(f, u, k) =>

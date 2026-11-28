@@ -630,6 +630,22 @@ Bad Crow's "3rd printing balance changes" sheet's new rules, each a setup toggle
     arc; not pinned) deals it 1 damage, once for the hex however many cover it.
   - Readings: the Command Tiger's marker never goes on a plane (it isn't a Vehicle); the 88mm FLAK 36, with only AP, gives Overwatch but
     can't fire at a plane.
+- **New Commanders** (`ThirdPrintingCommanders`, with Draw three Commanders; 2026-11-28): the sheet's new core-faction Commanders join each
+  player's draw (`Commander.printing`), the expansion ones only with Expansion Commanders too. Played so far:
+  - Wehrmacht **Breakthrough Offensive**: Rapid Production (3 XP; a Vehicle spending its first CP of the round to leave a Spawn Area may
+    move once more for free, as Bersaglieri; one Kubelwagen free), Panzerwerfer (1 XP, Tier 2: 3 health, range 2 to 4, 2 indirect HE, a
+    Speed Die, sets up with a Firing Arc, the second target as the Centaur's Strafing Fire, 1 Manpower 4 Fuel), Tiger Call-In (1 XP, Tier 3,
+    no free Tiger), Tiger Ace (5 XP, Tier 3: a Veterancy option, +1 Range for 2 XP, read off the blue target icon; one Tiger free).
+  - Soviet **Shock Army**: HM-38 120mm Mortars (3 XP: the Mortar's Splash XP upgrade costs 1 XP; one Mortar spawns with it free), Penal
+    Battalions (1 XP, the existing call-in), Katyusha (1 XP, Tier 2: 2 health, range 2 to 5, 1 indirect Flame and 1 indirect HE, a Speed
+    Die, Slow, sets up with a Firing Arc, the second target as above, 1 Manpower 4 Fuel), T-34-85 (4 XP, Tier 3, one free).
+  - The DAK's versions of the universal German **StuG Assault Doctrine** and **StuG Tactics** (with the DAK's expansion Commanders): as the
+    Wehrmacht's, but Tank Desant's free Infantry is an Assault Grenadier, Target Weak Point gives StuG III Ds +1 HE, Turretless Terror gives
+    Ds Camouflage too, and the free StuG is a III D or G, the player's pick. "Panzerjaegers can attack with just CRF at Range 1" isn't
+    played yet.
+  - The rest (Field Ordnance, Cavalry Support, Luftwaffe Supply, Reserve Army, Defense in Depth, Atlantic Wall, Rocketry Support, Army in
+    Exile, the DAK's Desperate Battle and Last Stand, Intel Disruption, Tank Buster, the Desert Rats', Stuart Honey and Stretch Goal
+    Commanders) and the core factions' new Lost Brigades are still to come (`tools/third-printing-art.py` lists them by picture).
 
 ## Units
 
