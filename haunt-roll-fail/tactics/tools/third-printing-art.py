@@ -28,19 +28,24 @@ ALL = {32: 'Field Ordnance (US)', 33: 'Cavalry Support (US)', 34: 'Luftwaffe Sup
     60: 'Shock Motor (SU)', 61: 'Airborne Troops Tactics (SU)', 62: 'Overwatch Doctrine (OKW)', 63: 'Luftwaffe Ground Forces (OKW)',
     64: 'Infantry Assault (BR)', 65: 'Demolition Engineers (BR)', 66: 'Field Support (BR)', 67: 'Italian Infantry (DAK)', 68: 'Stalling Tactics (DAK)'}
 
-# the cards played, by picture
-CARDS = {35: 'breakthrough-offensive', 37: 'shock-army', 46: 'stug-assault-dak', 47: 'stug-tactics-dak'}
+# the cards played, by picture (a universal German card is each German faction's Commander)
+CARDS = {35: 'breakthrough-offensive', 37: 'shock-army', 46: 'stug-assault-dak', 47: 'stug-tactics-dak',
+    44: ['intel-disruption-wehrmacht', 'intel-disruption-okw', 'intel-disruption-dak'], 45: ['tank-buster-wehrmacht', 'tank-buster-okw', 'tank-buster-dak'],
+    56: 'special-operations-us', 49: 'special-operations-british'}
 
 PANEL = {2: 485, 3: 805, 4: 1130}
 
 # the token, its faction, the picture and panel its portrait is on, its kind
-TOKENS = [('panzerwerfer', 'wehrmacht', 35, 2, 'Y'), ('katyusha', 'soviet', 37, 3, 'Y')]
+TOKENS = [('panzerwerfer', 'wehrmacht', 35, 2, 'Y'), ('katyusha', 'soviet', 37, 3, 'Y'),
+    ('marder-iii', 'wehrmacht', 44, 2, 'R'), ('marder-iii', 'okw', 44, 2, 'R'), ('m3-lee', 'us', 56, 3, 'R'), ('m3-grant', 'british', 49, 3, 'R'),
+    ('ssf-canadians', 'british', 49, 2, 'G')]
 
 def make(d, out):
-    for n, cid in CARDS.items():
+    for n, ids in CARDS.items():
         img = Image.open(os.path.join(d, '%d.img' % n)).convert('RGB').crop((75, 65, 1425, 830))
         img = img.resize((1016, int(765 * 1016 / 1350)), Image.LANCZOS)
-        art.webp(img, os.path.join(out, 'commander', cid + '.webp'), q=85)
+        for cid in ([ids] if isinstance(ids, str) else ids):
+            art.webp(img, os.path.join(out, 'commander', cid + '.webp'), q=85)
     for name, f, n, panel, kind in TOKENS:
         img = Image.open(os.path.join(d, '%d.img' % n)).convert('RGB')
         x = PANEL[panel]

@@ -361,6 +361,19 @@ case object StuGCallInFreeDAK extends Ability("StuG III G Call-In", "The StuG II
 case object TankDesantDAK extends Ability("Tank Desant Tactics", "Infantry gain +2 Defense Dice next to a Heavy Vehicle (not in a Building, no stacking with other Cover). One Assault Grenadier spawns for free.")
 case object TargetWeakPointDAK extends Ability("Target Weak Point", "StuG III Gs have +1 AP and StuG III Ds +1 HE. One StuG III D or G spawns for free.")
 case object TurretlessTerrorDAK extends Ability("Turretless Terror", "StuG III Ds and Gs have Camouflage. One Stormtrooper spawns for free (it counts toward the one a round).")
+// the universal German Intel Disruption and Tank Buster Doctrines (Wehrmacht, OKW, DAK), and both Special Operations (US, British)
+case object MarderCallInFree extends Ability("Marder III Call-In", "The Marder III can be bought (2 health, range 4, 2 fixed AP). One spawns for free.")
+case object DisruptionBeacons extends Ability("Disruption Beacons", "Spending its first CP of a round, an Infantry may pay 2 Munitions to have Camouflage this round instead of moving. One Marder III spawns for free.")
+case object TravelSpeed extends Ability("Travel Speed", "Spending its first CP of a round to leave a Spawn Area, a Vehicle may move once more for free, as with a Speed Die. Any two Vehicles up to Tier 2, the Marder III among them, spawn for free.")
+case object PactOfSteel extends Ability("Pact of Steel", "Tier 2 Vehicles cost 1 Manpower less. One Infantry spawns for free.")
+case object TankBusterKit extends Ability("Tank Busters", "Infantry can convert to Tank Busters for 3 Munitions: they keep their Health, Defense and Camouflage, but their attack becomes 3 AP at range 3.")
+case object M3LeeCallIn extends Ability("M3 Lee", "The M3 Lee can be bought: 3 health, range 3, 2 fixed AI, 1 turreted AP, 2 fixed HE. One spawns for free.")
+case object M3LeeCallInPlain extends Ability("M3 Lee", "The M3 Lee can be bought: 3 health, range 3, 2 fixed AI, 1 turreted AP, 2 fixed HE.")
+case object AssaultOperation extends Ability("Assault Operation", "Devil's Brigades take one Riflemen XP and one Munitions upgrade for free. A Devil's Brigade still standing neutralizes the Control Point it stands on or Assaulted this round and keeps the enemy from capturing it in the Supply Phase, even Pinned or after a failed Assault. One spawns for free.")
+case object SSFCanadiansSpawn extends Ability("SSF Canadians", "SSF Canadians can be bought: an Infantry Section with +1 AI or AP (picked once, for free), that enters impassable water and gets 3 Defense Dice in a Destroyed Building. One spawns for free.")
+case object M3GrantCallIn extends Ability("M3 Grant", "The M3 Grant can be bought: 3 health, range 3, Sight 3, 1 fixed AI, 1 turreted AP, 2 fixed HE. One spawns for free.")
+case object M3GrantCallInPlain extends Ability("M3 Grant", "The M3 Grant can be bought: 3 health, range 3, Sight 3, 1 fixed AI, 1 turreted AP, 2 fixed HE.")
+case object AssaultOperationBR extends Ability("Assault Operation", "SSF Canadians take their Infantry Section XP Health upgrade and either Munitions upgrade for free. An SSF Canadian still standing neutralizes the Control Point it stands on or Assaulted this round and keeps the enemy from capturing it in the Supply Phase, even Pinned or after a failed Assault. One spawns for free.")
 
 case object CommandPantherCallIn extends Ability("Command Panther", "The Command Panther can be bought: 5 health, range 3, 2 AP and 2 AI turreted, Spots Camo. One at a time.")
 
@@ -450,6 +463,16 @@ case object TankDestroyerWest extends Commander("tank-destroyer-west", "Tank Des
 case object StuGAssaultDoctrineDAK extends Commander("stug-assault-dak", "StuG Assault Doctrine", DAK, $(Tier(StuGCloseRange, 1), Tier(StuGCallInDAK, 1, 2), Tier(TankDesantDAK, 3), Tier(TargetWeakPointDAK, 4, 2)))
 case object StuGTacticsDAK extends Commander("stug-tactics-dak", "StuG Tactics", DAK, $(Tier(StormtrooperSpawn, 2), Tier(StuGCallInFreeDAK, 4, 2), Tier(FragmentationBomb, 1), Tier(TurretlessTerrorDAK, 3)))
 // the 3rd printing's new core Commanders
+sealed abstract class IntelDisruptionDoctrine(f : Faction) extends Commander("intel-disruption-" + f.id, "Intel Disruption Doctrine", f, $(Tier(ReconPlane, 1), Tier(MarderCallIn, 1, 2), Tier(DisruptionBeacons, 4), Tier(TravelSpeed, 5, 2)))
+case object IntelDisruptionWM extends IntelDisruptionDoctrine(Wehrmacht)
+case object IntelDisruptionOKW extends IntelDisruptionDoctrine(OKW)
+case object IntelDisruptionDAK extends IntelDisruptionDoctrine(DAK)
+sealed abstract class TankBusterDoctrine(f : Faction) extends Commander("tank-buster-" + f.id, "Tank Buster Doctrine", f, $(Tier(MarkVehicle, 1), Tier(MarderCallInFree, 4, 2), Tier(PactOfSteel, 3), Tier(TankBusterKit, 2)))
+case object TankBusterWM extends TankBusterDoctrine(Wehrmacht)
+case object TankBusterOKW extends TankBusterDoctrine(OKW)
+case object TankBusterDAK extends TankBusterDoctrine(DAK)
+case object SpecialOperationsUS extends Commander("special-operations-us", "Special Operations", US, $(Tier(MarkVehicle, 1), Tier(DevilsBrigadeSpawn, 3), Tier(M3LeeCallInPlain, 1, 3), Tier(AssaultOperation, 3)))
+case object SpecialOperationsBR extends Commander("special-operations-british", "Special Operations", British, $(Tier(MarkVehicle, 1), Tier(SSFCanadiansSpawn, 3), Tier(M3GrantCallInPlain, 1, 3), Tier(AssaultOperationBR, 3)))
 case object BreakthroughOffensive extends Commander("breakthrough-offensive", "Breakthrough Offensive", Wehrmacht, $(Tier(RapidProduction, 3), Tier(PanzerwerferCallIn, 1, 2), Tier(TigerCallInPlain, 1, 3), Tier(TigerAce, 5, 3)))
 case object ShockArmy extends Commander("shock-army", "Shock Army", Soviet, $(Tier(HM38Mortars, 3), Tier(PenalBattalionCallIn, 1), Tier(KatyushaCallIn, 1, 2), Tier(T3485CallIn, 4, 3)))
 case object StuGAssaultDoctrineOKW extends Commander("stug-assault-okw", "StuG Assault Doctrine", OKW, StuGAssaultDoctrine.tiers)
@@ -497,10 +520,12 @@ object Commander {
         ArmoredWarfareSupport, ArmoredAirpowerSupport, ItalianCombinedArmor, ItalianCombinedArms, ItalianFieldEngineers, DefensiveWarfare,
         DesertSkorpion, ItalianCoastal,
         ItalianLightSupport, ItalianDesertRaid, DAKAssaultSupportDoctrine, ItalianTankAssaultCommander,
-        StuGAssaultDoctrineDAK, StuGTacticsDAK, BreakthroughOffensive, ShockArmy)
+        StuGAssaultDoctrineDAK, StuGTacticsDAK, BreakthroughOffensive, ShockArmy,
+        IntelDisruptionWM, IntelDisruptionOKW, IntelDisruptionDAK, TankBusterWM, TankBusterOKW, TankBusterDAK, SpecialOperationsUS, SpecialOperationsBR)
 
     // the 3rd printing's new Commanders of the core factions (the setup's ThirdPrintingCommanders)
-    val printing = $[Commander](BreakthroughOffensive, ShockArmy)
+    val printing = $[Commander](BreakthroughOffensive, ShockArmy,
+        IntelDisruptionWM, IntelDisruptionOKW, IntelDisruptionDAK, TankBusterWM, TankBusterOKW, TankBusterDAK, SpecialOperationsUS, SpecialOperationsBR)
 
     // the expansion Commanders (the setup's Expansion Commanders option)
     val expansion = $[Commander](LightCavalryCompany, HeavyCavalryCompany, TacticalSupportCompany, MotorPoolCompany, PathfinderCompany,
@@ -544,6 +569,11 @@ object Commander {
         case TigerCallIn | TigerAce => $(Tiger)
         case RapidProduction => $(Kubelwagen)
         case TankDesantDAK => $(AssaultGrenadiers)
+        case MarderCallInFree | DisruptionBeacons => $(MarderIII)
+        case M3LeeCallIn => $(M3Lee)
+        case M3GrantCallIn => $(M3Grant)
+        case AssaultOperation => $(DevilsBrigade)
+        case SSFCanadiansSpawn | AssaultOperationBR => $(SSFCanadian)
         case TurretlessTerrorDAK => $(Stormtroopers)
         case MG42ArmoredCars => $(SdKfz222)
         case Mechanized222Surge => $(SdKfz222, PanzerGrenadiers)
@@ -656,7 +686,7 @@ case object NoCommanders extends CommandersChoice("No Commanders", "No Commander
 case object ThirdPrintingCommanders extends GameOption with ToggleOption {
     val group = "3rd printing".txt
     def valueOn = "New Commanders".hl
-    override val explain = $[Elem]("The players also draw from the 3rd printing's new Commanders of the core factions (from Bad Crow's change sheet; Breakthrough Offensive and Shock Army so far).".txt)
+    override val explain = $[Elem]("The players also draw from the 3rd printing's new Commanders of the core factions (from Bad Crow's change sheet; those played so far, which RULES.md lists).".txt)
     override def required(all : $[BaseOption]) = $($(DrawCommanders))
 }
 

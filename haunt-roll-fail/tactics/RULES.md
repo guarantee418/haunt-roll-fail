@@ -643,8 +643,22 @@ Bad Crow's "3rd printing balance changes" sheet's new rules, each a setup toggle
     Wehrmacht's, but Tank Desant's free Infantry is an Assault Grenadier, Target Weak Point gives StuG III Ds +1 HE, Turretless Terror gives
     Ds Camouflage too, and the free StuG is a III D or G, the player's pick. "Panzerjaegers can attack with just CRF at Range 1" isn't
     played yet.
+  - **Intel Disruption Doctrine** and **Tank Buster Doctrine**, the universal German cards, one each for the Wehrmacht, the OKW and the
+    DAK: Intel Disruption is the Recon Plane opening; Marder III Call-In (the DAK's Marder III, with the Wehrmacht's and OKW's tokens);
+    Disruption Beacons (an Infantry's first CP of a round and 2 Munitions: Camouflage this round, and it moves no more); Travel Speed
+    (Rapid Production; the two free Vehicles up to Tier 2 are picked from the faction's board and the Marder III); the Tank Buster
+    Doctrine opening is the Mark Vehicle one; Pact of Steel (Tier 2 Vehicles 1 Manpower less; the free Infantry any Tier 1 Infantry of
+    the board, no Weapon Team); Tank Busters (a Munitions upgrade of any Infantry for 3: its attack becomes 3 AP at range 3, its Close
+    Range dice gone; Health, Defense and Camouflage kept).
+  - US **Special Operations**: Mark Vehicle; SSF Commandos (the Devil's Brigade call-in, whose unit is the one the card describes); M3 Lee
+    (3 health, range 3, 2 fixed AI, 1 turreted AP, 2 fixed HE, 1 Manpower 4 Fuel); Assault Operation (a Devil's Brigade buys its Riflemen
+    XP and Munitions upgrades for nothing, one option each; one still standing neutralizes in the Supply Phase the Control Point it stands
+    on or assaulted this round, even pinned or after a failed Assault, and no enemy captures it there).
+  - British **Special Operations**: Mark Vehicle; SSF Canadians (an Infantry Section, with its upgrades, that takes +1 AI or AP for nothing
+    once, crosses water and gets 3 Defense Dice in a Destroyed Building, 4 Manpower); M3 Grant (as the Lee with 1 AI and Sight 3); Assault
+    Operation (the same, with the Infantry Section's XP Health and either Munitions upgrade).
   - The rest (Field Ordnance, Cavalry Support, Luftwaffe Supply, Reserve Army, Defense in Depth, Atlantic Wall, Rocketry Support, Army in
-    Exile, the DAK's Desperate Battle and Last Stand, Intel Disruption, Tank Buster, the Desert Rats', Stuart Honey and Stretch Goal
+    Exile, the DAK's Desperate Battle and Last Stand, the Desert Rats', Stuart Honey and Stretch Goal
     Commanders) and the core factions' new Lost Brigades are still to come (`tools/third-printing-art.py` lists them by picture).
 
 ## Units

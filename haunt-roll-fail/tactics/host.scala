@@ -57,9 +57,20 @@ object Host extends hrf.host.BaseHost {
     // the three drawn (alone, so no other is taken first) and takes its tiers whenever it may
     val commander = sys.env.get("TACTICS_COMMANDER")./(id => Commander.all.find(_.id == id).get)
 
+    // the forced Commander alone among those drawn (Replay does the same after each action, so its moves validate)
+    def forceDraw(g : G) = commander.foreach { c =>
+        g.setup.%(_.base == c.faction).foreach { f =>
+            if (g.commanderOf.contains(f).not && g.drawn.get(f).exists(_ != $(c))) {
+                g.drawn += f -> $(c)
+                // TACTICS_XP=n (and TACTICS_MUN=n): that player starts with n more XP (Munitions), to reach the later tiers
+                g.states(f).stock += XP -> (g.states(f).stock(XP) + sys.env.get("TACTICS_XP")./(_.toInt).|(0))
+                g.states(f).stock += Munitions -> (g.states(f).stock(Munitions) + sys.env.get("TACTICS_MUN")./(_.toInt).|(0))
+            }
+        }
+    }
+
     def forcedCommander(g : G, f : F, actions : $[UserAction]) : |[UserAction] = commander.%(_.faction == f.base)./~{ c =>
-        if (g.commanderOf.contains(f).not && g.drawn.get(f).exists(_.has(c).not))
-            g.drawn += f -> $(c)
+        forceDraw(g)
         g.explode(actions, false, None).find {
             case CommanderTierAction(_, x, _) => x == c
             case _ => false
@@ -170,6 +181,7 @@ object Replay {
         var rest = moves.drop(1)
         var n = 1
         while (rest.any) {
+            Host.forceDraw(game)
             auto(continue) match {
                 case Some(a) =>
                     continue = game.performContinue(|(continue), a, false).continue
