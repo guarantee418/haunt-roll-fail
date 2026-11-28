@@ -415,6 +415,30 @@ case object VeteranSquadLeaders extends Ability("Veteran Squad Leaders", "In the
 case object SideSkirts extends Ability("Side Skirts", "In the Supply Phase, Infantry with a Wrench may pay 3 Munitions to give an adjacent Vehicle +1 Health, once for each Vehicle.")
 case object ArmyInExile extends Ability("Army in Exile", "At the start of your Maneuver Phase spend your very first 2 CP and 1 Munitions: this round each enemy you assign damage to gives you 1 Munitions, and each one you destroy 1 XP.")
 case object PointAssault extends Ability("Point Assault", "Targeted Canadian Shock Troops and Stuarts may pay any Munitions for as many more Defense Dice, after the damage is assigned. One Veteran ANZAC spawns for free.")
+// Army in Exile, Rocketry Support, Field Support (British), Desperate Battle, Last Stand (DAK), Shock Motor, Airborne Troops (Soviet),
+// Luftwaffe Supply (Wehrmacht)
+case object PerimeterMonitor extends Ability("Perimeter Monitor", "At the start of your Maneuver Phase spend your very first 1 CP and 1 Munitions to place an Eye on three Control Points: they (and the hexes around them) are visible to your team this round, Camouflage too.")
+case object SLDFlares extends Ability("SLD Starburst Flares", "At the start of your Maneuver Phase spend your very first 1 CP and 1 Munitions to place an Eye on three Control Points: they (and the hexes around them) are visible to your team this round, Camouflage too.")
+case object LandMattressCallIn extends Ability("Land Mattress", "The Land Mattress can be bought: a Weapon Team, 3 health, range 2 to 6, 2 indirect HE, Slow, no Capture, no Setup in Buildings or Transports, its damage may also go to a second unit next to its target; 2 Manpower less spawned into a Universal Carrier that spawned this round.")
+case object SharpshootersANZAC extends Ability("Sharpshooters", "ANZAC Light Infantry can be bought (see the card). One spawns for free.")
+case object LandMattressEmplacementAbility extends Ability("Artillery Emplacement", "ANZAC and Infantry Sections can build the Land Mattress Emplacement (4 health, the Land Mattress's attack). One is built for free next to one of them.")
+case object SeekVengeance extends Ability("Seek Vengeance", "Polish Lancer Sections have Heroic Sacrifice; one may spend 1 CP to drop to the ground: +1 Range this round, and no more CP, moves or Retreat this round. One spawns for free.")
+case object VeteranSemovente extends Ability("Veteran Semovente", "Semoventes have an AP and an HE upgrade: 3 AP or 3 HE, picked each attack. One spawns for free.")
+case object NebelwerferCallInFree extends Ability("Nebelwerfer", "The Nebelwerfer can be bought. One spawns for free.")
+case object CombinedArmsDAK extends Ability("Combined Arms", "Infantry next to a Light Vehicle can't be pinned or take Overwatch, and gets 1 Defense Die where no better Cover counts, also Assaulting next to it; not in Buildings.")
+case object StrategicMobility extends Ability("Strategic Mobility", "At the start of your Maneuver Phase spend your very first 1 CP and 3 Munitions: Vehicle Weapon Teams and all Infantry may make a free move this turn. One 88mm FLAK 36 spawns for free.")
+case object ArmoredVehicleDetection extends Ability("Armored Vehicle Detection", "Light Vehicles and T-70s can upgrade to +2 Sight and spot Camouflage for 2 Munitions (a T-70 not twice).")
+case object ShockTroopsAssault extends Ability("Shock Troops", "Shock Troops can be bought: 5 health, range 2, 1 AI, Close Range Firepower, a Defense Die; Assaulting, they may pay 1 Munitions to Smoke the assaulted hex at the start of the Damage Phase.")
+case object MechanizedSupport extends Ability("Mechanized Support", "Infantry next to a Heavy Vehicle can't be pinned or take Overwatch, and gets 1 Defense Die where no better Cover counts, also Assaulting next to it; not in Buildings. One T-70 spawns for free.")
+case object VehicleCrewTraining extends Ability("Vehicle Crew Training", "T-70s and T-34s can upgrade to +1 AP for 3 Munitions; T-70s always Capture. One Shock Troops squad spawns for free.")
+case object RadioNet extends Ability("Radio Net", "Light Vehicles can upgrade to +2 Sight and spot Camouflage for 2 Munitions.")
+case object CanadianShockCallInFree extends Ability("Canadian Shock Troops", "Canadian Shock Troops can be bought, two squads for each. One pair spawns for free.")
+case object WithdrawAndRefit extends Ability("Withdraw and Refit", "Once a Supply Phase, return an Emplacement or a Light Vehicle that didn't spawn this round to the supply, for its Manpower and Fuel back. One .55 cal Armor Piercing Sniper spawns for free.")
+case object MedicalAirdrop extends Ability("Medical Airdrop", "At the start of your Maneuver Phase spend your very first 2 CP and 1 Munitions to mark a hex: there and around it your Infantry take 1 less damage this round.")
+case object RallyPoints extends Ability("Rally Points", "At the start of your Maneuver Phase spend your very first 2 CP and 1 Munitions to mark a hex: there and around it your Infantry take 1 less damage this round.")
+case object PanzerwerferCallInFree extends Ability("Panzerwerfer", "The Panzerwerfer can be bought. One spawns for free.")
+case object JU52Cargo extends Ability("JU52 Cargo Supply Drop", "Drop a Weapon Team and a Pak 43 Emplacement on visible adjacent non-Building hexes, Double Slow the first round, for 4 Manpower and 5 Munitions; one a round. One group drops for free.")
+case object AirborneGuardsParadrop extends Ability("Airborne Guards Paradrop", "Drop a Weapon Team (1 Manpower 5 Munitions) or Guards Rifle Infantry (5 Manpower 1 Munitions) on a visible non-Building hex, Double Slow the first round; one a round. One drops for free.")
 
 case object CommandPantherCallIn extends Ability("Command Panther", "The Command Panther can be bought: 5 health, range 3, 2 AP and 2 AI turreted, Spots Camo. One at a time.")
 
@@ -524,6 +548,14 @@ case object ArtillerySupportBR extends Commander("artillery-support", "Artillery
 case object HeavyArmorSupport extends Commander("heavy-armor-support", "Heavy Armor Support", British, $(Tier(VehicleOverRepair, 1), Tier(DingoCallInIS, 3), Tier(M3GrantCallInPlain, 1, 3), Tier(BlackPrinceCallIn, 5, 3)))
 case object PolishCavalry extends Commander("polish-cavalry", "Polish Cavalry Regiment", British, $(Tier(PolishLancerCallInPlain, 1), Tier(StuartHoneyCallIn, 1, 2), Tier(StrategicManeuversBR, 3), Tier(NoManLeftBehind, 5)))
 case object CommonwealthDefense extends Commander("commonwealth-defense", "Commonwealth Defense", British, $(Tier(ANZACCallIn, 1), Tier(CanadianShockCallIn, 1), Tier(StuartHoneyCallInFree, 4, 2), Tier(PointAssault, 3)))
+case object ArmyInExileCommander extends Commander("army-in-exile", "Army in Exile", British, $(Tier(ArmyInExile, 1), Tier(PolishLancerCallIn, 3), Tier(LandMattressCallIn, 1, 2), Tier(SeekVengeance, 3)))
+case object RocketrySupport extends Commander("rocketry-support", "Rocketry Support", British, $(Tier(PerimeterMonitor, 1), Tier(LandMattressCallIn, 1, 2), Tier(SharpshootersANZAC, 3), Tier(LandMattressEmplacementAbility, 3, 2)))
+case object FieldSupport extends Commander("field-support", "Field Support", British, $(Tier(RadioNet, 1), Tier(APSniperCallInPlain, 1), Tier(CanadianShockCallInFree, 3), Tier(WithdrawAndRefit, 3)))
+case object DesperateBattle extends Commander("desperate-battle", "Desperate Battle", DAK, $(Tier(VeteranSquadLeaders, 1), Tier(SLDFlares, 1), Tier(NebelwerferCallInFree, 4, 2), Tier(VeteranSemovente, 4, 2)))
+case object LastStand extends Commander("last-stand", "Last Stand", DAK, $(Tier(CombinedArmsDAK, 1), Tier(NebelwerferCallIn, 1, 2), Tier(KradCallInFree, 3), Tier(StrategicMobility, 4, 3)))
+case object ShockMotor extends Commander("shock-motor", "Shock Motor Heavy Tactics", Soviet, $(Tier(ArmoredVehicleDetection, 1), Tier(ShockTroopsAssault, 1), Tier(MechanizedSupport, 4, 2), Tier(VehicleCrewTraining, 3)))
+case object AirborneTroops extends Commander("airborne-troops", "Airborne Troops Tactics", Soviet, $(Tier(RallyPoints, 1), Tier(DShKCallIn, 3), Tier(GuardsRifleCallIn, 1), Tier(AirborneGuardsParadrop, 4)))
+case object LuftwaffeSupply extends Commander("luftwaffe-supply", "Luftwaffe Supply Doctrine", Wehrmacht, $(Tier(MedicalAirdrop, 1), Tier(Pak43Emplacement, 1), Tier(PanzerwerferCallInFree, 4, 2), Tier(JU52Cargo, 4)))
 case object SpecialOperationsUS extends Commander("special-operations-us", "Special Operations", US, $(Tier(MarkVehicle, 1), Tier(DevilsBrigadeSpawn, 3), Tier(M3LeeCallInPlain, 1, 3), Tier(AssaultOperation, 3)))
 case object SpecialOperationsBR extends Commander("special-operations-british", "Special Operations", British, $(Tier(MarkVehicle, 1), Tier(SSFCanadiansSpawn, 3), Tier(M3GrantCallInPlain, 1, 3), Tier(AssaultOperationBR, 3)))
 case object BreakthroughOffensive extends Commander("breakthrough-offensive", "Breakthrough Offensive", Wehrmacht, $(Tier(RapidProduction, 3), Tier(PanzerwerferCallIn, 1, 2), Tier(TigerCallInPlain, 1, 3), Tier(TigerAce, 5, 3)))
@@ -576,13 +608,15 @@ object Commander {
         StuGAssaultDoctrineDAK, StuGTacticsDAK, BreakthroughOffensive, ShockArmy,
         IntelDisruptionWM, IntelDisruptionOKW, IntelDisruptionDAK, TankBusterWM, TankBusterOKW, TankBusterDAK, SpecialOperationsUS, SpecialOperationsBR,
         EngineeringCorps, DefenseInDepthDoctrine, AtlanticWall, ReserveArmy, ItalianInfantryCommander,
-        PolishCarpathian, ShockAssaultRegiment, LogisticalSupremacy, ArtillerySupportBR, HeavyArmorSupport, PolishCavalry, CommonwealthDefense)
+        PolishCarpathian, ShockAssaultRegiment, LogisticalSupremacy, ArtillerySupportBR, HeavyArmorSupport, PolishCavalry, CommonwealthDefense,
+        ArmyInExileCommander, RocketrySupport, FieldSupport, DesperateBattle, LastStand, ShockMotor, AirborneTroops, LuftwaffeSupply)
 
     // the 3rd printing's new Commanders of the core factions (the setup's ThirdPrintingCommanders)
     val printing = $[Commander](BreakthroughOffensive, ShockArmy,
         IntelDisruptionWM, IntelDisruptionOKW, IntelDisruptionDAK, TankBusterWM, TankBusterOKW, TankBusterDAK, SpecialOperationsUS, SpecialOperationsBR,
         EngineeringCorps, DefenseInDepthDoctrine, AtlanticWall, ReserveArmy, ItalianInfantryCommander,
-        PolishCarpathian, ShockAssaultRegiment, LogisticalSupremacy, ArtillerySupportBR, HeavyArmorSupport, PolishCavalry, CommonwealthDefense)
+        PolishCarpathian, ShockAssaultRegiment, LogisticalSupremacy, ArtillerySupportBR, HeavyArmorSupport, PolishCavalry, CommonwealthDefense,
+        ArmyInExileCommander, RocketrySupport, FieldSupport, DesperateBattle, LastStand, ShockMotor, AirborneTroops, LuftwaffeSupply)
 
     // the expansion Commanders (the setup's Expansion Commanders option)
     val expansion = $[Commander](LightCavalryCompany, HeavyCavalryCompany, TacticalSupportCompany, MotorPoolCompany, PathfinderCompany,
@@ -604,7 +638,7 @@ object Commander {
     def pool(f : Faction, options : $[BaseOption]) = options.has(ExpansionCommanders).?(all.diff(printing).%(_.faction == f.base)).|(of(f)) ++ options.has(ThirdPrintingCommanders).??(printing.%(_.faction == f.base))
 
     // the abilities spent at the start of a Maneuver Phase: CP, Munitions
-    val opening = Map[Ability, (Int, Int)](ItalianInfantry -> (1, 3), SmokeOperation -> (2, 2), NoManLeftBehind -> (2, 1), ArmyInExile -> (2, 1), ReconSweep -> (1, 1), P47Strike -> (2, 2), CombatGroupAdvance -> (1, 3), PanzerwerferBarrage -> (1, 1), FragmentationBomb -> (2, 2), ArmorBlitzkrieg -> (1, 3),
+    val opening = Map[Ability, (Int, Int)](ItalianInfantry -> (1, 3), SmokeOperation -> (2, 2), NoManLeftBehind -> (2, 1), ArmyInExile -> (2, 1), PerimeterMonitor -> (1, 1), SLDFlares -> (1, 1), MedicalAirdrop -> (2, 1), RallyPoints -> (2, 1), StrategicMobility -> (1, 3), ReconSweep -> (1, 1), P47Strike -> (2, 2), CombatGroupAdvance -> (1, 3), PanzerwerferBarrage -> (1, 1), FragmentationBomb -> (2, 2), ArmorBlitzkrieg -> (1, 3),
         ArtilleryEye -> (1, 1), IL2Strike -> (2, 2), BreakthroughTactics -> (1, 3), GrandAssault -> (1, 3), RapidConscription -> (2, 1), FortifiedCamo -> (1, 1),
         CombinedArms -> (2, 2), P47Strafing -> (2, 2), Outmaneuver -> (1, 3), HowitzerBarrage -> (1, 1),
         StukaStrafe -> (2, 2), MarkVehicle -> (1, 2), ReconPlane -> (1, 1), TacticalMovement -> (1, 3),
@@ -628,6 +662,15 @@ object Commander {
         case TankDesantDAK => $(AssaultGrenadiers)
         case MarderCallInFree | DisruptionBeacons => $(MarderIII)
         case FastDeploy => $(Jeep)
+        case SeekVengeance => $(PolishLancer)
+        case VeteranSemovente => $(Semovente)
+        case NebelwerferCallInFree => $(Nebelwerfer)
+        case StrategicMobility => $(Flak88)
+        case MechanizedSupport => $(T70)
+        case VehicleCrewTraining => $(ShockTroops)
+        case WithdrawAndRefit => $(APSniper)
+        case SharpshootersANZAC => $(ANZAC)
+        case PanzerwerferCallInFree => $(Panzerwerfer)
         case PolishLancerCallIn | StrategicManeuversBR => $(PolishLancer)
         case BlackPrinceCallIn => $(BlackPrince)
         case DingoCallInFree => $(Dingo)

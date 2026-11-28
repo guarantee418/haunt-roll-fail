@@ -688,11 +688,32 @@ Bad Crow's "3rd printing balance changes" sheet's new rules, each a setup toggle
     Health, once a Vehicle), Strategic Maneuvers (the US's No-Fire mode for Stuarts), No Man Left Behind (this round 1 Manpower for each
     damage the player's Infantry take), Point Assault (the Ober Defense step: any Munitions for as many Defense Dice, after the damage is
     assigned).
+  - British **Army in Exile** (the opening: this round 1 Munitions for each enemy the player assigns damage to, in the Damage Phase, and 1
+    XP for each it destroys; Polish Lancers; the Land Mattress; Seek Vengeance: Lancers have Heroic Sacrifice, and 1 CP drops one to the
+    ground, +1 Range this round, no more CP, moves or Retreat this round), British **Rocketry Support** (Perimeter Monitor: an Eye on three
+    Control Points, picked one at a time, as the Recon Plane's; the Land Mattress, a Weapon Team of 3 health, range 2 to 6, 2 indirect HE,
+    Slow, no Capture, a second target next to the first, 5 Manpower 1 Fuel, 2 Manpower less spawned into a Universal Carrier that spawned
+    this round; Sharpshooters, ANZAC with one free; the Land Mattress Emplacement, the same as an Emplacement of 4 health built by
+    Infantry Sections and ANZAC for the same price, one built free), British **Field Support** (Radio Net: Light Vehicles' +2 Sight Spots
+    Camo upgrade for 2 Munitions; the AP Sniper; a free pair of Canadian Shock Troops; Withdraw and Refit: once a Supply Phase an
+    Emplacement or Light Vehicle, not a Tier Building and not spawned this round, goes back to the supply for its Manpower and Fuel).
+  - DAK **Desperate Battle** (Veteran Squad Leaders: Attacking Spirit for 1 XP; SLD Starburst Flares, the Perimeter Monitor; Nebelwerfer;
+    Veteran Semovente: +1 AP, and 3 HE in place of its 2, picked each attack; one free) and **Last Stand** (Combined Arms: Infantry next
+    to a Light Vehicle, not in a Building, is never pinned or hit by Overwatch, and gets 1 Defense Die where no better Cover counts, the
+    sheet's FAQ; Nebelwerfer; Kradschützen; Strategic Mobility: a free move for every Infantry and Vehicle Weapon Team; one 88 free).
+  - Soviet **Shock Motor Heavy Tactics** (Armored Vehicle Detection: the Light Vehicles' and T-70s' +2 Sight Spots Camo upgrade, never twice
+    on a T-70; Shock Troops with their Smoke when Assaulting; Mechanized Support: Combined Arms beside Heavy Vehicles, one T-70 free;
+    Vehicle Crew Training: T-70s and T-34s +1 AP for 3 Munitions, T-70s always Capture, one Shock Troops free) and **Airborne Troops
+    Tactics** (Rally Points: the opening marks a hex, and the player's Infantry there and around it take 1 damage less from each hit
+    this round; the DShK; Guards Rifle; Airborne Guards Paradrop: a purchase dropping a Weapon Team, 1 Manpower 5 Munitions, or Guards
+    Rifle, 5 Manpower 1 Munitions, on a visible hex, Double Slow, one a round, one free).
+  - Wehrmacht **Luftwaffe Supply Doctrine** (Medical Airdrop, as Rally Points; Pak 43 Emplacement; Panzerwerfer, one free; JU52 Cargo Supply
+    Drop: a purchase dropping a Weapon Team and a Pak 43 beside it, 4 Manpower 5 Munitions, Double Slow, one a round, one group free).
   - Defense in Depth, Field Engineers and Advanced Fortifications (their engineers): spending its first CP of a round, the unit may leave
     Barbed Wire or a Tank Trap in its hex for nothing (read as "in the hex they are leaving": the player then moves it; Sandbags, which
     need a facing, and Barricades are left out); when it Assaults, it may remove one Battlefield Defense of the assaulted hex at once.
-  - The rest (Field Ordnance, Cavalry Support, Luftwaffe Supply, Rocketry Support, Army in
-    Exile, the DAK's Desperate Battle and Last Stand, the Stretch Goal Commanders) and the core factions' new Lost Brigades are still to come (`tools/third-printing-art.py` lists them by picture).
+  - The rest (Field Ordnance, Cavalry Support, the Stretch Goal Commanders but Engineering Corps, Special Operations, Shock Motor and
+    Airborne Troops) and the core factions' new Lost Brigades are still to come (`tools/third-printing-art.py` lists them by picture).
 
 ## Units
 
