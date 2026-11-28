@@ -670,12 +670,29 @@ Bad Crow's "3rd printing balance changes" sheet's new rules, each a setup toggle
     marks three Control Points, picked one at a time; the player's Infantry on one in the Damage Phase gets 1 more Defense Die, stacking
     with Cover), Guastatori, Bersaglieri (one free), Off Shore Support (Guastatori and Bersaglieri get a Health and an AI upgrade free; two
     SdKfz 250 free).
+  - The British **Desert Rats** and **Stuart "Honey"** Commanders: Polish Carpathian Brigade, Shock Assault Regiment, Logistical Supremacy,
+    Artillery Support, Heavy Armor Support, Polish Cavalry Regiment, Commonwealth Defense. Their units: the Polish Lancer Section (4
+    health, range 2 to 3 as its grey and red range icons read, 1 AI 1 AP, 4 Manpower 1 Munitions; a Veterancy option, +2 AP for 3 XP),
+    the Matilda II (5 health, range 2, 2 turreted AI, Slow, 2 Manpower 3 Fuel; after spending a CP, once a round, it may move onto an
+    adjacent empty Control Point for free, facing the way it went), the Black Prince (a Churchill for the limit: 6 health, range 4, 3 AP
+    turreted (the card shows one turreted and two forward; one arc is played for all three), 2 Close Range AI, a Defense Die, Slow, 3
+    Manpower 5 Fuel), the Canadian Shock Troops (two squads a purchase: 3 health, range 2, 3 AI of which 2 Close Range, a Speed Die, 4
+    Manpower 1 Munitions), the ANZAC Light Infantry (5 health, range 2, 1 AI, Camouflage, a Wrench, building every Emplacement an
+    Infantry Section builds; a Veterancy option for 2 XP, +2 Sight and Spots Camo or +1 AI; a "Veteran ANZAC" spawns with Spots Camo),
+    the Dingo (1 health, range 3, 1 indirect HE, Capture, Reinforce, 2 Speed Dice, 2 Manpower 1 Fuel) and the Stuart (the US's M5).
+    Abilities: Rigorous Vehicle Training (in the Damage Phase, 1 XP for each enemy its Heavy Vehicles assigned damage to, and 1 XP more
+    for each of its Heavy Vehicles destroyed), Attacking Spirit (a Supply Phase purchase: each Infantry of the player on a Control Point
+    it holds may Reinforce 1 for 1 Munitions, free if the point was captured that Supply Phase, once a round each), Smoke Operation (the
+    opening Smokes those hexes at once, for the round), Towed Heavy Mortar (a Dingo builds as an Infantry Section with one Wrench, 3
+    Munitions more), Vehicle Over Repair (a Supply Phase purchase: an Infantry with a Wrench gives an adjacent Vehicle +1 Health and
+    Health, once a Vehicle), Strategic Maneuvers (the US's No-Fire mode for Stuarts), No Man Left Behind (this round 1 Manpower for each
+    damage the player's Infantry take), Point Assault (the Ober Defense step: any Munitions for as many Defense Dice, after the damage is
+    assigned).
   - Defense in Depth, Field Engineers and Advanced Fortifications (their engineers): spending its first CP of a round, the unit may leave
     Barbed Wire or a Tank Trap in its hex for nothing (read as "in the hex they are leaving": the player then moves it; Sandbags, which
     need a facing, and Barricades are left out); when it Assaults, it may remove one Battlefield Defense of the assaulted hex at once.
   - The rest (Field Ordnance, Cavalry Support, Luftwaffe Supply, Rocketry Support, Army in
-    Exile, the DAK's Desperate Battle and Last Stand, the Desert Rats', Stuart Honey and Stretch Goal
-    Commanders) and the core factions' new Lost Brigades are still to come (`tools/third-printing-art.py` lists them by picture).
+    Exile, the DAK's Desperate Battle and Last Stand, the Stretch Goal Commanders) and the core factions' new Lost Brigades are still to come (`tools/third-printing-art.py` lists them by picture).
 
 ## Units
 

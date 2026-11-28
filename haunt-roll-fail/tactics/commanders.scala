@@ -390,6 +390,31 @@ case object AdvancedFortifications extends Ability("Advanced Fortifications", "C
 case object ReserveConscription extends Ability("Reserve Conscription", "Once a Supply Phase, for 5 Munitions every Infantry with a Munitions Health upgrade left takes one, and every Infantry Reinforces 1 health. Two Conscripts spawn for free.")
 case object ItalianInfantry extends Ability("Italian Infantry", "At the start of your Maneuver Phase spend your very first 1 CP and 3 Munitions to mark three Control Points: your Infantry on them in the Damage Phase gets 1 more Defense Die this round.")
 case object OffShoreSupport extends Ability("Off Shore Support", "Guastatori and Bersaglieri have a Health and an AI upgrade for free. Two SdKfz 250s spawn for free.")
+// the British Desert Rats and Stuart "Honey" pack
+case object PolishLancerCallIn extends Ability("Polish Lancer Section", "Polish Lancer Sections can be bought: 4 health, range 2 to 3, 1 AI and 1 AP; a Veterancy option, +2 AP for 3 XP. One spawns for free.")
+case object PolishLancerCallInPlain extends Ability("Polish Lancer Section", "Polish Lancer Sections can be bought: 4 health, range 2 to 3, 1 AI and 1 AP; a Veterancy option, +2 AP for 3 XP.")
+case object MatildaCallIn extends Ability("Matilda II", "The Matilda II can be bought: 5 health, range 2, 2 turreted AI, Slow. After spending a CP it may move onto an adjacent Control Point for free, as with a Speed Die.")
+case object RigorousVehicleTraining extends Ability("Rigorous Vehicle Training", "Each enemy your Heavy Vehicles target gives you 1 more XP, and each of your Heavy Vehicles destroyed 1 more XP.")
+case object BlackPrinceCallIn extends Ability("Black Prince", "The Black Prince can be bought (a Churchill for the limit): 6 health, range 4, 3 AP and 2 Close Range AI, a Defense Die, Slow. One spawns for free.")
+case object CanadianShockCallIn extends Ability("Canadian Shock Troops", "Canadian Shock Troops can be bought, two squads for each: 3 health, range 2, 3 AI of which 2 Close Range, a Speed Die.")
+case object AttackingSpirit extends Ability("Attacking Spirit", "In the Supply Phase, each Infantry on a Control Point may pay 1 Munitions to Reinforce 1 health, free if the point was captured this round. One pair of Canadian Shock Troops spawns for free.")
+case object SmokeOperation extends Ability("Smoke Operation", "At the start of your Maneuver Phase spend your very first 2 CP and 2 Munitions: every Matilda II and every Infantry on a Control Point Smokes its hex. One Vehicle spawns for free.")
+case object DingoCallIn extends Ability("Dingo - Forward Observer", "The Dingo can be bought: 1 health, range 3, 1 indirect HE, Capture, Reinforce, 2 Speed Dice.")
+case object DingoCallInFree extends Ability("Dingo - Forward Observer", "The Dingo can be bought (see the card). One spawns for free.")
+case object DingoCallInIS extends Ability("Dingo", "The Dingo can be bought (see the card). One Infantry Section spawns for free.")
+case object ANZACCallIn extends Ability("ANZAC Light Infantry", "ANZAC Light Infantry can be bought: 5 health, range 2, 1 AI, Camouflage, a Wrench; they build Emplacements as Infantry Sections; a Veterancy option for 2 XP, +2 Sight and Spots Camo or +1 AI.")
+case object ANZACCallInFree extends Ability("ANZAC Light Infantry", "ANZAC Light Infantry can be bought (see the card). One spawns for free.")
+case object SeventeenPounderANZAC extends Ability("17 Pounder Emplacement", "ANZAC Light Infantry and Infantry Sections can build the 17 Pounder Emplacement (4 health, range 4, 4 AP, a Defense Die) for 5 Manpower. One Veteran ANZAC spawns for free.")
+case object TowedHeavyMortar extends Ability("Towed Heavy Mortar", "A Dingo may build one Emplacement each round as an Infantry Section with a Wrench, for 3 Munitions more.")
+case object VehicleOverRepair extends Ability("Vehicle Over Repair", "In the Supply Phase, Infantry with a Wrench may pay 3 Munitions to give an adjacent Vehicle +1 Health, once for each Vehicle.")
+case object StuartHoneyCallIn extends Ability("Stuart \"Honey\"", "The M5 Stuart can be bought: 3 health, range 2, 1 AI and 1 AP turreted, 2 Speed Dice.")
+case object StuartHoneyCallInFree extends Ability("Stuart \"Honey\"", "The M5 Stuart can be bought. One spawns for free.")
+case object StrategicManeuversBR extends Ability("Strategic Maneuvers", "Stuarts may spend 1 CP to toggle a No-Fire mode in which they capture, and 1 CP back. One Polish Lancer Section spawns for free.")
+case object NoManLeftBehind extends Ability("No Man Left Behind", "At the start of your Maneuver Phase spend your very first 2 CP and 1 Munitions: this round each damage your Infantry takes gives you 1 Manpower. One Stuart and one Polish Lancer Section spawn for free.")
+case object VeteranSquadLeaders extends Ability("Veteran Squad Leaders", "In the Supply Phase, each Infantry on a Control Point may pay 1 XP to Reinforce 1 health, free if the point was captured this round.")
+case object SideSkirts extends Ability("Side Skirts", "In the Supply Phase, Infantry with a Wrench may pay 3 Munitions to give an adjacent Vehicle +1 Health, once for each Vehicle.")
+case object ArmyInExile extends Ability("Army in Exile", "At the start of your Maneuver Phase spend your very first 2 CP and 1 Munitions: this round each enemy you assign damage to gives you 1 Munitions, and each one you destroy 1 XP.")
+case object PointAssault extends Ability("Point Assault", "Targeted Canadian Shock Troops and Stuarts may pay any Munitions for as many more Defense Dice, after the damage is assigned. One Veteran ANZAC spawns for free.")
 
 case object CommandPantherCallIn extends Ability("Command Panther", "The Command Panther can be bought: 5 health, range 3, 2 AP and 2 AI turreted, Spots Camo. One at a time.")
 
@@ -492,6 +517,13 @@ case object DefenseInDepthDoctrine extends Commander("defense-in-depth", "Defens
 case object AtlanticWall extends Commander("atlantic-wall", "Atlantic Wall", OKW, $(Tier(OKWCoastalWall, 1), Tier(LeFH18Ability, 1), Tier(OKWCoastalReserves, 3), Tier(PrecisionStrikeLeFH, 3)))
 case object ReserveArmy extends Commander("reserve-army", "Reserve Army", Soviet, $(Tier(CombatEngineerSpawn, 1), Tier(KatyushaCallInFree, 4, 2), Tier(AdvancedFortifications, 1), Tier(ReserveConscription, 5)))
 case object ItalianInfantryCommander extends Commander("italian-infantry", "Italian Infantry", DAK, $(Tier(ItalianInfantry, 1), Tier(GuastatoriCallIn, 1), Tier(BersaglieriCallInFree, 3), Tier(OffShoreSupport, 5, 2)))
+case object PolishCarpathian extends Commander("polish-carpathian", "Polish Carpathian Brigade", British, $(Tier(PolishLancerCallIn, 3), Tier(MatildaCallIn, 1, 2), Tier(RigorousVehicleTraining, 1), Tier(BlackPrinceCallIn, 5, 3)))
+case object ShockAssaultRegiment extends Commander("shock-assault", "Shock Assault Regiment", British, $(Tier(CanadianShockCallIn, 1), Tier(MatildaCallIn, 1, 2), Tier(AttackingSpirit, 3), Tier(SmokeOperation, 4, 3)))
+case object LogisticalSupremacy extends Commander("logistical-supremacy", "Logistical Supremacy", British, $(Tier(DingoCallIn, 1), Tier(ANZACCallIn, 1), Tier(SeventeenPounderANZAC, 3), Tier(BlackPrinceCallIn, 5, 3)))
+case object ArtillerySupportBR extends Commander("artillery-support", "Artillery Support", British, $(Tier(DingoCallInFree, 3), Tier(MatildaCallIn, 1, 2), Tier(TowedHeavyMortar, 1, 2), Tier(M3GrantCallIn, 4, 3)))
+case object HeavyArmorSupport extends Commander("heavy-armor-support", "Heavy Armor Support", British, $(Tier(VehicleOverRepair, 1), Tier(DingoCallInIS, 3), Tier(M3GrantCallInPlain, 1, 3), Tier(BlackPrinceCallIn, 5, 3)))
+case object PolishCavalry extends Commander("polish-cavalry", "Polish Cavalry Regiment", British, $(Tier(PolishLancerCallInPlain, 1), Tier(StuartHoneyCallIn, 1, 2), Tier(StrategicManeuversBR, 3), Tier(NoManLeftBehind, 5)))
+case object CommonwealthDefense extends Commander("commonwealth-defense", "Commonwealth Defense", British, $(Tier(ANZACCallIn, 1), Tier(CanadianShockCallIn, 1), Tier(StuartHoneyCallInFree, 4, 2), Tier(PointAssault, 3)))
 case object SpecialOperationsUS extends Commander("special-operations-us", "Special Operations", US, $(Tier(MarkVehicle, 1), Tier(DevilsBrigadeSpawn, 3), Tier(M3LeeCallInPlain, 1, 3), Tier(AssaultOperation, 3)))
 case object SpecialOperationsBR extends Commander("special-operations-british", "Special Operations", British, $(Tier(MarkVehicle, 1), Tier(SSFCanadiansSpawn, 3), Tier(M3GrantCallInPlain, 1, 3), Tier(AssaultOperationBR, 3)))
 case object BreakthroughOffensive extends Commander("breakthrough-offensive", "Breakthrough Offensive", Wehrmacht, $(Tier(RapidProduction, 3), Tier(PanzerwerferCallIn, 1, 2), Tier(TigerCallInPlain, 1, 3), Tier(TigerAce, 5, 3)))
@@ -543,12 +575,14 @@ object Commander {
         ItalianLightSupport, ItalianDesertRaid, DAKAssaultSupportDoctrine, ItalianTankAssaultCommander,
         StuGAssaultDoctrineDAK, StuGTacticsDAK, BreakthroughOffensive, ShockArmy,
         IntelDisruptionWM, IntelDisruptionOKW, IntelDisruptionDAK, TankBusterWM, TankBusterOKW, TankBusterDAK, SpecialOperationsUS, SpecialOperationsBR,
-        EngineeringCorps, DefenseInDepthDoctrine, AtlanticWall, ReserveArmy, ItalianInfantryCommander)
+        EngineeringCorps, DefenseInDepthDoctrine, AtlanticWall, ReserveArmy, ItalianInfantryCommander,
+        PolishCarpathian, ShockAssaultRegiment, LogisticalSupremacy, ArtillerySupportBR, HeavyArmorSupport, PolishCavalry, CommonwealthDefense)
 
     // the 3rd printing's new Commanders of the core factions (the setup's ThirdPrintingCommanders)
     val printing = $[Commander](BreakthroughOffensive, ShockArmy,
         IntelDisruptionWM, IntelDisruptionOKW, IntelDisruptionDAK, TankBusterWM, TankBusterOKW, TankBusterDAK, SpecialOperationsUS, SpecialOperationsBR,
-        EngineeringCorps, DefenseInDepthDoctrine, AtlanticWall, ReserveArmy, ItalianInfantryCommander)
+        EngineeringCorps, DefenseInDepthDoctrine, AtlanticWall, ReserveArmy, ItalianInfantryCommander,
+        PolishCarpathian, ShockAssaultRegiment, LogisticalSupremacy, ArtillerySupportBR, HeavyArmorSupport, PolishCavalry, CommonwealthDefense)
 
     // the expansion Commanders (the setup's Expansion Commanders option)
     val expansion = $[Commander](LightCavalryCompany, HeavyCavalryCompany, TacticalSupportCompany, MotorPoolCompany, PathfinderCompany,
@@ -570,7 +604,7 @@ object Commander {
     def pool(f : Faction, options : $[BaseOption]) = options.has(ExpansionCommanders).?(all.diff(printing).%(_.faction == f.base)).|(of(f)) ++ options.has(ThirdPrintingCommanders).??(printing.%(_.faction == f.base))
 
     // the abilities spent at the start of a Maneuver Phase: CP, Munitions
-    val opening = Map[Ability, (Int, Int)](ItalianInfantry -> (1, 3), ReconSweep -> (1, 1), P47Strike -> (2, 2), CombatGroupAdvance -> (1, 3), PanzerwerferBarrage -> (1, 1), FragmentationBomb -> (2, 2), ArmorBlitzkrieg -> (1, 3),
+    val opening = Map[Ability, (Int, Int)](ItalianInfantry -> (1, 3), SmokeOperation -> (2, 2), NoManLeftBehind -> (2, 1), ArmyInExile -> (2, 1), ReconSweep -> (1, 1), P47Strike -> (2, 2), CombatGroupAdvance -> (1, 3), PanzerwerferBarrage -> (1, 1), FragmentationBomb -> (2, 2), ArmorBlitzkrieg -> (1, 3),
         ArtilleryEye -> (1, 1), IL2Strike -> (2, 2), BreakthroughTactics -> (1, 3), GrandAssault -> (1, 3), RapidConscription -> (2, 1), FortifiedCamo -> (1, 1),
         CombinedArms -> (2, 2), P47Strafing -> (2, 2), Outmaneuver -> (1, 3), HowitzerBarrage -> (1, 1),
         StukaStrafe -> (2, 2), MarkVehicle -> (1, 2), ReconPlane -> (1, 1), TacticalMovement -> (1, 3),
@@ -594,6 +628,12 @@ object Commander {
         case TankDesantDAK => $(AssaultGrenadiers)
         case MarderCallInFree | DisruptionBeacons => $(MarderIII)
         case FastDeploy => $(Jeep)
+        case PolishLancerCallIn | StrategicManeuversBR => $(PolishLancer)
+        case BlackPrinceCallIn => $(BlackPrince)
+        case DingoCallInFree => $(Dingo)
+        case DingoCallInIS => $(InfantrySection)
+        case StuartHoneyCallInFree => $(Stuart)
+        case NoManLeftBehind => $(Stuart, PolishLancer)
         case BigRocketBoom => $(Sturmtiger)
         case KatyushaCallInFree => $(Katyusha)
         case ReserveConscription => $(Conscripts, Conscripts)

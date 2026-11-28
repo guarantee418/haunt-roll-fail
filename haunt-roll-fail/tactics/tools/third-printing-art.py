@@ -32,14 +32,18 @@ ALL = {32: 'Field Ordnance (US)', 33: 'Cavalry Support (US)', 34: 'Luftwaffe Sup
 CARDS = {35: 'breakthrough-offensive', 37: 'shock-army', 46: 'stug-assault-dak', 47: 'stug-tactics-dak',
     44: ['intel-disruption-wehrmacht', 'intel-disruption-okw', 'intel-disruption-dak'], 45: ['tank-buster-wehrmacht', 'tank-buster-okw', 'tank-buster-dak'],
     56: 'special-operations-us', 49: 'special-operations-british',
-    57: 'engineering-corps', 38: 'defense-in-depth', 39: 'atlantic-wall', 36: 'reserve-army', 67: 'italian-infantry'}
+    57: 'engineering-corps', 38: 'defense-in-depth', 39: 'atlantic-wall', 36: 'reserve-army', 67: 'italian-infantry',
+    48: 'polish-carpathian', 50: 'shock-assault', 51: 'logistical-supremacy', 52: 'artillery-support', 53: 'heavy-armor-support',
+    54: 'polish-cavalry', 55: 'commonwealth-defense'}
 
 PANEL = {2: 485, 3: 805, 4: 1130}
 
 # the token, its faction, the picture and panel its portrait is on, its kind
 TOKENS = [('panzerwerfer', 'wehrmacht', 35, 2, 'Y'), ('katyusha', 'soviet', 37, 3, 'Y'),
     ('marder-iii', 'wehrmacht', 44, 2, 'R'), ('marder-iii', 'okw', 44, 2, 'R'), ('m3-lee', 'us', 56, 3, 'R'), ('m3-grant', 'british', 49, 3, 'R'),
-    ('ssf-canadians', 'british', 49, 2, 'G'), ('combat-engineers', 'soviet', 36, 3, 'G')]
+    ('ssf-canadians', 'british', 49, 2, 'G'), ('combat-engineers', 'soviet', 36, 3, 'G'),
+    ('polish-lancer', 'british', 41, 2, 'G'), ('matilda', 'british', 48, 2, 'R'), ('black-prince', 'british', 48, 4, 'R'),
+    ('canadian-shock', 'british', 55, 2, 'G'), ('anzac', 'british', 51, 2, 'G'), ('dingo', 'british', 53, 2, 'Y'), ('stuart', 'british', 54, 2, 'R')]
 
 def make(d, out):
     for n, ids in CARDS.items():
