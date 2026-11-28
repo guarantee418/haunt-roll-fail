@@ -728,10 +728,29 @@ Bad Crow's "3rd printing balance changes" sheet's new rules, each a setup toggle
     Buildings +1 Health, the Battlegroup's Retreat Point and the Schwerer HQ's +2 Sight Spots Camo for 4 Munitions each; Goliath Tracked
     Mine: an opening on a hex within 3 of a Tier Building, 2 HE there in the Damage Phase, hitting only enemies; For the Fatherland, one
     Obersoldaten free; Valiant Assault: Obersoldaten have their AI XP and Speed upgrades, and Assault Operation's hold on points; one free).
+  - OKW **Luftwaffe Ground Forces**: Fallschirmjäger (a purchase dropping one on a visible non-Building hex, Double Slow, 5 Manpower 1
+    Munitions, one a round: Volksgrenadiers with Sight 3 and no Defense Die, their upgrades), the MG-34 Team (one free: a Weapon Team, 4
+    health, range 3, 1 AI, a machine gun, Sight 3, a Speed Die, no Capture, 4 Manpower 1 Munitions), FG42 Rifles (a Fallschirmjäger with
+    both its XP Health upgrades has +1 AI and still attacks pinned), Stuka Airborne Assault (the opening's 3 hexes in a line each take 1
+    AI, and the enemy Infantry in them is pinned at the pin step; the free Fallschirmjäger, dropped, uses up that round's one).
+  - British **Infantry Assault**: Valour (the opening marks a VP Control Point the player's team doesn't hold: this round every unit
+    destroyed there gives no VP, and in the Supply Phase the point gives its holder 1 more VP), the Gurkha Rifles Section (5 health,
+    range 2, 1 AI, 4 Manpower 1 Munitions; for 3 Munitions either +1 Range, +1 Sight and +1 AI, or a Defense Die and a Close Range die,
+    read off the package icons), Ayo Gorkhali! (a Gurkha Assaults spending no CP, with 1 more HE in that Assault; one free), Volunteer
+    Infantry (Infantry 1 Manpower less, and Rapid Production's free move for Infantry; one board Infantry free).
+  - US **Field Ordnance** (Fieldcraft, the mines; Assault Engineers; the Frontline Medical Station, the British Forward Emplacement's rules,
+    built by Riflemen and Assault Engineers for 2 Manpower; Artillery Observer: a Jeep Veterancy option for 1 XP, Spots Camo (+2 Sight),
+    no Transport, and for 3 Munitions 2 indirect HE in place of its attack, with the Strafing second target, at what the Jeep could fire
+    at; one Veteran Jeep free) and **Cavalry Support** (Ranger Endurance Training: the Ranger Training rules, one Riflemen with the AP
+    Munitions upgrade free, the card not saying which; M3 Carriage: for 1 CP an Infantry Weapon Team, not set up, merges into an adjacent
+    Jeep that isn't a Veteran Observer: the M3 Carriage (one type per Weapon Team, a Jeep for the limit) has the Jeep's health +2, the team's
+    range, attacks, upgrades bought and to buy, sets up with a Firing Arc, Captures; the player gains 1 Manpower; Artillery Observer; M3
+    Lee, one free).
   - Defense in Depth, Field Engineers and Advanced Fortifications (their engineers): spending its first CP of a round, the unit may leave
     Barbed Wire or a Tank Trap in its hex for nothing (read as "in the hex they are leaving": the player then moves it; Sandbags, which
     need a facing, and Barricades are left out); when it Assaults, it may remove one Battlefield Defense of the assaulted hex at once.
-  - The rest (Field Ordnance, Cavalry Support, Luftwaffe Ground Forces and Infantry Assault) and the core factions' new Lost Brigades are still to come (`tools/third-printing-art.py` lists them by picture).
+  - Every Commander of the sheet is played (`tools/third-printing-art.py` lists them by picture); the core factions' new Lost Brigades
+    are still to come.
 
 ## Units
 

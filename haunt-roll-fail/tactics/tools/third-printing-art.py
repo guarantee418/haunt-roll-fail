@@ -28,7 +28,7 @@ ALL = {32: 'Field Ordnance (US)', 33: 'Cavalry Support (US)', 34: 'Luftwaffe Sup
     60: 'Shock Motor (SU)', 61: 'Airborne Troops Tactics (SU)', 62: 'Overwatch Doctrine (OKW)', 63: 'Luftwaffe Ground Forces (OKW)',
     64: 'Infantry Assault (BR)', 65: 'Demolition Engineers (BR)', 66: 'Field Support (BR)', 67: 'Italian Infantry (DAK)', 68: 'Stalling Tactics (DAK)'}
 
-# the cards played, by picture (a universal German card is each German faction's Commander)
+# the cards played, by picture (a universal German card is each German faction's Commander): all of them since 2026-11-28
 CARDS = {35: 'breakthrough-offensive', 37: 'shock-army', 46: 'stug-assault-dak', 47: 'stug-tactics-dak',
     44: ['intel-disruption-wehrmacht', 'intel-disruption-okw', 'intel-disruption-dak'], 45: ['tank-buster-wehrmacht', 'tank-buster-okw', 'tank-buster-dak'],
     56: 'special-operations-us', 49: 'special-operations-british',
@@ -37,7 +37,8 @@ CARDS = {35: 'breakthrough-offensive', 37: 'shock-army', 46: 'stug-assault-dak',
     54: 'polish-cavalry', 55: 'commonwealth-defense',
     41: 'army-in-exile', 40: 'rocketry-support', 66: 'field-support', 42: 'desperate-battle', 43: 'last-stand', 60: 'shock-motor',
     61: 'airborne-troops', 34: 'luftwaffe-supply',
-    68: 'stalling-tactics', 65: 'demolition-engineers', 58: 'fortified-armor', 59: 'jaeger-armor', 62: 'overwatch-doctrine'}
+    68: 'stalling-tactics', 65: 'demolition-engineers', 58: 'fortified-armor', 59: 'jaeger-armor', 62: 'overwatch-doctrine',
+    63: 'luftwaffe-ground', 64: 'infantry-assault', 32: 'field-ordnance', 33: 'cavalry-support'}
 
 PANEL = {2: 485, 3: 805, 4: 1130}
 
@@ -48,7 +49,9 @@ TOKENS = [('panzerwerfer', 'wehrmacht', 35, 2, 'Y'), ('katyusha', 'soviet', 37, 
     ('polish-lancer', 'british', 41, 2, 'G'), ('matilda', 'british', 48, 2, 'R'), ('black-prince', 'british', 48, 4, 'R'),
     ('canadian-shock', 'british', 55, 2, 'G'), ('anzac', 'british', 51, 2, 'G'), ('dingo', 'british', 53, 2, 'Y'), ('stuart', 'british', 54, 2, 'R'),
     ('land-mattress', 'british', 40, 2, 'G'), ('land-mattress-emplacement', 'british', 40, 4, 'P'),
-    ('forward-repair', 'british', 65, 4, 'P'), ('panzer-iv-f1', 'wehrmacht', 58, 3, 'R')]
+    ('forward-repair', 'british', 65, 4, 'P'), ('panzer-iv-f1', 'wehrmacht', 58, 3, 'R'),
+    ('fallschirmjager', 'okw', 63, 3, 'G'), ('mg34', 'okw', 63, 2, 'G'), ('gurkha', 'british', 64, 2, 'G'), ('medical-station', 'us', 32, 3, 'P'),
+    ('m3-carriage', 'us', 33, 2, 'Y')]
 
 def make(d, out):
     for n, ids in CARDS.items():

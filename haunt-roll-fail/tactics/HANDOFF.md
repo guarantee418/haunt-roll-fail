@@ -132,12 +132,15 @@ booklet's pictures (pages 9 and 10). Moro River's first rows had the bridge poin
   - its 17 Lost Brigades (`brigades.scala`, 2026-11-28; cards and tokens by `tools/dak-brigade-art.py`; `TACTICS_BRIGADE=<id>` makes
     `tactics.Host` draw, pick and buy one);
   - setup toggles under "3rd printing" (RULES.md, 3rd printing): the Barricade (`Barricades`), Blitz Cubes (`BlitzCubes`), Planes with
-    anti-air (`Planes`, tokens by `tools/plane-art.py`) and the first new Commanders (`ThirdPrintingCommanders`: Breakthrough Offensive,
-    Shock Army; and with the DAK's expansion Commanders its StuG Assault Doctrine and StuG Tactics; cards and tokens by
-    `tools/third-printing-art.py`, whose `ALL` names every Commander picture). `tactics.Host` takes `TACTICS_BARRICADES=1`,
-    `TACTICS_BLITZ=1`, `TACTICS_PLANES=1`, `TACTICS_PRINTING=1`, `TACTICS_COMMANDER=<id>` (draws only that card) and
-    `TACTICS_FORCE=<action kinds>` (also `Aircraft`, `Unit:<id>`).
-  To do, all on the sheet: the other new Commanders (RULES.md, 3rd printing, lists them) and the core factions' new Lost Brigades (pictures
+    anti-air (`Planes`, tokens by `tools/plane-art.py`) and every new Commander of the sheet (`ThirdPrintingCommanders`, `Commander.printing`:
+    the 37 cards, the universal German ones one for each German faction; the DAK's versions of StuG Assault Doctrine and StuG Tactics with its
+    expansion Commanders; cards and tokens by `tools/third-printing-art.py`; their rules in `game.scala` under the "3RD PRINTING" comments,
+    `printingActions`, and the readings in RULES.md, 3rd printing). `tactics.Host` takes `TACTICS_BARRICADES=1`,
+    `TACTICS_BLITZ=1`, `TACTICS_PLANES=1`, `TACTICS_PRINTING=1`, `TACTICS_COMMANDER=<id>` (draws only that card, `tactics.Replay` too),
+    `TACTICS_XP=n` and `TACTICS_MUN=n` (a head start for that player) and `TACTICS_FORCE=<action kinds>` (also `Aircraft`, `Unit:<id>`,
+    `Effect:<effect>`). On 2026-11-28 every new Commander was played that way, its dumps replaying valid; the M3 Carriage merge was
+    checked by hand, as the bots make every Jeep a Veteran Observer first.
+  To do, all on the sheet: the core factions' new Lost Brigades (pictures
   69 to 94: US 69-72, Wehrmacht 73-76, Soviet 77-80, OKW 81-85, British 86-94); Troop Transports (boats, cards 133-138); the Black Gold
   and Twin Beaches
   panels (Fortifications, Anchors, Shorelines, permanent barbed wire) and 17 1v1 scenarios. The sheet's 15
