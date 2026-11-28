@@ -154,10 +154,14 @@ case object Infantry extends Kind("Infantry", "G", "green")
 case object LightVehicle extends Kind("Light Vehicle", "Y", "yellow")
 case object HeavyVehicle extends Kind("Heavy Vehicle", "R", "red")
 case object Emplacement extends Kind("Emplacement", "P", "purple")
+// the 3rd printing's planes: only AI damages them (and only from anti-air units, `diceOnFull`), with a Defense Die each as a Light Vehicle
+case object Plane extends Kind("Plane", "Y", "yellow")
 
 object Matrix {
     // None: immune; true: a Defense Die for each such die (for HE, each hit or crit); false: no defense
     def resist(k : Kind, d : Dmg) : |[Boolean] = (k, d) match {
+        case (Plane, AI) => |(true)
+        case (Plane, _) => None
         case (HeavyVehicle, AI) => None
         case (HeavyVehicle, Flame) => None
         case (Infantry, AP) => |(true)
@@ -233,6 +237,17 @@ case object CommandMarker extends Effect("Command marker: one Vehicle a round ga
 // the DAK Commanders: Breda and Bolster (+2 Health and +1 Sight, the Bersaglieri), Coastal Reserves (+2 Health, the Panzerjaeger)
 case object BredaUp extends Effect("Breda and Bolster: +2 Health, +1 Sight")
 case object HealthTwo extends Effect("+2 Health")
+// the 3rd printing Commanders: Tank Busters (3 AP at range 3 in place of the unit's attack)
+case object BusterKit extends Effect("Tank Busters: 3 AP at range 3")
+// Precision Strike: the damage may also go to a second unit next to the target
+case object RetreatPointUp extends Effect("Retreat Point")
+// Artillery Observer: the Veteran Jeep; the Gurkhas' two upgrade packages
+case object ObserverUp extends Effect("Veteran Observer: +2 Sight, Spots Camo, 105mm Howitzer, no Transport")
+case object GurkhaRecon extends Effect("+1 Range, +1 Sight, +1 AI")
+case object GurkhaShock extends Effect("A Defense Die and a Close Range die")
+// Engineer Detachments: a flamethrower and a Defense Die
+case object DetachmentKit extends Effect("+1 Flame and a Defense Die")
+case object PrecisionUp extends Effect("Precision Strike: a second target next to the first")
 
 case class Slot(xp : Boolean, cost : Int, options : $[Effect], times : Int = 1) extends Record {
     def res : Res = xp.?(XP).|(Munitions)
@@ -292,6 +307,9 @@ sealed abstract class UnitType(val name : String, val faction : Faction, val tie
     // the other damage it may pick for an attack ("picks either damage type each attack"), and the range of that attack
     def alt : $[Attack] = $
     def altRange = range
+    // anti-air capability (3rd printing): it may fire at planes, with its AI (and the damage type `aaAs` as AI), and deals them Overwatch
+    def antiAir = false
+    def aaAs : |[Dmg] = None
 }
 
 object UnitType {
@@ -319,11 +337,20 @@ object UnitType {
         Hetzer,
         EliteGrenadiers, CommandPantherUS, CommandPantherWM, CommandPantherBR, CommandPantherSU, CommandPantherOKW,
         AssaultGrenadiers, Panzerjaeger, Flakvierling, SdKfz250, StuGD, EightRad, PanzerIII, Flak88, CommandTiger,
-        FlammpanzerIII, Kradschutzen, KradScout, Semovente, Bersaglieri, Howitzer105, Guastatori, Panzerpioneer, Artillery210, L640)
+        FlammpanzerIII, Kradschutzen, KradScout, Semovente, Bersaglieri, Howitzer105, Guastatori, Panzerpioneer, Artillery210, L640,
+        MarderIII, Nebelwerfer, CoastalReservesVet, TankBusters, CommandPantherDAK,
+        Panzerwerfer, Katyusha, M3Lee, M3Grant, SSFCanadian, CombatEngineers,
+        PolishLancer, MatildaII, BlackPrince, CanadianShock, ANZAC, Dingo, LandMattress, LandMattressEmplacement,
+        ForwardRepair, PanzerIVF1, Fallschirmjager, MG34, Gurkha, MedicalStation, M3CarriageMortar, M3CarriageMG, M3CarriageAT,
+        P47AntiTank, P47Bomber, P47Recon, StukaAntiTankWM, StukaBomberWM, StukaReconWM, IL2Bomber, IL2AntiTank, IL2Recon,
+        StukaAntiTankOKW, StukaBomberOKW, StukaReconOKW, TyphoonBomber, TyphoonAntiTank, TyphoonRecon, StukaAntiTankDAK, StukaBomberDAK, StukaReconDAK,
+        TigerAceTank, KV1, PPShGuards, FG42Jager, CoastalReservesOKW,
+        TroopTransportUS, TroopTransportWM, TroopTransportBR, TroopTransportSU, TroopTransportOKW, TroopTransportDAK)
 
     // the Wehrmacht units the OKW's expansion Commanders bring too (the StuG Pack's shared Commanders, and the ECC's King Tiger and
     // Jagdpanther): an OKW squad of the Wehrmacht's type, drawn with its own token
-    lazy val shared = $[(UnitType, Faction)](StuG -> OKW, KingTiger -> OKW, Jagdpanther -> OKW, Stormtroopers -> OKW, Elefant -> DAK, MGBunker -> DAK)
+    lazy val shared = $[(UnitType, Faction)](StuG -> OKW, KingTiger -> OKW, Jagdpanther -> OKW, Stormtroopers -> OKW, Elefant -> DAK, MGBunker -> DAK, StuG -> DAK, Stormtroopers -> DAK,
+        MarderIII -> Wehrmacht, MarderIII -> OKW, Stuart -> British)
 
     def of(f : Faction) = all.%(_.faction == f.base)
 }
@@ -344,6 +371,7 @@ case object USMortar extends UnitType("Mortar Team", US, 1, Infantry, 3, 2, 5, $
 }
 case object Jeep extends UnitType("Willys Jeep", US, 1, LightVehicle, 2, 1, 2, $(ai), Cost(2, 0, 1),
     $(Slot(true, 1, $(ReinforceUp)), Slot(false, 2, $(AddAttack(ai))))) {
+    override def antiAir = true
     override def transport = true
     override def capture = true
 }
@@ -372,7 +400,9 @@ case object Major extends UnitType("Major", US, 3, Infantry, 3, 2, 3, $(heIndire
     override def limit = 1
 }
 case object Sherman extends UnitType("M4A3 Sherman", US, 3, HeavyVehicle, 4, 1, 2, $(ai, ai, ap), Cost(2, 0, 4),
-    $(Slot(true, 1, $(SpeedUp)), Slot(false, 3, $(AddAttack(ap)))))
+    $(Slot(true, 1, $(SpeedUp)), Slot(false, 3, $(AddAttack(ap))))) {
+    override def antiAir = true
+}
 case object Wolverine extends UnitType("M10 Wolverine", US, 3, HeavyVehicle, 3, 1, 3, $(ap, ap), Cost(2, 0, 3),
     $(Slot(true, 3, $(AddAttack(ap))), Slot(false, 3, $(SpeedUp)))) {
     override def speed = 1
@@ -409,11 +439,13 @@ case object WMortar extends UnitType("Mortar Team", Wehrmacht, 2, Infantry, 3, 2
 }
 case object SdKfz222 extends UnitType("SdKfz 222", Wehrmacht, 2, LightVehicle, 3, 1, 3, $(ai, ap), Cost(2, 0, 3),
     $(Slot(true, 1, $(SpeedUp)), Slot(false, 3, $(AddAttack(ai), DefenseUp)))) {
+    override def antiAir = true
     override def id = "sdkfz-222"
 }
 // PANZER KORPS 3
 case object Ostwind extends UnitType("Flakpanzer \"Ostwind\"", Wehrmacht, 3, HeavyVehicle, 3, 1, 2, $(ai, ai, ai), Cost(3, 0, 2),
     $(Slot(true, 2, $(AddAttack(ai))), Slot(false, 3, $(SpotsCamo)))) {
+    override def antiAir = true
     override def speed = 1
 }
 // the hull machine gun (AI, and the Munitions upgrade's AI) is fixed, the main gun (AP) turreted
@@ -463,6 +495,7 @@ case object MortarEmplacement extends UnitType("Mortar Emplacement", British, 2,
 }
 case object Bofors extends UnitType("Bofors Emplacement", British, 2, Emplacement, 3, 1, 3, $(ai, ai), Cost(3, 0, 0),
     $(Slot(true, 2, $(AddAttack(ai))), Slot(false, 3, $(SightUp)))) {
+    override def antiAir = true
     override def builtBy = $(InfantrySection)
 }
 // COMPANY COMMAND POST 3
@@ -473,6 +506,7 @@ case object Cromwell extends UnitType("Cromwell", British, 3, HeavyVehicle, 4, 1
 }
 case object Centaur extends UnitType("Centaur AA", British, 3, HeavyVehicle, 3, 1, 3, $(ai, ai), Cost(3, 0, 2),
     $(Slot(true, 3, $(AddAttacks(ai))), Slot(false, 4, $(SpotsCamo)))) {
+    override def antiAir = true
     override def strafing = true
 }
 case object Churchill extends UnitType("Churchill", British, 3, HeavyVehicle, 6, 1, 3, $(ai, ap, ap), Cost(2, 0, 4),
@@ -496,6 +530,7 @@ case object SovietMortar extends UnitType("Mortar Team", Soviet, 1, Infantry, 3,
 }
 case object ScoutCar extends UnitType("M3A1 Scout Car", Soviet, 1, LightVehicle, 2, 1, 2, $(ai), Cost(2, 0, 1),
     $(Slot(true, 1, $(AddAttack(ai))), Slot(false, 3, $(DefenseUp)))) {
+    override def antiAir = true
     override def id = "scout-car"
     override def transport = true
     override def capture = true
@@ -527,6 +562,8 @@ case object T34 extends UnitType("T-34 Tank", Soviet, 3, HeavyVehicle, 3, 1, 2, 
 }
 case object SU76 extends UnitType("SU-76 Assault Gun", Soviet, 3, HeavyVehicle, 2, 1, 3, $(he, he, he), Cost(1, 0, 4),
     $(Slot(true, 1, $(SpeedUp)), Slot(false, 3, $(HealthUp)))) {
+    override def antiAir = true
+    override def aaAs = |(HE)
     override def id = "su76"
     override def fixed = $(HE)
 }
@@ -591,13 +628,16 @@ case object Battlegroup extends UnitType("OKW Battlegroup", OKW, 2, Emplacement,
     override def limit = 1
 }
 case object SchwererHQ extends UnitType("Schwerer Panzer HQ", OKW, 3, Emplacement, 3, 1, 4, $(ap), Cost(1, 0, 3), $) {
+    override def antiAir = true
+    override def aaAs = |(AP)
     override def id = "schwerer-hq"
     override def tierBuilding = 3
     override def limit = 1
 }
 case object Flak37 extends UnitType("Flak 37", OKW, 1, Emplacement, 2, 1, 3, $(ai, ai), Cost(0, 4, 0), $) {
+    override def antiAir = true
     override def id = "flak"
-    override def builtBy = $(Sturmpioneers)
+    override def builtBy = $(Sturmpioneers, CoastalReservesOKW)
 }
 
 // DAK HEADQUARTERS 1 (2026-11-27, read off the change sheet's boards)
@@ -613,6 +653,7 @@ case object Panzerjaeger extends UnitType("Panzerjaeger", DAK, 1, Infantry, 3, 1
 // pins like a machine gun ("PINNED"), and sets up with a Firing Arc like a Weapon Team; anti-air (no planes yet)
 case object Flakvierling extends UnitType("Flakvierling", DAK, 1, LightVehicle, 2, 1, 2, $(ai), Cost(2, 0, 1),
     $(Slot(true, 1, $(HealthUp, SightRangeUp)), Slot(false, 2, $(AddAttack(ai))))) {
+    override def antiAir = true
     override def weaponTeam = true
     override def machineGun = true
 }
@@ -646,6 +687,7 @@ case object PanzerIII extends UnitType("Panzer III", DAK, 3, HeavyVehicle, 3, 1,
 // a light vehicle that sets up with a Firing Arc like a Weapon Team; Slow; anti-air (no planes yet)
 case object Flak88 extends UnitType("88mm FLAK 36 Anti-Tank Gun", DAK, 3, LightVehicle, 3, 1, 4, $(ap, ap, ap), Cost(4, 0, 0),
     $(Slot(true, 3, $(AddAttack(ap))), Slot(false, 3, $(HealthUp, RemoveSlow)))) {
+    override def antiAir = true
     override def id = "flak88"
     override def weaponTeam = true
     override def slow = 1
@@ -707,7 +749,7 @@ case object Panzerpioneer extends UnitType("Panzerpioneer", DAK, 1, Infantry, 5,
 case object Artillery210 extends UnitType("210/22 Artillery Emplacement", DAK, 1, Emplacement, 4, 4, 6, $(heIndirect, heIndirect, heIndirect), Cost(5, 0, 0), $) {
     override def id = "artillery21022"
     override def commander = true
-    override def builtBy = $(Panzerjaeger, Guastatori, Panzerpioneer)
+    override def builtBy = $(Panzerjaeger, Guastatori, Panzerpioneer, CoastalReservesVet)
 }
 // two spawn for each one bought; a No-Fire mode to Capture
 case object L640 extends UnitType("L6/40 Light Tank", DAK, 2, HeavyVehicle, 1, 1, 2, $(ai), Cost(2, 0, 3), $) {
@@ -716,6 +758,35 @@ case object L640 extends UnitType("L6/40 Light Tank", DAK, 2, HeavyVehicle, 1, 1
     override def speed = 1
     override def captureMode = true
     override def limit = 6
+}
+
+// THE DAK LOST BRIGADES' OWN UNITS (2026-11-28, read off the change sheet's cards; brigades.scala)
+case object MarderIII extends UnitType("Marder III", DAK, 2, HeavyVehicle, 2, 1, 4, $(ap, ap), Cost(2, 0, 3), $) {
+    override def id = "marder-iii"
+    override def commander = true
+    override def fixed = $(AP)
+}
+// a Weapon Team with indirect Flame and HE, range 2 to 5, no Capture, no Setup in Buildings (nor in Transports, as no passenger sets
+// up); "targets two units adjacent to each other": its damage may go, in full, to a second unit next to its target (the Centaur's
+// Strafing Fire; the change sheet's FAQ: each target takes its HE, rolled for each)
+case object Nebelwerfer extends UnitType("Nebelwerfer", DAK, 2, Infantry, 4, 2, 5, $(flameIndirect, heIndirect), Cost(5, 0, 1), $) {
+    override def commander = true
+    override def weaponTeam = true
+    override def noBuildingSetup = true
+    override def capture = false
+    override def strafing = true
+}
+// a Panzerjaeger with its Coastal Reserves Health, its AP and its Camouflage
+case object CoastalReservesVet extends UnitType("Veteran Coastal Reserves", DAK, 1, Infantry, 5, 1, 3, $(ai, ap), Cost(4, 3, 0), $) {
+    override def id = "coastal-reserves"
+    override def commander = true
+    override def wrenches = 1
+    override def innate = $(Camouflage)
+}
+case object TankBusters extends UnitType("Veteran Tank Busters", DAK, 1, Infantry, 5, 1, 3, $(ap, ap, ap), Cost(4, 3, 0), $) {
+    override def id = "tank-busters"
+    override def commander = true
+    override def speed = 1
 }
 
 // THE BRITISH, SOVIET AND OKW COMMANDER UNITS (Faction Guide pages 22, 28 and 35)
@@ -796,12 +867,12 @@ case object Puma extends UnitType("Puma", OKW, 2, LightVehicle, 3, 1, 3, $(ap, a
 case object LeFH18 extends UnitType("LeFH 18 Artillery", OKW, 1, Emplacement, 3, 1, 5, $(heIndirect, heIndirect), Cost(0, 4, 0), $) {
     override def id = "lefh18"
     override def commander = true
-    override def builtBy = $(Sturmpioneers)
+    override def builtBy = $(Sturmpioneers, CoastalReservesOKW)
 }
 case object OKWPak43 extends UnitType("Pak 43 Emplacement", OKW, 1, Emplacement, 3, 1, 4, $(ap, ap, ap), Cost(4, 0, 0), $) {
     override def id = "okw-pak43"
     override def commander = true
-    override def builtBy = $(Sturmpioneers)
+    override def builtBy = $(Sturmpioneers, CoastalReservesOKW)
     override def innate = $(AddAttack(ap))
 }
 case object Kettenkrad extends UnitType("Kettenkrad", OKW, 1, LightVehicle, 1, 1, 0, $, Cost(2, 0, 1), $) {
@@ -1061,6 +1132,259 @@ case object CommandPantherWM extends CommandPanther(Wehrmacht, "Command Panther"
 case object CommandPantherBR extends CommandPanther(British, "Captured Command Panther")
 case object CommandPantherSU extends CommandPanther(Soviet, "Captured Command Panther")
 case object CommandPantherOKW extends CommandPanther(OKW, "Command Panther")
+case object CommandPantherDAK extends CommandPanther(DAK, "Command Panther")
+
+// THE 3RD PRINTING COMMANDERS' UNITS (2026-11-28, read off their cards): rocket launchers that set up with a Firing Arc like a Weapon
+// Team, and whose damage may also go, in full, to a second unit next to the target ("targets two units adjacent to each other")
+case object Panzerwerfer extends UnitType("Panzerwerfer", Wehrmacht, 2, LightVehicle, 3, 2, 4, $(heIndirect, heIndirect), Cost(1, 0, 4), $) {
+    override def commander = true
+    override def weaponTeam = true
+    override def strafing = true
+}
+case object Katyusha extends UnitType("Katyusha", Soviet, 2, LightVehicle, 2, 2, 5, $(flameIndirect, heIndirect), Cost(1, 0, 4), $) {
+    override def commander = true
+    override def weaponTeam = true
+    override def strafing = true
+    override def slow = 1
+}
+
+// the M3 Lee (US) and M3 Grant (British): AI and HE forward, AP turreted
+case object M3Lee extends UnitType("M3 Lee", US, 3, HeavyVehicle, 3, 1, 3, $(ai, ai, ap, he, he), Cost(1, 0, 4), $) {
+    override def id = "m3-lee"
+    override def commander = true
+    override def fixed = $(AI, HE)
+}
+case object M3Grant extends UnitType("M3 Grant", British, 3, HeavyVehicle, 3, 1, 3, $(ai, ap, he, he), Cost(1, 0, 4), $) {
+    override def id = "m3-grant"
+    override def commander = true
+    override def fixed = $(AI, HE)
+    override def sight = 3
+}
+// the British Devil's Brigade: an Infantry Section that takes +1 AI or AP for free once (commanderSlots), crosses water, 3 Defense in Ruins
+case object SSFCanadian extends UnitType("SSF Canadians", British, 1, Infantry, 4, 1, 2, $(ai), Cost(4, 0, 0), InfantrySection.upgrades) {
+    override def id = "ssf-canadians"
+    override def commander = true
+    override def wrenches = 1
+}
+
+// the Soviet Combat Engineers: Conscripts with a Munitions Health upgrade, 2 Wrenches and a Close Range die, no Speed Die
+case object CombatEngineers extends UnitType("Combat Engineers", Soviet, 1, Infantry, 4, 1, 2, $(ai, ai), Cost(4, 0, 0),
+    $(Slot(true, 2, $(AddAttack(flame))), Slot(false, 3, $(HealthUp)))) {
+    override def id = "combat-engineers"
+    override def commander = true
+    override def close = 1
+    override def wrenches = 2
+}
+
+// THE BRITISH DESERT RATS' AND STUART PACK'S UNITS
+case object PolishLancer extends UnitType("Polish Lancer Section", British, 1, Infantry, 4, 2, 3, $(ai, ap), Cost(4, 1, 0), $) {
+    override def id = "polish-lancer"
+    override def commander = true
+}
+// after spending a CP it may move onto an adjacent Control Point for free (MatildaPointAction)
+case object MatildaII extends UnitType("Matilda II", British, 2, HeavyVehicle, 5, 1, 2, $(ai, ai), Cost(2, 0, 3), $) {
+    override def id = "matilda"
+    override def commander = true
+    override def slow = 1
+}
+case object BlackPrince extends UnitType("Black Prince", British, 3, HeavyVehicle, 6, 1, 4, $(ai, ai, ap, ap, ap), Cost(3, 0, 5), $) {
+    override def id = "black-prince"
+    override def commander = true
+    override def chassis = Churchill
+    override def slow = 1
+    override def defense = 1
+    override def close = 2
+}
+// two squads spawn for each one bought
+case object CanadianShock extends UnitType("Canadian Shock Troops", British, 1, Infantry, 3, 1, 2, $(ai, ai, ai), Cost(4, 1, 0), $) {
+    override def id = "canadian-shock"
+    override def commander = true
+    override def close = 2
+    override def speed = 1
+}
+// builds Emplacements as an Infantry Section (`buildsAs`)
+case object ANZAC extends UnitType("ANZAC Light Infantry", British, 1, Infantry, 5, 1, 2, $(ai), Cost(4, 1, 0), $) {
+    override def id = "anzac"
+    override def commander = true
+    override def wrenches = 1
+    override def innate = $(Camouflage)
+}
+case object Dingo extends UnitType("Dingo", British, 1, LightVehicle, 1, 1, 3, $(heIndirect), Cost(2, 0, 1), $) {
+    override def commander = true
+    override def capture = true
+    override def reinforce = true
+    override def speed = 2
+}
+
+// the Land Mattress: a Weapon Team rocket launcher, and its Emplacement (built by Infantry Sections and ANZAC); a second target next to the first
+case object LandMattress extends UnitType("Land Mattress", British, 2, Infantry, 3, 2, 6, $(heIndirect, heIndirect), Cost(5, 0, 1), $) {
+    override def id = "land-mattress"
+    override def commander = true
+    override def weaponTeam = true
+    override def noBuildingSetup = true
+    override def capture = false
+    override def strafing = true
+    override def slow = 1
+}
+case object LandMattressEmplacement extends UnitType("Land Mattress Emplacement", British, 2, Emplacement, 4, 2, 6, $(heIndirect, heIndirect), Cost(5, 0, 1), $) {
+    override def id = "land-mattress-emplacement"
+    override def commander = true
+    override def strafing = true
+    override def builtBy = $(InfantrySection)
+}
+
+// the British Forward Repair Assembly (as the Soviet Forward Station) and the Wehrmacht Panzer IV Ausf. F1 (2 HE in place of its AP)
+case object ForwardRepair extends UnitType("Forward Repair Assembly", British, 1, Emplacement, 3, 1, 0, $, Cost(2, 0, 0), $) {
+    override def id = "forward-repair"
+    override def commander = true
+    override def builtBy = $(InfantrySection, RoyalEngineers)
+    override def inBuildings = true
+    override def wrenches = 1
+    override def limit = 1
+}
+case object PanzerIVF1 extends UnitType("Panzer IV Ausf. F1", Wehrmacht, 3, HeavyVehicle, 4, 1, 3, $(ai, he, he), Cost(2, 0, 4), PanzerIV.upgrades) {
+    override def id = "panzer-iv-f1"
+    override def commander = true
+    override def chassis = PanzerIV
+}
+
+// Fallschirmjäger (Volksgrenadiers with +1 Sight in place of their Defense Die), the MG-34 Team, the Gurkha Rifles Section, the US
+// Frontline Medical Station (the British Forward Emplacement's rules), and the M3 Carriages: a Jeep merged with a Weapon Team
+case object Fallschirmjager extends UnitType("Fallschirmjäger", OKW, 1, Infantry, 3, 1, 3, $(ai), Cost(5, 1, 0), Volksgrenadiers.upgrades) {
+    override def id = "fallschirmjager"
+    override def commander = true
+    override def sight = 3
+}
+case object MG34 extends UnitType("MG-34 Team", OKW, 1, Infantry, 4, 1, 3, $(ai), Cost(4, 1, 0), $) {
+    override def id = "mg34"
+    override def commander = true
+    override def weaponTeam = true
+    override def machineGun = true
+    override def capture = false
+    override def sight = 3
+    override def speed = 1
+}
+case object Gurkha extends UnitType("Gurkha Rifles Section", British, 1, Infantry, 5, 1, 2, $(ai), Cost(4, 1, 0), $) {
+    override def id = "gurkha"
+    override def commander = true
+}
+case object MedicalStation extends UnitType("Frontline Medical Station", US, 1, Emplacement, 3, 1, 0, $, Cost(2, 0, 0), $) {
+    override def id = "medical-station"
+    override def commander = true
+    override def builtBy = $(Riflemen, AssaultEngineers)
+    override def reinforce = true
+    override def retreatPoint = true
+    override def innate = $(SpotsCamo, SpawnAdjacent)
+}
+sealed abstract class M3Carriage(val team : UnitType) extends UnitType("M3 Carriage (" + team.name + ")", US, 1, LightVehicle, Jeep.health + 2, team.minRange, team.range, team.attacks, Cost(2, 0, 1), team.upgrades) {
+    override def id = "m3-carriage"
+    override def commander = true
+    override def purchasable = false
+    override def weaponTeam = true
+    override def capture = true
+    override def chassis = Jeep
+    override def machineGun = team.machineGun
+    override def noBuildingSetup = team.noBuildingSetup
+}
+case object M3CarriageMortar extends M3Carriage(USMortar)
+case object M3CarriageMG extends M3Carriage(FiftyCal)
+case object M3CarriageAT extends M3Carriage(ATGun)
+object M3Carriage {
+    def forTeam(t : UnitType) : |[UnitType] = $[M3Carriage](M3CarriageMortar, M3CarriageMG, M3CarriageAT).find(_.team == t)
+}
+
+// THE 3RD PRINTING'S PLANES (2026-11-28, the change sheet's "Plane cards", three of each faction): 2 health, range 2, 1 forward AI, a Speed
+// Die, 2 Fuel, one at a time; the Anti-Tank and the Bomber may fire 2 forward AP or HE instead for 3 Munitions (`alt`, paid in TargetAction),
+// the Recon has +2 Sight and Spots Camo. Unlocked for 2 XP (`planeOf`), one for the game
+sealed abstract class Aircraft(f : Faction, model : String, val role : String) extends UnitType(model + " " + role, f, 1, Plane, 2, 1, 2, $(ai), Cost(0, 0, 2), $) {
+    override def id = "plane-" + role.toLowerCase.replace("-", "")
+    override def commander = true
+    override def purchasable = true
+    override def capture = false
+    override def speed = 1
+    override def limit = 1
+    override def fixed = $(AI, AP, HE)
+    override def innate = (role == "Recon").$(SpotsCamo)
+    override def alt = role @@ {
+        case "Anti-Tank" => $(UnitType.ap, UnitType.ap)
+        case "Bomber" => $(UnitType.he, UnitType.he)
+        case _ => $[Attack]()
+    }
+    def xp = 2
+}
+case object P47AntiTank extends Aircraft(US, "P47 Thunderbolt", "Anti-Tank")
+case object P47Bomber extends Aircraft(US, "P47 Thunderbolt", "Bomber")
+case object P47Recon extends Aircraft(US, "P47 Thunderbolt", "Recon")
+case object StukaAntiTankWM extends Aircraft(Wehrmacht, "Stuka JU-87", "Anti-Tank")
+case object StukaBomberWM extends Aircraft(Wehrmacht, "Stuka JU-87", "Bomber")
+case object StukaReconWM extends Aircraft(Wehrmacht, "Stuka JU-87", "Recon")
+case object IL2Bomber extends Aircraft(Soviet, "Ilyushin IL-2", "Bomber")
+case object IL2AntiTank extends Aircraft(Soviet, "Ilyushin IL-2", "Anti-Tank")
+case object IL2Recon extends Aircraft(Soviet, "Ilyushin IL-2", "Recon")
+case object StukaAntiTankOKW extends Aircraft(OKW, "Stuka JU-87", "Anti-Tank")
+case object StukaBomberOKW extends Aircraft(OKW, "Stuka JU-87", "Bomber")
+case object StukaReconOKW extends Aircraft(OKW, "Stuka JU-87", "Recon")
+case object TyphoonBomber extends Aircraft(British, "Hawker Typhoon", "Bomber")
+case object TyphoonAntiTank extends Aircraft(British, "Hawker Typhoon", "Anti-Tank")
+case object TyphoonRecon extends Aircraft(British, "Hawker Typhoon", "Recon")
+case object StukaAntiTankDAK extends Aircraft(DAK, "Stuka JU-87", "Anti-Tank")
+case object StukaBomberDAK extends Aircraft(DAK, "Stuka JU-87", "Bomber")
+case object StukaReconDAK extends Aircraft(DAK, "Stuka JU-87", "Recon")
+
+// THE 3RD PRINTING'S TROOP TRANSPORTS (boats; the setup's TroopTransports, on maps with Sea): unlocked for 1 XP in the purchases (not a Lost
+// Brigade), then up to three bought for 2 Manpower 1 Fuel; a Light Vehicle of 2 health with a Speed Die and no attack that keeps to the Sea and
+// the Anchorages, never captures or neutralizes, and carries one Vehicle or Infantry, which may spawn inside it wherever it is
+sealed abstract class TroopTransport(f : Faction) extends UnitType("Troop Transport", f, 1, LightVehicle, 2, 0, 0, $, Cost(2, 0, 1), $) {
+    override def id = "troop-transport"
+    override def commander = true
+    override def transport = true
+    override def capture = false
+}
+case object TroopTransportUS extends TroopTransport(US)
+case object TroopTransportWM extends TroopTransport(Wehrmacht)
+case object TroopTransportBR extends TroopTransport(British)
+case object TroopTransportSU extends TroopTransport(Soviet)
+case object TroopTransportOKW extends TroopTransport(OKW)
+case object TroopTransportDAK extends TroopTransport(DAK)
+
+object TroopTransport {
+    def of(f : Faction) : UnitType = UnitType.all.collect { case t : TroopTransport if t.faction == f.base => t }.head
+}
+
+// the 3rd printing's core Lost Brigades' own units (2026-11-28): the Tiger Ace (a Tiger for the limit), the KV-1 (the KV-8's model), the
+// PPSh-41 SMG Airborne Guards and FG42 Fallschirmjäger (dropped like Stormtroopers, one a round), and the OKW's Veteran Coastal Reserves
+case object TigerAceTank extends UnitType("Tiger Ace", Wehrmacht, 3, HeavyVehicle, 6, 1, 3, $(ap, ap, ap, ai), Cost(3, 0, 5), $) {
+    override def id = "tiger-ace"
+    override def commander = true
+    override def chassis = Tiger
+    override def defense = 1
+}
+case object KV1 extends UnitType("KV-1 Heavy Tank", Soviet, 3, HeavyVehicle, 5, 1, 2, $(ai, ap), Cost(2, 0, 3), $) {
+    override def id = "kv1"
+    override def commander = true
+    override def chassis = KV8
+    override def slow = 1
+}
+case object PPShGuards extends UnitType("PPSh-41 SMG Airborne Guards", Soviet, 1, Infantry, 4, 1, 2, $(ai, ai, ai), Cost(5, 2, 0), $) {
+    override def id = "ppsh-guards"
+    override def commander = true
+    override def close = 2
+}
+case object FG42Jager extends UnitType("FG42 Fallschirmjäger", OKW, 1, Infantry, 3, 1, 3, $(ai, ai), Cost(5, 2, 0), Volksgrenadiers.upgrades) {
+    override def id = "fg42"
+    override def commander = true
+    override def sight = 3
+}
+case object CoastalReservesOKW extends UnitType("Veteran Coastal Reserves", OKW, 1, Infantry, 5, 1, 2, $(ai, ai, ap), Cost(4, 3, 0), $) {
+    override def id = "coastal-reserves"
+    override def commander = true
+    override def close = 1
+    override def wrenches = 2
+}
+
+object Aircraft {
+    def of(f : Faction) : $[Aircraft] = UnitType.all.collect { case a : Aircraft if a.faction == f.base => a }
+}
 
 // the cost of unlocking a Tier Building (on the back of its board), the same for every faction
 object Tiers {
@@ -1202,6 +1526,23 @@ case object OpposingFaithsFourMap extends MapChoice(OpposingFaithsFour, "Large M
 case object TwoHilltopsMap extends MapChoice(TwoHilltops, "Large Map Pack, HL1, HL2, HL2r, HL1r: Four Hill 331 panels; each team spawns along its edge and on one side. Starting stockpile 4 Manpower, 4 Munitions, 6 Fuel.")
 case object FrozenForkMap extends MapChoice(FrozenFork, "Large Map Pack, SG2, SG1, SG2, SG1: Four Stalingrad panels. Starting stockpile 3 Manpower, 3 Munitions, 3 Fuel.")
 case object SixBridgesMap extends MapChoice(SixBridges, "Large Map Pack, TP2r, TP1r, TP1, TP2: Four Trois Ponts panels, the river crossed six times. Starting stockpile 5 Manpower, 4 Munitions, 3 Fuel.")
+case object BlackGoldMap extends MapChoice(BlackGold, "3rd printing, BG1, BG2: The oil fields, with their Fortifications. Starting stockpile 2 Manpower, 2 Munitions, 6 Fuel.")
+case object TwinBeachesMap extends MapChoice(TwinBeaches, "3rd printing, TB1, TB2: The two beaches; Team 2 may unlock Troop Transports. Starting stockpile 5 Manpower, 3 Munitions, 4 Fuel.")
+case object AcrossMoroRiverMap extends MapChoice(AcrossMoroRiver, "3rd printing, MR1, TB1: Moro River and a beach; Team 2 may unlock Troop Transports. Starting stockpile 4 Manpower, 4 Munitions, 3 Fuel.")
+case object ElAlameinMap extends MapChoice(ElAlamein, "3rd printing, BG2, BG1: Both Black Gold panels. Starting stockpile 4 Manpower, 2 Munitions, 3 Fuel.")
+case object IronHillMap extends MapChoice(IronHill, "3rd printing, BG2, HL2r: Black Gold and Hill 331 turned round. Starting stockpile 5 Manpower, 4 Munitions, 5 Fuel.")
+case object DesertsEdgeMap extends MapChoice(DesertsEdge, "3rd printing, MR1r, BG1: Moro River turned round and Black Gold. Starting stockpile 4 Manpower, 3 Munitions, 5 Fuel.")
+case object BattleOfTheScheldtMap extends MapChoice(BattleOfTheScheldt, "3rd printing, TB2, TB1: Both Twin Beaches panels; each team spawns along its edge. Starting stockpile 5 Manpower, 3 Munitions, 3 Fuel.")
+case object KasserinePassMap extends MapChoice(KasserinePass, "3rd printing, HL2r, BG1r: Hill 331 and Black Gold, both turned round. Starting stockpile 4 Manpower, 3 Munitions, 3 Fuel.")
+case object OperationCrusaderMap extends MapChoice(OperationCrusader, "3rd printing, HL1, BG2: Hill 331 and Black Gold; both teams spawn on the left. Starting stockpile 5 Manpower, 4 Munitions, 4 Fuel.")
+case object TobrukMap extends MapChoice(Tobruk, "3rd printing, BG1, TB1: Black Gold and a beach, a Destroyed Building between them at the bottom; each team spawns along its edge. Starting stockpile 4 Manpower, 2 Munitions, 2 Fuel.")
+case object MarethLineMap extends MapChoice(MarethLine, "3rd printing, TB2, BG2: A beach and Black Gold, a Destroyed Building between them at the bottom; each team spawns along its edge. Starting stockpile 3 Manpower, 4 Munitions, 3 Fuel.")
+case object OperationHuskyMap extends MapChoice(OperationHusky, "3rd printing, TB2, MR2: A beach and Moro River. Starting stockpile 5 Manpower, 4 Munitions, 3 Fuel.")
+case object SainteMereEgliseMap extends MapChoice(SainteMereEglise, "3rd printing, MO1r, TB2: The Monastery turned round and a beach; the church tower's Manpower and Munitions point goes when the tower is destroyed; each team spawns along its edge. Starting stockpile 5 Manpower, 2 Munitions, 4 Fuel.")
+case object SalernoMap extends MapChoice(Salerno, "3rd printing, MR2r, TB1: Moro River turned round and a beach. Starting stockpile 4 Manpower, 3 Munitions, 3 Fuel.")
+case object ClosedPortMap extends MapChoice(ClosedPort, "3rd printing, MO2, TB2: The Monastery and a beach; Team 2 spawns at both bottom corners. Starting stockpile 6 Manpower, 2 Munitions, 4 Fuel.")
+case object SeasideVillageMap extends MapChoice(SeasideVillage, "3rd printing, TP1, TB2: Trois Ponts and a beach; Team 2 spawns at both bottom corners. Starting stockpile 4 Manpower, 6 Munitions, 3 Fuel.")
+case object StormTheBeachMap extends MapChoice(StormTheBeach, "3rd printing, TP2, TB1: Trois Ponts and a beach. Starting stockpile 6 Manpower, 4 Munitions, 4 Fuel.")
 case object HillThreeThirtyOneFFAMap extends MapChoice(HillThreeThirtyOneFFA, "Large Map Pack, HL1, HL2: Three players, each on their own; the Bunker is a Destroyed Building, three Buildings below it. Starting stockpile 6 Manpower, 2 Munitions, 4 Fuel.")
 case object CologneFFAMap extends MapChoice(CologneFFA, "Large Map Pack, TP1, TP2, MO1r: Four players, each on their own, one in each corner. Starting stockpile 6 Manpower, 4 Munitions, 4 Fuel.")
 case object LorraineMap extends MapChoice(Lorraine, "Large Map Pack, MR1, MR2 / HL1, HL2: Moro River above Hill 331; the Spawn Areas are the left and right edges. Starting stockpile 5 Manpower, 4 Munitions, 3 Fuel.")
@@ -1221,6 +1562,42 @@ case object MudMap extends MapChoice(Mud, "Large Map Pack, HL2, MR1, MR2, HL1: M
 case object WinterSolsticeMap extends MapChoice(WinterSolstice, "Large Map Pack, SG1, SG2, AF1, AF2: Stalingrad and the snowy forest. Starting stockpile 3 Manpower, 5 Munitions, 1 Fuel.")
 case object SummerSolsticeMap extends MapChoice(SummerSolstice, "Large Map Pack, MO2, MR1, MR2, MO1: Moro River between two Monastery panels. Starting stockpile 2 Manpower, 3 Munitions, 4 Fuel.")
 
+// THE 3RD PRINTING (Bad Crow's "3rd printing balance changes" sheet, 2026-11-28): its new rules as setup toggles, off in older games
+// the Barricade (Battlefield defence): built by Infantry with a Wrench on one edge of its hex (1 CP); barbed wire and sandbags on that
+// edge: 2 Defense Dice of Cover to the hex against attacks across it, no move across it from either hex, but Assaults go across
+case object Barricades extends GameOption with ToggleOption {
+    val group = "3rd printing".txt
+    def valueOn = "Barricades".hl
+    override val explain = $[Elem]("Infantry with a Wrench may build a Barricade on one edge of its hex for 1 CP: it gives the hex 2 Defense Dice of Cover against attacks across that edge, and no unit moves across it from either hex, though Assaults may go across. Two damage to the hex destroys it, as other Battlefield Defenses (Full Game Rules only).".txt)
+    override def required(all : $[BaseOption]) = $($(FullGameRules))
+}
+
+// Blitz Cubes: in its team's first turn of each round a player may spend its turn's cubes as orange cubes, each moving one unit up to 2
+// hexes (a CP on that unit this round, and no defenses, setting up, packing up or Commander abilities with it); the orange cubes stay on
+// the unit, each taking a CP off what it may take in the later rounds, until removed, one a unit, at the start of the Damage Phase, the unit
+// then not attacking
+case object BlitzCubes extends GameOption with ToggleOption {
+    val group = "3rd printing".txt
+    def valueOn = "Blitz Cubes".hl
+    override val explain = $[Elem]("In its first turn of each round a player may spend up to 3 orange Blitz Cubes in place of its CP, each moving a unit up to 2 hexes. Orange cubes stay on the unit: each takes a CP off what it may spend in the later rounds (3 cubes: none) until one is removed at the start of the Damage Phase, the unit then not attacking.".txt)
+}
+
+// Planes (Full Game Rules): each player's three plane cards lie by its Commander; once a game one may be unlocked for its XP in the
+// purchases, then bought for 2 Fuel, one at a time
+case object TroopTransports extends GameOption with ToggleOption {
+    val group = "3rd printing".txt
+    def valueOn = "Troop Transports".hl
+    override val explain = $[Elem]("On maps with Sea (the Twin Beaches panels), the players whose Spawn Area is by the Sea (or the map's side that starts with them) may unlock Troop Transports for 1 XP in the purchases, then buy up to three for 2 Manpower 1 Fuel each. A Troop Transport keeps to the Sea and the Anchorages, has no attack, never captures or neutralizes, and carries one Vehicle or Infantry, which may spawn inside it wherever it is (Full Game Rules only).".txt)
+    override def required(all : $[BaseOption]) = $($(FullGameRules))
+}
+
+case object Planes extends GameOption with ToggleOption {
+    val group = "3rd printing".txt
+    def valueOn = "Planes and anti-air".hl
+    override val explain = $[Elem]("Each player may unlock one of its faction's three planes (Anti-Tank, Bomber, Recon) for 2 XP in the purchases, then buy it for 2 Fuel, one at a time. A plane moves forward only, 2 hexes or 1 and a turn per CP, over anything; it never captures or neutralizes, fires forward, and only anti-air units' AI damages it, as it takes 1 Overwatch damage for each hex it enters in an anti-air unit's range (Full Game Rules only).".txt)
+    override def required(all : $[BaseOption]) = $($(FullGameRules))
+}
+
 // the booklet's optional Modular Bunkers (and the Hilltop Monastery's optional Victory Point), on the missions that mark them
 case object OptionalMapFeatures extends GameOption with ToggleOption {
     val group = "Map: options".txt
@@ -1234,10 +1611,15 @@ object MapChoice {
 
     // the booklet's chapters, in its order
     val sections = $("Core missions", "Skirmishes", "Core panels, 3 panels", "Large Map Pack, 2 panels", "Large Map Pack, 3 panels",
-        "Large Map Pack, 4 panels", "Large Map Pack, square", "Free-for-all")
+        "Large Map Pack, 4 panels", "Large Map Pack, square", "Free-for-all", "3rd printing")
+
+    // the 3rd printing's 1v1 scenarios (Bad Crow's change sheet), on the Black Gold and Twin Beaches panels and the older ones
+    val printing = $[MapData](BlackGold, TwinBeaches, AcrossMoroRiver, ElAlamein, IronHill, DesertsEdge, BattleOfTheScheldt, KasserinePass,
+        OperationCrusader, Tobruk, MarethLine, OperationHusky, SainteMereEglise, Salerno, ClosedPort, SeasideVillage, StormTheBeach)
 
     def sectionOf(m : MapData) : String =
-        if (m.areas.num > 2) "Free-for-all"
+        if (printing.has(m)) "3rd printing"
+        else if (m.areas.num > 2) "Free-for-all"
         else if (m.panels == 1) "Skirmishes"
         else if (core.has(m)) (m.panels == 3).?("Core panels, 3 panels").|("Core missions")
         else if (m.rows > 1) "Large Map Pack, square"
@@ -1249,7 +1631,8 @@ object MapChoice {
     val all = $[MapChoice](MoroRiverMap, AcrossTheDonMap, BetweenTwoRiversMap, ArdennesForestMap, FrozenLakeMap, RoadToMoscowMap, MoroRiverFFAMap, TheRiverMap, FrozenPondMap, BetweenTwoRiversWideMap, ArdennesForestWideMap,
         HillThreeThirtyOneMap, PloiestiOutskirtsMap, VerrieresRidgeMap, TroisPontsMap, CaenMap, CarentanMap, StalingradMap, BulgeMap, LeningradMap, MongolianTrainStationMap,
         CathedralMissionMap, CologneMissionMap, DesertOasisMap, NoMansLandMap, MoscowOutskirtsMap, OpposingFaithsMap, SemoisMap, HinderdamMap, AncientFieldsMap, AirfieldMissionMap, HilltopMonasteryMap, BudapestMap, SiegeOfLeningradMap, OpposingFaithsThreeMap, TheWideFrontMap, TroisPontsThreeMap, TwoIslandsMap, CologneFourMap, TroisPontsMonasteryMap, HillMonasteryMap, VengeanceMap, OpposingFaithsFourMap, TwoHilltopsMap, FrozenForkMap, SixBridgesMap, HillThreeThirtyOneFFAMap, CologneFFAMap,
-        LorraineMap, RailsAndMetalMap, StHilaireMap, WinterStormMap, TheVolgaMap, RaceToRomeMap, StMarieDuMontMap, CologneFiveFFAMap, HillSixSixTwoFFAMap, ARiverTooFarMap, RaceAcrossTheRhineMap, FrozenRiverMap, FrozenRiverFourMap, MudMap, WinterSolsticeMap, SummerSolsticeMap)
+        LorraineMap, RailsAndMetalMap, StHilaireMap, WinterStormMap, TheVolgaMap, RaceToRomeMap, StMarieDuMontMap, CologneFiveFFAMap, HillSixSixTwoFFAMap, ARiverTooFarMap, RaceAcrossTheRhineMap, FrozenRiverMap, FrozenRiverFourMap, MudMap, WinterSolsticeMap, SummerSolsticeMap,
+        BlackGoldMap, TwinBeachesMap, AcrossMoroRiverMap, ElAlameinMap, IronHillMap, DesertsEdgeMap, BattleOfTheScheldtMap, KasserinePassMap, OperationCrusaderMap, TobrukMap, MarethLineMap, OperationHuskyMap, SainteMereEgliseMap, SalernoMap, ClosedPortMap, SeasideVillageMap, StormTheBeachMap)
 }
 
 // THE ICE MATRIX (Full Game Rules 10.4): how many dice a unit attacked on an Ice tile rolls for each damage type assigned to it
@@ -1329,6 +1712,28 @@ case class SetUpAction(self : Faction, squad : Squad, k : Int) extends BaseActio
 case class PackUpAction(self : Faction, squad : Squad, k : Int) extends BaseAction(squad, "in", (g : Game) => g.where(squad).elem)("Pack up to move", (g : Game) => g.costNote(squad, 1))
 // Full Game Rules: barbed wire (keeps Infantry out) and tank traps (keep Vehicles out), built on the unit's hex for 1 CP
 case class DefensesAction(self : Faction, squad : Squad, wire : Boolean, trap : Boolean, k : Int) extends BaseAction(squad, "builds in", (g : Game) => g.where(squad).elem, (g : Game) => g.costNote(squad, 1))((wire && trap).?("Barbed Wire and a Tank Trap").|(wire.?("Barbed Wire").|("a Tank Trap")).hl)
+case class BarricadeAction(self : Faction, squad : Squad, edge : Int, k : Int) extends BaseAction(squad, "builds a Barricade in", (g : Game) => g.where(squad).elem, (g : Game) => g.costNote(squad, 1))("on its", Sandbags.names(edge).hl, "edge")
+case class BlitzMoveAction(self : Faction, squad : Squad, path : $[Hex], k : Int) extends BaseAction(squad, "in", (g : Game) => g.where(squad).elem)("Blitz to", path.last, (path.num > 1).?(("(through " + path.head.name + ")").txt).|(Empty), "for an orange cube".spn(styles.small)) with HexKey { def hex = path.last }
+case class BoatUnlockAction(self : Faction) extends BaseAction("Troop Transports", "(then up to three)".spn(styles.small))("Unlock", Images.token(Squad(self, TroopTransport.of(self), 0)) ~ TroopTransport.of(self).elem, "for", 1.hlb, XP.icon)
+case class PlaneUnlockAction(self : Faction, t : UnitType) extends BaseAction("Planes", "(one for the game)".spn(styles.small))("Unlock", Images.token(Squad(self, t, 0)) ~ t.elem, "for", 2.hlb, XP.icon)
+case class PlaneMoveAction(self : Faction, squad : Squad, path : $[Hex], edge : Int, k : Int) extends BaseAction(squad, "in", (g : Game) => g.where(squad).elem, "facing", (g : Game) => g.facingNote(squad))("Fly to", path.last, (path.num > 1).?(("(over " + path.head.name + ")").txt).|(Empty), "facing", Facing.names(edge).hl, (g : Game) => g.costNote(squad, 1)) with HexKey { def hex = path.last }
+case class BeaconAction(self : Faction, squad : Squad, k : Int) extends BaseAction(squad, "in", (g : Game) => g.where(squad).elem)("Disruption Beacon: Camouflage this round for", 2.hlb, Munitions.icon, (g : Game) => g.costNote(squad, 1))
+case class DigInAction(self : Faction, squad : Squad, wire : Boolean, k : Int) extends BaseAction(squad, "in", (g : Game) => g.where(squad).elem)("Leave", wire.?("Barbed Wire").|("a Tank Trap").hl, "here before moving", "(free, its first CP)".spn(styles.small))
+case class SapAction(self : Faction, squad : Squad, hex : Hex, what : String, k : Int) extends BaseAction(squad, "assaulting", hex)("Remove the", what.hl)
+case class SapSkipAction(self : Faction, k : Int) extends BaseAction(None)("Leave the defenses")
+case class ReserveConscriptionAction(self : Faction) extends BaseAction("Commander")("Reserve Conscription:", "Infantry Health upgrades and Reinforce 1 for", 5.hlb, Munitions.icon)
+case class PointPickAction(self : Faction, a : Ability, picked : $[Hex], hex : Hex, k : Int) extends BaseAction(a, picked.num.hlb, "of", 3.hlb)(hex) with Soft with HexKey
+case class PointsAction(self : Faction, a : Ability, hexes : $[Hex], k : Int) extends BaseAction(a, 3.hlb, "of", 3.hlb)(hexes.last) with HexKey { def hex = hexes.last }
+case class MatildaPointAction(self : Faction, squad : Squad, hex : Hex, k : Int) extends BaseAction(squad, "in", (g : Game) => g.where(squad).elem)("Onto the Control Point in", hex, "for free") with HexKey
+case class SpiritAction(self : Faction, squad : Squad, xp : Boolean, free : Boolean) extends BaseAction("Commander")("Reinforce", squad, "in", (g : Game) => g.where(squad).elem, free.?("for free".txt).|(("for 1" + " ").txt ~ xp.?(XP.icon).|(Munitions.icon)))
+case class OverRepairAction(self : Faction, squad : Squad, vehicle : Squad) extends BaseAction("Commander")(squad, "gives", vehicle, "+1 Health for", 3.hlb, Munitions.icon)
+case class VengeanceAction(self : Faction, squad : Squad, k : Int) extends BaseAction(squad, "in", (g : Game) => g.where(squad).elem)("Seek Vengeance: drop to the ground, +1 Range this round", (g : Game) => g.costNote(squad, 1))
+case class WithdrawAction(self : Faction, squad : Squad) extends BaseAction("Commander")("Withdraw", squad, "in", (g : Game) => g.where(squad).elem, "for", (g : Game) => { val c = g.costOf(squad.faction, squad.utype) ; Cost(c.mp, 0, c.fuel).elem })
+case class MineLayAction(self : Faction, squad : Squad, dmg : Dmg, k : Int) extends BaseAction(squad, "in", (g : Game) => g.where(squad).elem)("Leave", ("an " + dmg.short).hl, "mine here for", 2.hlb, Munitions.icon)
+case class MergeAction(self : Faction, squad : Squad, jeep : Squad, k : Int) extends BaseAction(squad, "in", (g : Game) => g.where(squad).elem)("Merge into", jeep, "in", (g : Game) => g.where(jeep).elem, "as an M3 Carriage", (g : Game) => g.costNote(squad, 1))
+case class BlitzRestStepAction(order : $[Faction]) extends ForcedAction
+case class BlitzRestAction(self : Faction, squad : Squad, order : $[Faction]) extends BaseAction("Blitz Cubes: remove one, the unit not attacking")(squad, "in", (g : Game) => g.where(squad).elem, (g : Game) => ("(" + g.blitz.getOrElse(squad, 0) + " orange)").spn(styles.small)) with SquadKey
+case class BlitzRestDoneAction(self : Faction, order : $[Faction]) extends BaseAction(None)("Keep the orange cubes")
 case class SandbagsAction(self : Faction, squad : Squad, edge : Int, k : Int) extends BaseAction(squad, "builds Sandbags in", (g : Game) => g.where(squad).elem, (g : Game) => g.costNote(squad, 1))("Facing", Sandbags.facing(edge).hl)
 case class EndTurnAction(self : Faction, k : Int) extends BaseAction(None)("End turn", (g : Game) => (g.cpLeft > 0).?(("(forfeit " + g.cpLeft + " CP)").spn(styles.small) : Elem).|(Empty))
 
@@ -1363,6 +1768,7 @@ case class OpDrawAction(f : Faction) extends ForcedAction
 case class OpPickAction(self : Faction, card : OpCard, upper : Boolean) extends BaseAction("Operation", "(the other team learns only top or bottom)".spn(styles.small))(Image(card.image, styles.opCard) ~ " " ~ upper.?("Top").|("Bottom").hl ~ ": " ~ card.turns(upper).hlb ~ " turns", ("(" + Operations.side(upper) + ")").spn(styles.small))
 
 // facing: a Heavy Vehicle always faces a hex side; a Weapon Team picks one when it sets up
+case class ObserverSpawnAction(self : Faction, squad : Squad, yes : Boolean) extends BaseAction(squad, "spawned in", (g : Game) => g.where(squad).elem)(yes.?("As an Artillery Observer").|("As a Jeep"))
 case class SpawnFaceAction(self : Faction, squad : Squad, edge : Int) extends BaseAction(squad, "spawned in", (g : Game) => g.where(squad).elem, "faces")(Facing.elem(edge))
 case class SetUpFacingAction(self : Faction, squad : Squad, edge : Int, k : Int) extends BaseAction(squad, "in", (g : Game) => g.where(squad).elem, "sets up to fire", (g : Game) => g.costNote(squad, 1), "facing")(Facing.elem(edge))
 // a Heavy Vehicle's CP: forward or backward, rotating one hex side before or after, or rotating in place (the path is then only its own hex)
@@ -1419,6 +1825,7 @@ case class FreeNextAction(f : Faction) extends ForcedAction
 case class FreeSpawnAction(self : Faction, t : UnitType, hex : Hex) extends BaseAction("Free", (g : Game) => g.freeNote)(Images.token(Squad(self, t, 0)) ~ t.elem, "in", hex) with HexKey
 case class DefensiveStanceAction(self : Faction, squad : Squad, k : Int) extends BaseAction(squad, "in", (g : Game) => g.where(squad).elem)("Defensive Stance", "(Heavy Cover this round, no more CP)".spn(styles.small), (g : Game) => g.costNote(squad, 1))
 case class KradDropAction(self : Faction, squad : Squad, path : $[Hex], k : Int) extends BaseAction(squad, "in", (g : Game) => g.where(squad).elem)("Move to", path.last, "leaving a rider in", (g : Game) => g.where(squad).elem, "(1 Health)".spn(styles.small), (g : Game) => g.costNote(squad, path.num)) with HexKey { def hex = path.last }
+case class RapidProductionAction(self : Faction, squad : Squad, k : Int) extends BaseAction(squad, "in", (g : Game) => g.where(squad).elem)("Rapid Production: a free move")
 case class BersaglieriDashAction(self : Faction, squad : Squad, k : Int) extends BaseAction(squad, "in", (g : Game) => g.where(squad).elem)("Bersaglieri: a free move")
 case class SalvageKitsAction(self : Faction) extends BaseAction("Commander")("Salvage Kits: pay", 2.hlb, Munitions.icon, "for", 1.hlb, Fuel.icon)
 case class BattlefieldSalvageAction(self : Faction, r : Res) extends BaseAction("Battlefield Salvage", (g : Game) => ("(" + g.salvage.getOrElse(self, 0) + " left)").spn(styles.small))("Take", 1.hlb, r.icon, "for", 1.hlb, XP.icon)
@@ -1515,7 +1922,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // a destroyed unit's VP: to the other team, or in a free-for-all to every player who assigned it Damage (11.0)
     def killed(x : Squad, by : $[Faction]) {
         Jests.note(this, "destroyed", x.faction, by.%(e => foe(e, x.faction)).headOption.|(other(x.faction)), x.utype.name)
-        if (has(x, HeroicSacrifice).not) {
+        if (has(x, HeroicSacrifice).not && (pos.contains(x) && valourAt(where(x))).not) {
             if (freeForAll)
                 by.distinct.%(e => foe(e, x.faction)).foreach { e =>
                     gain(e, VP, 1)
@@ -1558,6 +1965,56 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // built barbed wire and tank traps (Full Game Rules), not the map's permanent tank traps
     var wire = Set[Hex]()
     var traps = Set[Hex]()
+    // Barricades (3rd printing): a hex and the edge they stand on
+    var barricades = Set[(Hex, Int)]()
+    // Blitz Cubes (3rd printing): the orange cubes on each unit, those placed this round, and the units resting this Damage Phase
+    val blitzing = options.has(BlitzCubes)
+    var blitz = Map[Squad, Int]()
+    var blitzNow = Map[Squad, Int]()
+    var rested = Set[Squad]()
+    // the 3rd printing Commanders: effects a unit has for one round (Disruption Beacons' Camouflage, ...), the hexes Assault Operation
+    // units assaulted this round
+    var tempEffects = Map[Squad, (Int, $[Effect])]()
+    var opAssaulted = Map[Squad, (Int, Hex)]()
+    var beaconed = Set[Squad]()
+    // Vehicle Over Repair, Side Skirts: the Vehicles given +1 Health; Attacking Spirit and Veteran Squad Leaders: the round each Control
+    // Point was captured, and the units Reinforced; No Man Left Behind's rounds; Army in Exile's rounds
+    var overRepaired = Set[Squad]()
+    var capturedIn = Map[Hex, Int]()
+    var spirited = Map[Squad, Int]()
+    var leftBehind = Map[Faction, Int]()
+    var exiled = Map[Faction, Int]()
+    // Medical Airdrop and Rally Points: the hex marked this round
+    var medics = Map[Faction, (Int, Hex)]()
+    // mines: the die left on a hex, by whom; the mines each unit left this round
+    var mines = Map[Hex, (Faction, Dmg)]()
+    var mined = Map[Squad, (Int, Int)]()
+    // Early Warning: the round the player's Weapon Teams got their free CP
+    var warned = Map[Faction, Int]()
+    // Valour: the Control Point marked this round
+    var valour = Map[Faction, (Int, Hex)]()
+    def valourAt(h : Hex) = valour.values.exists { case (r, x) => r == round && x == h }
+    var dugIn = Set[Squad]()
+    // Italian Infantry: the Control Points marked this round, by player
+    var pointGuards = Map[Faction, (Int, $[Hex])]()
+    // Planes (3rd printing): the plane each player unlocked
+    def planes = full && options.has(Planes)
+
+    // TROOP TRANSPORTS (3rd printing): on a map with Sea, for the teams the map names, else those whose Spawn Area is by the Sea
+    def boating = full && options.has(TroopTransports) && Board.terrain.values.exists(_ == Sea)
+    def boat(u : Squad) = u.utype.isInstanceOf[TroopTransport]
+    def boatTeam(f : Faction) = Board.boats./(_.has(team(f))).|(boatSpawn(f).any)
+    // where a Troop Transport spawns: the Sea and Anchorages in its Spawn Area or next to it
+    def boatSpawn(f : Faction) : $[Hex] = Board.hexes.%(h => Board.wet(h) && Board.traps.has(h).not && traps.contains(h).not && (Board.spawn(team(f)).has(h) || Board.spawn(team(f)).exists(Board.adjacent(h, _))))
+    def boatsBuyable(f : Faction) = boating && boatsOf.contains(f)
+    // a Troop Transport's empty hold, where a Vehicle or Infantry may spawn
+    def holds(f : Faction) : $[Squad] = units(f).%(v => boat(v) && passenger(v).none && retreating.contains(v).not)
+    // a Control Point in a tower is lost with its Building (Sainte-Mère-Église)
+    def lostPoint(h : Hex) = Board.tower.has(h) && ruined.contains(h)
+    var planeOf = Map[Faction, UnitType]()
+    // the players who unlocked Troop Transports
+    var boatsOf = Set[Faction]()
+    def barricading = full && options.has(Barricades)
     var control = Map[Hex, Faction]()
     var spawned = Map[UnitType, Int]()
 
@@ -1677,43 +2134,47 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def has(u : Squad, e : Effect) = effects(u).contains(e)
     def boughtEffects(u : Squad) = bought.getOrElse(u, $[Bought]())./(_.effect)
     // what it bought, and what its Commander gives it (less what it already bought)
-    def effects(u : Squad) : $[Effect] = { val b = boughtEffects(u) ; b ++ (freeEffects(u) ++ u.utype.innate).diff(b) }
-    def attacksOf(u : Squad) : $[Attack] = {
+    def effects(u : Squad) : $[Effect] = { val b = boughtEffects(u) ; b ++ (freeEffects(u) ++ u.utype.innate ++ tempEffects.get(u).%(_._1 == round)./~(_._2)).diff(b) }
+    def attacksOf(u : Squad) : $[Attack] = if (has(u, BusterKit)) $(UnitType.ap, UnitType.ap, UnitType.ap) else if (u.utype == Gurkha && unlocked(u.faction, AyoGorkhali) && assaults.contains(u)) attacksOf0(u) :+ UnitType.he else attacksOf0(u)
+
+    def attacksOf0(u : Squad) : $[Attack] = {
         // a Bunker (Full Game Rules 10.1): its Infantry has an AP die (only against units outside it, `diceOnFull`)
         val bunker = (full && u.kind == Infantry && pos.get(u).exists(h => Board.bunkers.has(h) && ruined.contains(h).not) && isPassenger(u).not).$(UnitType.ap)
-        val l = bunker ++ u.utype.attacks ++ effects(u)./~{ case AddAttack(a) => $(a) ; case AddAttacks(a) => $(a, a) ; case FlameRefit => $(UnitType.flame) ; case CloseFire => $(UnitType.ai, UnitType.ai) ; case CloseUp => $(UnitType.ai) ; case MortarRefit => $(UnitType.heIndirect, UnitType.heIndirect) ; case _ => $ }
+        val l = bunker ++ u.utype.attacks ++ effects(u)./~{ case AddAttack(a) => $(a) ; case AddAttacks(a) => $(a, a) ; case FlameRefit => $(UnitType.flame) ; case DetachmentKit => $(UnitType.flame) ; case GurkhaRecon => $(UnitType.ai) ; case GurkhaShock => $(UnitType.ai) ; case CloseFire => $(UnitType.ai, UnitType.ai) ; case CloseUp => $(UnitType.ai) ; case MortarRefit => $(UnitType.heIndirect, UnitType.heIndirect) ; case _ => $ }
         // Operation Crocodile: the Churchill's AI becomes 2 forward Flame
         if (u.utype == Churchill && unlocked(u.faction, OperationCrocodile)) l.%(_.dmg != AI) ++ $(UnitType.flame, UnitType.flame) else l
     }
     // the base AI dice that are Close Range Firepower, and the Thompson SMGs'
-    def closeAttacks(u : Squad) : $[Attack] = u.utype.attacks.%(_.dmg == AI).take(u.utype.close) ++ effects(u).count(CloseFire).times($(UnitType.ai, UnitType.ai)).flatten ++ effects(u).count(CloseUp).times(UnitType.ai)
+    def closeAttacks(u : Squad) : $[Attack] = has(u, BusterKit).?($[Attack]()).|(u.utype.attacks.%(_.dmg == AI).take(u.utype.close) ++ effects(u).count(CloseFire).times($(UnitType.ai, UnitType.ai)).flatten ++ effects(u).count(CloseUp).times(UnitType.ai) ++ effects(u).count(GurkhaShock).times(UnitType.ai))
     // the Wrenches: Kettenkrad Engineers have one
-    def wrenchesOf(u : Squad) = u.utype.wrenches + (u.utype == Kettenkrad && unlocked(u.faction, KettenkradEngineers)).??(1) +
+    def wrenchesOf(u : Squad) = u.utype.wrenches + (u.kind == Infantry && weaponTeam(u) && warned.get(u.faction).has(round) && u.utype.wrenches == 0).??(1) + (u.utype == Dingo && unlocked(u.faction, TowedHeavyMortar)).??(1) + (u.utype == Kettenkrad && unlocked(u.faction, KettenkradEngineers)).??(1) +
         ((u.utype == PenalBattalion || u.utype == ShockTroops) && unlocked(u.faction, BattlefieldPromotions)).??(1)
-    def rangeOf(u : Squad) = u.utype.range + has(u, MortarRefit).??(4) + effects(u).count(RangeUp) + effects(u).count(SightRangeUp) + lmgRange(u) + combined(u).??(1)
-    def sightOf(u : Squad) = u.utype.sight + has(u, SpotsCamo).??(2) + has(u, BredaUp).??(1) + effects(u).count(SightUp) + effects(u).count(SightRangeUp) + combined(u).??(1) + boysAT(u).??(1)
+    def rangeOf(u : Squad) = has(u, BusterKit).?(3).|(u.utype.range) + effects(u).count(GurkhaRecon) + has(u, MortarRefit).??(4) + effects(u).count(RangeUp) + effects(u).count(SightRangeUp) + lmgRange(u) + combined(u).??(1)
+    def sightOf(u : Squad) = u.utype.sight + effects(u).count(GurkhaRecon) + has(u, SpotsCamo).??(2) + has(u, BredaUp).??(1) + effects(u).count(SightUp) + effects(u).count(SightRangeUp) + combined(u).??(1) + boysAT(u).??(1)
     // Combined Arms: a unit next to another of its faction's this round
     def combined(u : Squad) = combinedArms.get(u.faction).has(round) && pos.contains(u) && units(u.faction).exists(v => v != u && pos.contains(v) && Board.adjacent(where(v), where(u)))
     // a vehicle that transports Infantry and captures (the Universal Carrier stops with its flamethrower), and the T-70 in its No-Fire mode
-    def carries(v : Squad) = v.utype.transport && has(v, FlameRefit).not && has(v, MortarRefit).not
-    def captures(v : Squad) = (v.utype.capture && has(v, FlameRefit).not) || noFire.contains(v) || commandVehicle.values.exists(x => x._1 == v && x._2 == round)
+    def carries(v : Squad) = v.utype.transport && has(v, FlameRefit).not && has(v, MortarRefit).not && has(v, ObserverUp).not
+    def captures(v : Squad) = (v.utype.capture && has(v, FlameRefit).not) || noFire.contains(v) || (v.utype == T70 && unlocked(v.faction, VehicleCrewTraining)) || (v.utype == EightRad && unlocked(v.faction, GrBLauncher)) || commandVehicle.values.exists(x => x._1 == v && x._2 == round)
     // the SdKfz 250's Mortar Halftrack: sets up and fires from 2 like a Weapon Team (2026-11-27)
     def setsUp(u : Squad) = u.utype.setsUp || has(u, MortarRefit)
     def weaponTeam(u : Squad) = u.utype.weaponTeam || has(u, MortarRefit)
-    def minRangeOf(u : Squad) = has(u, MortarRefit).?(2).|(u.utype.minRange)
+    def minRangeOf(u : Squad) = has(u, BusterKit).?(1).|(has(u, MortarRefit).?(2).|(u.utype.minRange))
     def spotsCamo(u : Squad) = has(u, SpotsCamo)
     def camouflaged(u : Squad) = has(u, Camouflage) || (u.kind == Emplacement && fortified.get(u.faction).has(round)) || preparedNow(u)
     // Prepared Positions: Emplacements and Vehicle Weapon Teams, Camouflaged with a Defense Die this round
     def preparedNow(u : Squad) = prepared.get(u.faction).has(round) && (u.kind == Emplacement || (u.utype.vehicle && weaponTeam(u)))
-    def defenseOf(u : Squad) = u.utype.defense + effects(u).count(DefenseUp) + preparedNow(u).??(1)
+    def defenseOf(u : Squad) = u.utype.defense + effects(u).count(DefenseUp) + effects(u).count(DetachmentKit) + effects(u).count(GurkhaShock) + radioNet(u).??(1) + preparedNow(u).??(1) +
+        // a Fortification (3rd printing): 1 Defense Die to Vehicles and Emplacements in it (its Infantry gets 3 as in a Building)
+        (u.kind != Infantry && u.kind != Plane && pos.get(u).exists(h => terrainAt(h) == Fortification) && isPassenger(u).not).??(1)
     def speedOf(u : Squad) = u.utype.speed + effects(u).count(SpeedUp)
     def reinforces(u : Squad) = u.utype.reinforce || has(u, ReinforceUp)
-    def maxHealth(u : Squad) = u.utype.health + effects(u).count(HealthUp) + 2 * effects(u).count(BredaUp) + 2 * effects(u).count(HealthTwo)
+    def maxHealth(u : Squad) = u.utype.health + overRepaired.contains(u).??(1) + (u.utype.tierBuilding > 0 && unlocked(u.faction, ForwardReceivers)).??(1) + effects(u).count(HealthUp) + 2 * effects(u).count(BredaUp) + 2 * effects(u).count(HealthTwo)
     // a Building destroyed in the Full Game Rules is a Destroyed Building
     def terrainAt(h : Hex) : Terrain = ruined.contains(h).?(Ruin : Terrain).|(Board.terrain(h))
     def inBuilding(h : Hex) = terrainAt(h) == Building || terrainAt(h) == Ruin || terrainAt(h) == Cathedral
     // open ground, Ice too
-    def isOpen(h : Hex) = terrainAt(h) == Open || terrainAt(h) == Ice
+    def isOpen(h : Hex) = terrainAt(h) == Open || terrainAt(h) == Ice || terrainAt(h) == Sea
     // Ice tiles (Full Game Rules)
     def onIce(u : Squad) = full && pos.contains(u) && terrainAt(where(u)) == Ice
     // a hex of a multi-hex Building that is still standing
@@ -1721,15 +2182,30 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def onBuilding(u : Squad) = inBuilding(where(u))
 
     // the most CP a unit may take a round (Slow takes one away)
-    def cap(u : Squad) = rangers(u).?(4).|(3) - slowOf(u) - slowed.get(u).has(round).??(doubleSlow.contains(u).?(2).|(1))
+    def cap(u : Squad) = rangers(u).?(4).|(3) - slowOf(u) - slowed.get(u).has(round).??(doubleSlow.contains(u).?(2).|(1)) - blitzing.??(blitz.getOrElse(u, 0) - blitzNow.getOrElse(u, 0))
+
+    // Blitz Cubes: the moves of up to 2 hexes an orange cube gives, in the team's first turn of the round (a Heavy Vehicle straight ahead
+    // in the Full Game Rules)
+    def blitzMoves(u : Squad, k : Int) : $[$[Hex]] = (blitzing && k < teams.num && cpLeft >= 1 && paidLeft(u) >= 1 && mayMove(u) && isPassenger(u).not && u.utype != KradScout &&
+        (full && (retreating.contains(u) || assaults.contains(u) || stance.contains(u))).not).??{
+        val h = where(u)
+        if (full && u.kind == HeavyVehicle) {
+            val e = facing.getOrElse(u, 0)
+            heavyStep(u, h, e).%(occupant(_).none).$./~(a => $($(a)) ++ heavyStep(u, a, e).%(occupant(_).none).$./(b => $(a, b)))
+        }
+        else {
+            val one = stepsFrom(u, h)
+            (one.%(occupant(_).none)./($(_)) ++ one./~(m => stepsFrom(u, m).%(n => n != h && occupant(n).none && one.has(n).not)./($(m, _)))).distinctBy(_.last)
+        }
+    }
 
     def onBoard(f : Faction, t : UnitType) = units(f).count(_.utype.chassis == t.chassis)
 
     // CONTROL POINTS and income: 1 of each resource, and 1 for each resource of each Control Point held
 
-    def pointsOf(f : Faction) : $[Hex] = control.toList.filter(_._2 == f).map(_._1).sortBy(h => (h.r, h.c))
+    def pointsOf(f : Faction) : $[Hex] = control.toList.filter(_._2 == f).map(_._1).%(lostPoint(_).not).sortBy(h => (h.r, h.c))
 
-    def income(f : Faction, r : Res) : Int = (r != VP).??(1) + pointsOf(f)./(h => Board.points(h).count(r)).sum +
+    def income(f : Faction, r : Res) : Int = (r != VP).??(1) + pointsOf(f)./(h => Board.points(h).count(r)).sum + (r == VP).??(pointsOf(f).count(valourAt)) +
         // Assault Tactics: a Scout Car in No-Fire mode on a Control Point, 1 more of its (first) resource
         units(f).count(v => ((v.utype == ScoutCar && unlocked(f, SupplyOperations)) || (v.utype == Kubelwagen && unlocked(f, AssaultSupport)) || (v.utype == EightRad && unlocked(f, DAKAssaultSupport))) && noFire.contains(v) && Board.points.get(where(v)).exists(_.%(_ != VP).headOption.has(r)))
 
@@ -1776,17 +2252,18 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     }
 
     // Moro River's tank traps (Full Game Rules) keep out Vehicles
-    def canEnter(u : Squad, h : Hex) = canAssault(u, h) && (u.utype.vehicle.not || traps.contains(h).not) && (u.kind != Infantry || wire.contains(h).not)
+    def canEnter(u : Squad, h : Hex) = (boat(u).not || (Board.wet(h) && Board.traps.has(h).not)) && canAssault(u, h) && (u.utype.vehicle.not || traps.contains(h).not) && (u.kind != Infantry || wire.contains(h).not)
 
     // the same, but past built barbed wire and tank traps, as an Assault on an enemy unit behind them may go
-    def canAssault(u : Squad, h : Hex) = (terrainAt(h) != Water || u.utype == DevilsBrigade) && (u.utype.vehicle.not || (inBuilding(h).not && (full && Board.traps.has(h)).not))
+    def canAssault(u : Squad, h : Hex) = boat(u).?(Board.wet(h)).|((terrainAt(h) != Water && terrainAt(h) != Anchorage) || devils(u)) && (u.utype.vehicle.not || (inBuilding(h).not && (full && Board.traps.has(h)).not))
 
     // a hex with built Battlefield Defenses that two damage would destroy: sandbags, barbed wire, tank traps
-    def defended(h : Hex) = sandbags.contains(h) || wire.contains(h) || traps.contains(h)
+    def defended(h : Hex) = sandbags.contains(h) || wire.contains(h) || traps.contains(h) || barricades.exists(_._1 == h)
 
     // all Battlefield Defenses of a hex are destroyed together
     def destroyDefenses(h : Hex) {
-        val l = $[String]() ++ sandbags.contains(h).$("Sandbags") ++ wire.contains(h).$("Barbed Wire") ++ traps.contains(h).$("Tank Trap")
+        val l = $[String]() ++ sandbags.contains(h).$("Sandbags") ++ wire.contains(h).$("Barbed Wire") ++ traps.contains(h).$("Tank Trap") ++ barricades.exists(_._1 == h).$("Barricade")
+        barricades = barricades.filterNot(_._1 == h)
         sandbags -= h
         wire -= h
         traps -= h
@@ -1796,14 +2273,26 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     // the barbed wire and tank traps a unit with a Wrench may build on its hex (1 CP; both at once with two Wrenches); not in a
     // Building, nor where an Assault is going on
-    def defenseChoices(f : Faction, u : Squad, k : Int) : $[UserAction] = (full && wrenchesOf(u) > 0 && onBuilding(u).not && isPassenger(u).not && assaultAt(where(u)).not && assaults.contains(u).not).??{
+    def defenseChoices(f : Faction, u : Squad, k : Int) : $[UserAction] = (full && wrenchesOf(u) > 0 && onBuilding(u).not && terrainAt(where(u)) != Fortification && isPassenger(u).not && assaultAt(where(u)).not && assaults.contains(u).not).??{
         val h = where(u)
         val w = wire.contains(h).not
         val t = traps.contains(h).not && Board.traps.has(h).not
         w.$(DefensesAction(f, u, true, false, k)) ++ t.$(DefensesAction(f, u, false, true, k)) ++ (w && t && wrenchesOf(u) >= 2).$(DefensesAction(f, u, true, true, k))
     }
 
-    def stepsFrom(u : Squad, h : Hex) = Board.neighbors(h).%(n => Board.joined(h, n) && canEnter(u, n))
+    def stepsFrom(u : Squad, h : Hex) = Board.neighbors(h).%(n => Board.joined(h, n) && barred(h, n).not && unwired(u, h, n) && canEnter(u, n))
+
+    // the 3rd printing's permanent barbed wire: no Infantry moves across it
+    def unwired(u : Squad, a : Hex, b : Hex) = u.kind != Infantry || Board.wired(a, b).not
+
+    // a Barricade on the edge between two hexes, on either side: no move across it
+    def barred(a : Hex, b : Hex) = barricades.nonEmpty && barricades.exists { case (h, e) => (h == a && Board.toward(a, e).has(b)) || (h == b && Board.toward(b, e).has(a)) }
+
+    // the edges of its hex Infantry with a Wrench may barricade (1 CP): open edges with a hex past them and no Barricade yet
+    def barricadeChoices(f : Faction, u : Squad, k : Int) : $[UserAction] = (barricading && u.kind == Infantry && wrenchesOf(u) > 0 && onBuilding(u).not && terrainAt(where(u)) != Fortification && isPassenger(u).not && assaultAt(where(u)).not && assaults.contains(u).not).??{
+        val h = where(u)
+        0.until(6).$.%(e => Board.toward(h, e).exists(n => Board.joined(h, n) && barred(h, n).not))./(e => BarricadeAction(f, u, e, k))
+    }
 
     // the moves of a unit standing in a hex: into an empty hex, or through an occupied one into an empty one (both CP at once)
     def moves(u : Squad) : $[$[Hex]] = {
@@ -1814,9 +2303,11 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         (left >= 2).??(one.%(occupant(_).any)./~(m => stepsFrom(u, m).%(n => n != h && occupant(n).none && one.has(n).not)./($(m, _)))).distinctBy(_.last)
     }
 
-    def transports(u : Squad) : $[Squad] = (u.kind == Infantry && pointsLeft(u) >= 1).??(stepsFrom(u, where(u))./~(occupant).%(v => v.faction == u.faction && carries(v) && passenger(v).none))
+    def transports(u : Squad) : $[Squad] = (u.kind == Infantry && pointsLeft(u) >= 1).??(stepsFrom(u, where(u))./~(occupant).%(v => v.faction == u.faction && carries(v) && passenger(v).none)) ++
+        // a Vehicle (not a Troop Transport, nor a transport with a passenger) boards a Troop Transport next to it
+        (u.utype.vehicle && boat(u).not && passenger(u).none && pointsLeft(u) >= 1).??(Board.neighbors(where(u)).%(n => Board.joined(where(u), n))./~(occupant).%(v => v.faction == u.faction && boat(v) && passenger(v).none))
 
-    def mayMove(u : Squad) = setUp.contains(u).not && u.kind != Emplacement && stance.contains(u).not
+    def mayMove(u : Squad) = setUp.contains(u).not && u.kind != Emplacement && stance.contains(u).not && beaconed.contains(u).not
 
     def unitActions(f : Faction, u : Squad, k : Int) : $[UserAction] = {
         val left = pointsLeft(u)
@@ -1827,16 +2318,19 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             // a Retreating unit spends no CP, an Assaulting one no more (its passenger may still leave), nor one in a Defensive Stance
             $
         else
+        if (u.kind == Plane)
+            mayMove(u).??(planeOptions(u)./{ case (p, e) => PlaneMoveAction(f, u, p, e, k) })
+        else
         if (full && isPassenger(u).not && u.kind == HeavyVehicle)
-            heavyOptions(u)./{ case (p, e, true) => AssaultAction(f, u, p.last, e, k) ; case (p, e, false) => HeavyMoveAction(f, u, p, e, k) } ++ noFireMode(u).$(NoFireModeAction(f, u, k)) ++ commanderActions(f, u, k)
+            heavyOptions(u)./{ case (p, e, true) => AssaultAction(f, u, p.last, e, k) ; case (p, e, false) => HeavyMoveAction(f, u, p, e, k) } ++ mayMove(u).??(transports(u)./(v => EmbarkAction(f, u, v, where(v), k))) ++ noFireMode(u).$(NoFireModeAction(f, u, k)) ++ commanderActions(f, u, k) ++ printingActions(f, u, k)
         else
         if (full && isPassenger(u).not) {
             val m = mayMove(u).??(moves(u)./(p => MoveAction(f, u, p, k)) ++ assaultHexes(u)./(h => AssaultAction(f, u, h, -1, k)) ++ transports(u)./(v => EmbarkAction(f, u, v, where(v), k)) ++
                 // a Kradschützen at 2 Health may leave a rider on the hex it leaves
                 (u.utype == Kradschutzen && health(u) == 2 && passenger(u).none).??(moves(u)./(p => KradDropAction(f, u, p, k))))
             val s = setsUp(u).??(setUp.contains(u).?($(PackUpAction(f, u, k))).|((u.utype.noBuildingSetup && onBuilding(u)).not.??(0.until(6).$./(e => SetUpFacingAction(f, u, e, k)))))
-            val b = (wrenchesOf(u) > 0 && onBuilding(u).not).??(0.until(6).$.%(e => Sandbags.edges(e).forall(sandbags.getOrElse(where(u), Set()).contains).not)./(e => SandbagsAction(f, u, e, k)))
-            m ++ s ++ b ++ defenseChoices(f, u, k) ++ noFireMode(u).$(NoFireModeAction(f, u, k)) ++ commanderActions(f, u, k)
+            val b = (wrenchesOf(u) > 0 && onBuilding(u).not && terrainAt(where(u)) != Fortification).??(0.until(6).$.%(e => Sandbags.edges(e).forall(sandbags.getOrElse(where(u), Set()).contains).not)./(e => SandbagsAction(f, u, e, k)))
+            m ++ s ++ b ++ defenseChoices(f, u, k) ++ barricadeChoices(f, u, k) ++ noFireMode(u).$(NoFireModeAction(f, u, k)) ++ commanderActions(f, u, k) ++ blitzMoves(u, k)./(p => BlitzMoveAction(f, u, p, k)) ++ printingActions(f, u, k)
         }
         else
         if (isPassenger(u))
@@ -1845,8 +2339,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             val m = mayMove(u).??(moves(u)./(p => MoveAction(f, u, p, k)) ++ transports(u)./(v => EmbarkAction(f, u, v, where(v), k)) ++
                 (u.utype == Kradschutzen && health(u) == 2 && passenger(u).none).??(moves(u)./(p => KradDropAction(f, u, p, k))))
             val s = weaponTeam(u).??(setUp.contains(u).?($(PackUpAction(f, u, k))).|((u.utype.noBuildingSetup && onBuilding(u)).not.$(SetUpAction(f, u, k))))
-            val b = (wrenchesOf(u) > 0 && onBuilding(u).not).??(0.until(6).$.%(e => Sandbags.edges(e).forall(sandbags.getOrElse(where(u), Set()).contains).not)./(e => SandbagsAction(f, u, e, k)))
-            m ++ s ++ b ++ noFireMode(u).$(NoFireModeAction(f, u, k))
+            val b = (wrenchesOf(u) > 0 && onBuilding(u).not && terrainAt(where(u)) != Fortification).??(0.until(6).$.%(e => Sandbags.edges(e).forall(sandbags.getOrElse(where(u), Set()).contains).not)./(e => SandbagsAction(f, u, e, k)))
+            m ++ s ++ b ++ noFireMode(u).$(NoFireModeAction(f, u, k)) ++ blitzMoves(u, k)./(p => BlitzMoveAction(f, u, p, k)) ++ printingActions(f, u, k)
         }
     }
 
@@ -1914,7 +2408,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     // ATTACKS
 
-    def canFire(u : Squad) = pinned.contains(u).not && noFire.contains(u).not && decoyed.contains(u).not && (setsUp(u).not || setUp.contains(u)) && (isPassenger(u).not || weaponTeam(u).not) && (full && retreating.contains(u)).not
+    def canFire(u : Squad) = rested.contains(u).not && (pinned.contains(u).not || firstStrike(u)) && noFire.contains(u).not && decoyed.contains(u).not && (setsUp(u).not || setUp.contains(u)) && (isPassenger(u).not || weaponTeam(u).not) && (full && retreating.contains(u)).not
 
     // the dice a unit puts on a target: all of them with a clear line, only the indirect ones over Buildings
     def diceOn(u : Squad, t : Squad) : $[Attack] = if (full) diceOnFull(u, t) else {
@@ -1935,7 +2429,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         val types = d./(_.dmg).distinct
         val fresh = used.get(u).forall(_.isEmpty)
         val alt = fresh.??(tulip(u, t).$((t, 3.times(UnitType.he)))) ++ gammon(u, t).$((t, 3.times(UnitType.he))) ++
-            (fresh && u.utype.alt.any && Board.distance(where(u), where(t)) <= u.utype.altRange).$((t, u.utype.alt)) ++
+            (fresh && has(u, ObserverUp) && u.faction.stock(Munitions) >= 3).$((t, $(UnitType.heIndirect, UnitType.heIndirect))) ++
+            (fresh && u.utype == Semovente && unlocked(u.faction, VeteranSemovente) && Board.distance(where(u), where(t)) <= u.utype.altRange).$((t, $(UnitType.he, UnitType.he, UnitType.he))) ++
+            (fresh && u.utype.alt.any && (u.utype == Semovente && unlocked(u.faction, VeteranSemovente)).not && Board.distance(where(u), where(t)) <= u.utype.altRange && (u.kind != Plane || (u.faction.stock(Munitions) >= 3 && u.utype.alt.exists(a => Matrix.relevant(t.kind, a.dmg) && inArc(u, where(t)))))).$((t, u.utype.alt)) ++
             // the KV-8: 1 more Flame Assaulting or at a unit in a Building
             (u.utype == KV8 && (assaults.get(u).has(t) || inBuilding(where(t)))).$((t, d :+ UnitType.flame))
         if (full && u.kind == HeavyVehicle && types.num > 1)
@@ -1960,16 +2456,18 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         else {
             val h = where(t)
             terrainAt(h) @@ {
-                case Building | Cathedral => 3
+                case Building | Cathedral | Fortification => 3
                 // a Devil's Brigade in a Destroyed Building gets 3
-                case Ruin => (t.utype == DevilsBrigade && unlocked(t.faction, DevilsBrigadeSpawn)).?(3).|(1)
+                case Ruin => ((t.utype == DevilsBrigade && unlocked(t.faction, DevilsBrigadeSpawn)) || t.utype == SSFCanadian).?(3).|(1)
                 case _ =>
                     from./{ x =>
                         val edges = Board.crossed(h, x)
                         val lines = edges./~(e => Board.cover.get((h, e)))./(_.dice)
                         // Riflemen Field Defenses: 1 more behind Sandbags
-                        val bags = edges.exists(e => sandbags.getOrElse(h, Set()).contains(e)).??(2 + ((riflemen(t) && unlocked(t.faction, RiflemenFieldDefenses)) || (t.utype == Conscripts && unlocked(t.faction, ConscriptPacks)) || (t.utype == Panzerjaeger && unlocked(t.faction, CoastalWall))).??(1))
-                        (lines :+ bags).max
+                        val bags = edges.exists(e => sandbags.getOrElse(h, Set()).contains(e)).??(2 + ((riflemen(t) && unlocked(t.faction, RiflemenFieldDefenses)) || (t.utype == Conscripts && unlocked(t.faction, ConscriptPacks)) || ((t.utype == Panzerjaeger || t.utype == CoastalReservesVet) && unlocked(t.faction, CoastalWall)) || (t.utype == Sturmpioneers && unlocked(t.faction, OKWCoastalWall))).??(1))
+                        // a Barricade on an edge crossed: 2
+                        val barricade = edges.exists(e => barricades.contains((h, e))).??(2 + (t.utype == Sturmpioneers && unlocked(t.faction, OKWCoastalWall)).??(1))
+                        (lines :+ bags :+ barricade).max
                     }.maxOr(0)
             }
         }
@@ -1994,11 +2492,21 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         // OKW: Tier 2 and 3 units next to their Tier Building
         val building = brigadeUnit(f, t).?($[Hex]()).|(((t.tier >= 2).??(tierBuildingOf(f, t.tier).$) ++ (t == Obersoldaten && unlocked(f, TerrorWestOber)).??(tierBuildingOf(f, 2).$))./~(u => Board.neighbors(where(u)).%(n => Board.joined(where(u), n) && terrainAt(n) != Water && occupant(n).none)))
         // the Soviet Forward Station: Vehicles next to it
-        val station = t.vehicle.??(units(f).%(_.utype == ForwardStation)./~(u => Board.neighbors(where(u)).%(n => Board.joined(where(u), n) && terrainAt(n) != Water && occupant(n).none)))
-        if (t == Stormtroopers || t == AIPartisans || t == ATPartisans)
-            stormHexes(f)
+        val station = t.vehicle.??(units(f).%(u => u.utype == ForwardStation || u.utype == ForwardRepair)./~(u => Board.neighbors(where(u)).%(n => Board.joined(where(u), n) && terrainAt(n) != Water && occupant(n).none)))
+        // the M1919A6 LMG Paratrooper Beacon: Riflemen next to a Pathfinder Squad
+        val lmg = (t == Riflemen && unlocked(f, PathfinderLMGBeacon)).??(units(f).%(u => u.utype == Pathfinder && isPassenger(u).not)./~(u => Board.neighbors(where(u)).%(n => Board.joined(where(u), n) && terrainAt(n) != Water && occupant(n).none)))
+        // a Troop Transport's hold, wherever it is (3rd printing)
+        val hold = (boating && (t.kind == Infantry || t.vehicle) && t.isInstanceOf[TroopTransport].not).??(holds(f)./(where))
+        if (t.isInstanceOf[TroopTransport])
+            boatSpawn(f).%(occupant(_).none)
         else
-            (area ++ transports ++ major ++ building ++ station).distinct.%(h => t.vehicle.not || inBuilding(h).not)
+        if (t == Stormtroopers || t == AIPartisans || t == ATPartisans)
+            stormHexes(f) ++ hold
+        else
+        if (t == PPShGuards || t == FG42Jager)
+            dropHexes(f)
+        else
+            (area ++ transports ++ major ++ building ++ station ++ lmg ++ hold).distinct.%(h => t.vehicle.not || inBuilding(h).not)
     }
 
     // OKW's Tier Buildings on the map
@@ -2008,7 +2516,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         occupant(h).%(_.utype.transport)./(v => ("(in " + v.utype.name + halftrackDiscount(f, t, h).??(", 2 Manpower less") + ")").spn(styles.small) : Elem).|(Board.spawn(team(f)).has(h).not.?(((t.tier >= 2).??(tierBuildingOf(f, t.tier)).%(b => Board.adjacent(where(b), h))./(b => "(next to the " + b.utype.name + ", " + (t.slow > 0).?("Double ").|("") + "Slow next round)").|(units(f).%(u => u.utype != Major && has(u, SpawnAdjacent) && Board.adjacent(where(u), h)).starting./(u => "(next to " + u.utype.name + ", Slow this round)").|("(next to the Major, Slow this round)"))).spn(styles.small) : Elem).|(Empty))
 
     // the DAK SdKfz 250: Infantry spawned into one that spawned this round cost 2 Manpower less
-    def halftrackDiscount(f : Faction, t : UnitType, h : Hex) = t.kind == Infantry && unlocked(f, Funkpanzerwagen).not && occupant(h).exists(v => v.faction == f && v.utype == SdKfz250 && carries(v) && passenger(v).none && spawnRound.get(v).has(round))
+    def halftrackDiscount(f : Faction, t : UnitType, h : Hex) = (t.kind == Infantry && unlocked(f, Funkpanzerwagen).not && occupant(h).exists(v => v.faction == f && v.utype == SdKfz250 && carries(v) && passenger(v).none && spawnRound.get(v).has(round))) ||
+        (t == LandMattress && occupant(h).exists(v => v.faction == f && v.utype == UniversalCarrier && carries(v) && passenger(v).none && spawnRound.get(v).has(round)))
     def spawnCost(f : Faction, t : UnitType, h : Hex) : Cost = costOf(f, t) @@ { c => halftrackDiscount(f, t, h).?(Cost(max(0, c.mp - 2), c.mun, c.fuel)).|(c) }
 
     def affordable(f : Faction, c : Cost) = f.stock(Manpower) >= c.mp && f.stock(Munitions) >= c.mun && f.stock(Fuel) >= c.fuel
@@ -2034,7 +2543,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def upgrades(f : Faction) : $[(Squad, Int, Effect)] = units(f)./~{ u =>
         slotsOf(u)./~{ case (i, s) =>
             val n = bought.getOrElse(u, $[Bought]()).count(_.slot == i)
-            (n < s.times && f.stock(s.res) >= slotPrice(u, i)).??(s.options.%(e => s.times > 1 || n == 0).%(e => (u.utype == Churchill && e == AddAttack(UnitType.ai) && unlocked(f, OperationCrocodile)).not).%(e => (e == MortarRefit && (has(u, SpotsCamo) || unlocked(f, Funkpanzerwagen))).not).%(e => e != SplashUp || full).%(e => freeEffects(u).has(e).not).%(e => i < 10 || has(u, e).not).%(e => (i < 2 && u.utype == DevilsBrigade && unlocked(f, VeteranDevils)).not)./(e => (u, i, e)))
+            (n < s.times && f.stock(s.res) >= slotPrice(u, i)).??(s.options.%(e => s.times > 1 || n == 0).%(e => (u.utype == Churchill && e == AddAttack(UnitType.ai) && unlocked(f, OperationCrocodile)).not).%(e => (e == MortarRefit && (has(u, SpotsCamo) || unlocked(f, Funkpanzerwagen))).not).%(e => e != SplashUp || full).%(e => e != SplashUp || has(u, PrecisionUp).not).%(e => e != SpotsCamo || has(u, SpotsCamo).not).%(e => freeEffects(u).has(e).not).%(e => i < 10 || has(u, e).not).%(e => (i < 2 && u.utype == DevilsBrigade && unlocked(f, VeteranDevils)).not)./(e => (u, i, e)))
         }
     }
 
@@ -2053,7 +2562,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         if (t.builtBy.none)
             builders(f)
         else
-            units(f).filter(u => t.builtBy.contains(u.utype) && retreating.contains(u).not && spawnRound.get(u).has(round).not && built.getOrElse(u, 0) < wrenchesOf(u))
+            units(f).filter(u => buildsAs(u).exists(t.builtBy.contains) && retreating.contains(u).not && spawnRound.get(u).has(round).not && built.getOrElse(u, 0) < wrenchesOf(u) && (u.utype != Dingo || f.stock(Munitions) >= t.cost.mun + 3))
                 .map(u => (u, Board.neighbors(where(u)).filter(h => Board.joined(where(u), h) && t.inBuildings.?(terrainAt(h) == Building).|(isOpen(h) && wire.contains(h).not) && standing(h).none))).filter(_._2.nonEmpty)
 
     // a unit has assigned dice: done, except a Heavy Vehicle in the Full Game Rules with damage types left to put on other targets
@@ -2086,7 +2595,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         val n = spawned.getOrElse(t, 0) + 1
         spawned += t -> n
         val u = Squad(f, t, n)
-        occupant(h).%(v => v.faction == f && carries(v) && t.kind == Infantry).foreach { v => carried += u -> v }
+        occupant(h).%(v => v.faction == f && carries(v) && passenger(v).none && (t.kind == Infantry || (boat(v) && t.vehicle))).foreach { v => carried += u -> v }
         pos += u -> h
         health += u -> maxHealth(u)
         // Conscript Support Tactics: new Conscripts come with both +1 Health upgrades
@@ -2151,7 +2660,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // HEAVY VEHICLE MOVEMENT: one CP moves it one hex forward or backward, turning one hex side before or after, or turns it in place;
     // through an occupied hex it goes straight on to the next for two CP. Each choice: the path (only its own hex for a turn in place),
     // the side it then faces, and whether it is an Assault
-    def heavyStep(u : Squad, h : Hex, d : Int) : |[Hex] = Board.toward(h, d).%(n => Board.joined(h, n) && canAssault(u, n))
+    def heavyStep(u : Squad, h : Hex, d : Int) : |[Hex] = Board.toward(h, d).%(n => Board.joined(h, n) && barred(h, n).not && canAssault(u, n))
 
     def heavyOptions(u : Squad) : $[($[Hex], Int, Boolean)] = {
         val h = where(u)
@@ -2179,10 +2688,52 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         l.distinct
     }
 
+    // THE 3RD PRINTING COMMANDERS' unit actions
+    // Defense in Depth, Field Engineers, Advanced Fortifications: the engineers that leave defenses behind and clear them assaulting
+    def sapper(u : Squad) = (u.utype == Sturmpioneers && unlocked(u.faction, DefenseInDepth)) || (u.utype == AssaultEngineers && unlocked(u.faction, FieldEngineers)) || (u.utype == CombatEngineers && unlocked(u.faction, AdvancedFortifications))
+
+    // the Battlefield Defenses of a hex, by name
+    def defensesIn(h : Hex) : $[String] = sandbags.contains(h).$("Sandbags") ++ wire.contains(h).$("Barbed Wire") ++ traps.contains(h).$("Tank Trap") ++ barricades.exists(_._1 == h).$("Barricade")
+
+    def printingActions(f : Faction, u : Squad, k : Int) : $[UserAction] = abilities.??(
+        // the mines: 2 Munitions, an AP or HE die left in the unit's hex
+        (full && mineLayer(u) && f.stock(Munitions) >= 2 && isPassenger(u).not && mines.contains(where(u)).not && assaultAt(where(u)).not && mined.get(u).%(_._1 == round)./(_._2).|(0) < wrenchesOf(u)).??($(MineLayAction(f, u, AP, k), MineLayAction(f, u, HE, k))) ++
+        // the sappers: on spending their first CP, Barbed Wire or a Tank Trap left in the hex they leave
+        (full && sapper(u) && cp.getOrElse(u, 0) == 0 && mayMove(u) && isPassenger(u).not && onBuilding(u).not && dugIn.contains(u).not && assaultAt(where(u)).not).??(
+            wire.contains(where(u)).not.$(DigInAction(f, u, true, k)) ++ (traps.contains(where(u)).not && Board.traps.has(where(u)).not).$(DigInAction(f, u, false, k))) ++
+        // Disruption Beacons: an Infantry's first CP for Camouflage this round, for 2 Munitions, in place of moving
+        // the Matilda II: after a CP, onto an adjacent Control Point for free
+        (full && (u.utype == MatildaII || u.utype == KV1) && cp.getOrElse(u, 0) >= 1 && raided.contains(u).not && mayMove(u) && isPassenger(u).not && assaults.contains(u).not).??(
+            Board.neighbors(where(u)).%(h => Board.points.contains(h) && Board.joined(where(u), h) && barred(where(u), h).not && occupant(h).none && standing(h).none && canEnter(u, h))./(h => MatildaPointAction(f, u, h, k))) ++
+        // Seek Vengeance: a Polish Lancer drops to the ground, +1 Range this round
+        (u.utype == PolishLancer && unlocked(f, SeekVengeance) && paidLeft(u) >= 1 && isPassenger(u).not && mayMove(u) && assaults.contains(u).not).$(VengeanceAction(f, u, k)) ++
+        // M3 Carriage: an Infantry Weapon Team merges into an adjacent Jeep
+        (u.kind == Infantry && unlocked(f, M3CarriageMerge) && M3Carriage.forTeam(u.utype).any && paidLeft(u) >= 1 && isPassenger(u).not && mayMove(u) && setUp.contains(u).not).??(
+            units(f).%(v => v.utype == Jeep && has(v, ObserverUp).not && passenger(v).none && Board.adjacent(where(u), where(v)) && Board.joined(where(u), where(v)) && onBoard(f, Jeep) <= Jeep.limit)./(v => MergeAction(f, u, v, k))) ++
+        (u.kind == Infantry && unlocked(f, DisruptionBeacons) && cp.getOrElse(u, 0) == 0 && paidLeft(u) >= 1 && f.stock(Munitions) >= 2 && isPassenger(u).not && mayMove(u)).$(BeaconAction(f, u, k))
+    )
+
+    // PLANES: one CP (or the Speed Die) flies it forward one hex, turning one hex side or not, or two hexes straight on, over anything
+    // (Buildings, water, impassable lines, units), to an empty hex
+    def planeOptions(u : Squad) : $[($[Hex], Int)] = (pointsLeft(u) >= 1).??{
+        val h = where(u)
+        val e = facing.getOrElse(u, 0)
+        Board.toward(h, e).$./~{ a =>
+            (occupant(a).none && standing(a).none).??($(0, 1, 5)./(p => ($(a), (e + p) % 6))) ++
+            Board.toward(a, e).%(b => occupant(b).none && standing(b).none).$./(b => ($(a, b), e))
+        }
+    }
+
+    // an anti-air unit's reach over a hex: in range, and in its arc and set up if it sets up
+    def aaCovers(m : Squad, h : Hex) = {
+        val d = Board.distance(where(m), h)
+        d >= 1 && d <= rangeOf(m) && (setsUp(m).not || (setUp.contains(m) && inArc(m, h)))
+    }
+
     // ASSAULTS: moving into an adjacent hex held by an enemy, where no other Assault is
     def assaultAt(h : Hex) = assaults.exists { case (_, d) => pos.get(d).has(h) }
 
-    def assaultable(u : Squad, h : Hex) = full && isPassenger(u).not && mayMove(u) && pointsLeft(u) >= 1 && canAssault(u, h) && assaultAt(h).not && occupant(h).exists(v => foe(v.faction, u.faction))
+    def assaultable(u : Squad, h : Hex) = full && u.kind != Plane && occupant(h).forall(_.kind != Plane) && isPassenger(u).not && mayMove(u) && pointsLeft(u) >= 1 && canAssault(u, h) && assaultAt(h).not && occupant(h).exists(v => foe(v.faction, u.faction))
 
     def assaultHexes(u : Squad) : $[Hex] = Board.neighbors(where(u)).%(n => Board.joined(where(u), n)).%(assaultable(u, _))
 
@@ -2212,14 +2763,14 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     // RETREATS: a Retreat Point is a hex of the team's Spawn Area, or a hex next to an ally that is one (the Major), not a Building
     // teammates' Retreat Points count too (Commander FAQ 4: Retreat always benefits teammates), in games with the hidden TeamRetreatPoints
-    def retreatPoints(f : Faction) : $[Hex] = (Board.spawn(team(f)) ++ options.has(TeamRetreatPoints).?(mates(f)).|($(f))./~(units).%(v => v.utype.retreatPoint && isPassenger(v).not && retreating.contains(v).not)./~(v => Board.neighbors(where(v)).%(n => Board.joined(where(v), n)))).distinct.%(h => isOpen(h))
+    def retreatPoints(f : Faction) : $[Hex] = (Board.spawn(team(f)) ++ options.has(TeamRetreatPoints).?(mates(f)).|($(f))./~(units).%(v => (v.utype.retreatPoint || has(v, RetreatPointUp)) && isPassenger(v).not && retreating.contains(v).not)./~(v => Board.neighbors(where(v)).%(n => Board.joined(where(v), n)))).distinct.%(h => isOpen(h))
 
     def onRetreatPoint(u : Squad) = retreatPoints(u.faction).has(where(u))
 
-    def mayRetreat(u : Squad) = full && u.kind == Infantry && isPassenger(u).not && assaults.contains(u).not && retreating.contains(u).not
+    def mayRetreat(u : Squad) = full && u.kind == Infantry && beaconed.contains(u).not && isPassenger(u).not && assaults.contains(u).not && retreating.contains(u).not
 
     // a Retreat passes through units and Battlefield Defenses, but ends in an empty hex it may enter
-    def passable(u : Squad, h : Hex) = (terrainAt(h) != Water || u.utype == DevilsBrigade) && (u.utype.vehicle.not || inBuilding(h).not)
+    def passable(u : Squad, h : Hex) = boat(u).?(Board.wet(h)).|((terrainAt(h) != Water && terrainAt(h) != Anchorage) || devils(u)) && (u.utype.vehicle.not || inBuilding(h).not)
 
     def mayEnd(u : Squad, h : Hex) = canEnter(u, h) && standing(h).none
 
@@ -2229,7 +2780,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         var i = 0
         while (front.any) {
             i += 1
-            front = front./~(h => Board.neighbors(h).%(n => Board.joined(h, n) && passable(u, n) && d.contains(n).not)).distinct
+            front = front./~(h => Board.neighbors(h).%(n => Board.joined(h, n) && barred(h, n).not && unwired(u, h, n) && passable(u, n) && d.contains(n).not)).distinct
             front.foreach(n => d += n -> i)
         }
         d
@@ -2242,7 +2793,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         var path = $[Hex]()
         var going = d.contains(cur)
         while (going && path.num < 6 && cur != point) {
-            Board.neighbors(cur).%(n => Board.joined(cur, n) && d.get(n).has(d(cur) - 1)).sortBy(h => (h.r, h.c)).starting match {
+            Board.neighbors(cur).%(n => Board.joined(cur, n) && barred(cur, n).not && unwired(u, cur, n) && d.get(n).has(d(cur) - 1)).sortBy(h => (h.r, h.c)).starting match {
                 case Some(n) =>
                     path :+= n
                     cur = n
@@ -2290,7 +2841,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         var front = $(where(u))
         var found = $[Hex]()
         while (front.any && found.none) {
-            front = front./~(h => Board.neighbors(h).%(n => Board.joined(h, n) && passable(u, n) && seen.contains(n).not)).distinct
+            front = front./~(h => Board.neighbors(h).%(n => Board.joined(h, n) && barred(h, n).not && unwired(u, h, n) && passable(u, n) && seen.contains(n).not)).distinct
             seen ++= front
             found = front.%(mayEnd(u, _))
         }
@@ -2307,8 +2858,26 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def spottedIn(f : Faction, u : Squad, h : Hex) = camouflaged(u).not || mates(f)./~(units).exists(s => retreating.contains(s).not && (Board.distance(where(s), h) <= 1 || (spotsCamo(s) && Board.distance(where(s), h) <= sightOf(s) && Board.clear(where(s), h))))
 
     def overwatch(u : Squad, h : Hex, assaulted : |[Squad]) : Boolean = {
+        if (u.kind == Plane) {
+            if (pos.contains(u).not)
+                return false
+            val by = enemies(u.faction)./~(units).%(m => m.utype.antiAir && isPassenger(m).not && retreating.contains(m).not && pinned.contains(m).not && aaCovers(m, h))
+            if (by.none)
+                return true
+            health += u -> (health(u) - 1)
+            log(u, "took", 1.hl, "anti-air Overwatch damage in", h, "from", by./(_.elem).comma)
+            if (health(u) > 0)
+                return true
+            log(u, "was shot down")
+            killed(u, by./(_.faction))
+            removeSquad(u)
+            return false
+        }
         if (full.not || u.kind != Infantry || retreating.contains(u) || pos.contains(u).not)
             return pos.contains(u)
+
+        if (escorted(u))
+            return true
 
         val mgs = enemies(u.faction)./~(units).%(m => m.utype.machineGun && setUp.contains(m) && isPassenger(m).not && retreating.contains(m).not)
         val by = inBuilding(h).?(mgs.%(m => assaulted.has(m))).|(mgs).%(m => covers(m, h) && spottedIn(m.faction, u, h))
@@ -2354,7 +2923,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     }
 
     // BUILDINGS: 2 health; units may fire HE and Flame at one with no visible enemy (nor ally) in it
-    def shotChoices(u : Squad) : $[(Hex, $[Attack])] = (full && canFire(u) && hasSplash(u).not).??(Board.hexes.%(h => terrainAt(h) == Building || wire.contains(h) || traps.contains(h))./~{ h =>
+    def shotChoices(u : Squad) : $[(Hex, $[Attack])] = (full && canFire(u) && hasSplash(u).not).??(Board.hexes.%(h => terrainAt(h) == Building || wire.contains(h) || traps.contains(h) || barricades.exists(_._1 == h))./~{ h =>
         val d = Board.distance(where(u), h)
         // a Building takes HE and Flame; barbed wire and tank traps any damage assigned to them
         val dice = remaining(u).%(a => a.dmg == HE || a.dmg == Flame || terrainAt(h) != Building).%(a => a.indirect || lineClear(where(u), h)).%(a => fixedGun(u, a).not || inArc(u, h)).%(_ => smoke.contains(where(u)).not || d <= 1)
@@ -2365,6 +2934,16 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def diceOnFull(u : Squad, t : Squad) : $[Attack] = {
         if (pos.contains(t).not || isPassenger(t))
             return $
+
+        // a plane: only an anti-air unit's AI (and the type it treats as AI), in range, seen, and in its arc if fixed or set up
+        if (t.kind == Plane) {
+            if (u.utype.antiAir.not || (setsUp(u) && setUp.contains(u).not))
+                return $
+            val d = Board.distance(where(u), where(t))
+            if (d < max(1, minRangeOf(u)) || d > rangeOf(u) || visible(u.faction, t).not || (setsUp(u) && inArc(u, where(t)).not))
+                return $
+            return remaining(u).%(a => a.dmg == AI || u.utype.aaAs.has(a.dmg))./(a => Attack(AI)).%(a => fixedGun(u, a).not || inArc(u, where(t)))
+        }
 
         val d = Board.distance(where(u), where(t))
         val pair = assaults.get(u).has(t) || assaults.get(t).has(u)
@@ -2400,7 +2979,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     }
 
     // the Ice checks: each unit attacked on an Ice tile rolls the most dice the Ice Matrix gives any damage type assigned to it
-    def iceChecks : $[(Squad, Int)] = full.??(all.%(onIce).%(t => isPassenger(t).not)./{ t =>
+    def iceChecks : $[(Squad, Int)] = full.??(all.%(onIce).%(t => isPassenger(t).not && t.kind != Plane)./{ t =>
         val types = assignments.%(_.target == t)./~(_.dice)./(_.dmg) ++
             splashes.%(s => area(s.hex).has(where(t)) && splashed(s.attacker, s.hex).has(t)).map(_ => HE : Dmg) ++
             strikes.%(_.hexes.has(where(t)))./~(_.dice)./(_.dmg)
@@ -2450,7 +3029,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             val dice = l./~(_.dice).%(a => Matrix.resist(t.kind, a.dmg).any)
             val direct = take(dice.count(_.dmg == HE))
             val splash = splashFaces.%{ case (s, _) => area(s.hex).has(h) && splashed(s.attacker, s.hex).has(t) }
-            val struck = strikeFaces.%(_._2 == h)
+            val struck = strikeFaces.%(_._2 == h).%(x => x._1.ability != GoliathMine || foe(x._1.faction, t.faction))
             val strikeAP = struck./(_._1.dice.count(_.dmg == AP)).sum * Matrix.resist(t.kind, AP).any.??(1)
             val faces = direct ++ splash.flatMap(_._2) ++ struck.flatMap(_._3)
             val heDamage = Matrix.resist(t.kind, HE).any.??(value(faces))
@@ -2468,8 +3047,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             val base = (shells.any && inBuilding(h)).?(max(0, base0 - 1)).|(base0)
             // Commanders: Defensive Stance is Heavy Cover even in an Assault; Armor Tactician 2 dice next to a Heavy Vehicle (not in a
             // Building, no stacking with other Cover)
-            val tactician = t.kind == Infantry && inBuilding(h).not && (unlocked(t.faction, ArmorTactician) || unlocked(t.faction, TankDesant) || unlocked(t.faction, InfantryTankSupport)) && units(t.faction).exists(v => v.kind == HeavyVehicle && isPassenger(v).not && Board.adjacent(where(v), h))
-            val cover = (l.any && (stance.contains(t) || tactician || holdsLine(t))).?(max(base, 2)).|(base)
+            val tactician = t.kind == Infantry && inBuilding(h).not && (unlocked(t.faction, ArmorTactician) || unlocked(t.faction, TankDesant) || unlocked(t.faction, TankDesantDAK) || unlocked(t.faction, InfantryTankSupport)) && units(t.faction).exists(v => v.kind == HeavyVehicle && isPassenger(v).not && Board.adjacent(where(v), h))
+            val cover0 = (l.any && (stance.contains(t) || tactician || holdsLine(t))).?(max(base, 2)).|(base)
+            val cover = (l.any && escorted(t)).?(max(cover0, 1)).|(cover0)
             val frontal = (t.kind == HeavyVehicle && l.exists(a => where(a.attacker) != h && a.dice.exists(_.dmg == AP) && inArc(t, where(a.attacker)))).??(2)
             val hull = (hullDown.contains(t) && l.any).??(2)
             // Breakthrough Doctrine: Infantry with Heroic Sacrifice +1 when Assaulting; Advanced Emplacements: +1 for a braced Emplacement
@@ -2477,7 +3057,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             // Tank Destroyer Doctrine: a marked vehicle has no Defense Dice this round
             // Soviet Architecture: Infantry +1 in a Building
             val architecture = (t.kind == Infantry && inBuilding(h) && unlocked(t.faction, SovietArchitecture)).??(1)
-            val n = marked.get(t).has(round).?(0).|(resisted + cover + frontal + hull + defenseOf(t) + assaulting + braced.contains(t).??(1) + architecture + oberBraced.getOrElse(t, 0))
+            val guarded = (t.kind == Infantry && pointGuards.get(t.faction).exists { case (r, l) => r == round && l.has(h) }).??(1)
+            val n = marked.get(t).has(round).?(0).|(resisted + cover + frontal + hull + defenseOf(t) + assaulting + guarded + braced.contains(t).??(1) + architecture + oberBraced.getOrElse(t, 0))
             val rolled = defLeft.take(n)
             defLeft = defLeft.drop(n)
             val saved = rolled.count(_.success)
@@ -2496,10 +3077,33 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // a unit a Lost Brigade brings (OKW: spawned from the Spawn Area only, not next to a Tier Building)
     def brigadeUnit(f : Faction, t : UnitType) = brigades && brigadeOf.get(f).exists(_.unit.has(t))
 
+    // Devil's Brigades cross water: the US's and the British SSF Canadians
+    def devils(u : Squad) = u.utype == DevilsBrigade || u.utype == SSFCanadian
+    // Assault Operation: units that neutralize and keep the enemy off the Control Points they contest
+    def assaultOp(u : Squad) = (u.utype == Obersoldaten && unlocked(u.faction, ValiantAssault)) || (u.utype == DevilsBrigade && unlocked(u.faction, AssaultOperation)) || (u.utype == SSFCanadian && unlocked(u.faction, AssaultOperationBR))
+    // the Control Points a unit contests: where it stands, and what it Assaulted this round (Assault Operation)
+    def contests(u : Squad) : $[Hex] = (pos.contains(u) && isPassenger(u).not).??($(where(u)) ++ opAssaulted.get(u).%(_._1 == round)./(_._2).$)
+
+    // ANZAC Light Infantry build Emplacements as Infantry Sections, and so do Dingos with Towed Heavy Mortar
+    def buildsAs(u : Squad) : $[UnitType] = $(u.utype) ++ (u.utype == ANZAC || (u.utype == Dingo && unlocked(u.faction, TowedHeavyMortar))).$(InfantrySection)
+
+    // Combined Arms (Light Vehicles) and Mechanized Support (Heavy Vehicles): Infantry next to one, not in a Building
+    def escorted(t : Squad) = t.kind == Infantry && pos.contains(t) && inBuilding(where(t)).not && (
+        (unlocked(t.faction, CombinedArmsDAK) && units(t.faction).exists(v => v.kind == LightVehicle && isPassenger(v).not && Board.adjacent(where(v), where(t)))) ||
+        (unlocked(t.faction, MechanizedSupport) && units(t.faction).exists(v => v.kind == HeavyVehicle && isPassenger(v).not && Board.adjacent(where(v), where(t)))))
+
+    // Command Radio Net: a Vehicle next to one of its faction's Panzer IV F1s
+    def radioNet(u : Squad) = u.utype.vehicle && pos.contains(u) && unlocked(u.faction, CommandRadioNet) && units(u.faction).exists(v => v != u && v.utype == PanzerIVF1 && isPassenger(v).not && Board.adjacent(where(v), where(u)))
+    // the mines: Infantry with Wrenches (once a round for each) of a player with Fieldcraft or a Mine Field
+    def mineLayer(u : Squad) = u.kind == Infantry && wrenchesOf(u) > 0 && (unlocked(u.faction, Fieldcraft) || unlocked(u.faction, MineField) || unlocked(u.faction, MineFieldDAK))
+
+    // FG42 Rifles: Fallschirmjäger with both XP Health upgrades
+    def firstStrike(u : Squad) = u.utype == Fallschirmjager && unlocked(u.faction, FG42Rifles) && bought.getOrElse(u, $[Bought]()).count(b => b.slot == 0 && b.effect == HealthUp) >= 2
+
     def riflemen(u : Squad) = u.utype == Riflemen || u.utype == AssaultEngineers || u.utype == DevilsBrigade
 
     // Ranger Endurance Training: Riflemen take 4 CP a round
-    def rangers(u : Squad) = riflemen(u) && unlocked(u.faction, RangerTraining)
+    def rangers(u : Squad) = riflemen(u) && (unlocked(u.faction, RangerTraining) || unlocked(u.faction, RangerEndurance))
 
     def slowOf(u : Squad) = (u.utype == Brummbar && unlocked(u.faction, EliteSturmpanzer)).?(0).|((has(u, RemoveSlow) || (u.utype == Churchill && unlocked(u.faction, OperationCrocodile))).?(0).|(u.utype.slow))
 
@@ -2543,12 +3147,27 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         case Volksgrenadiers if unlocked(u.faction, EncirclementVolks) => $(HealthUp, HealthUp)
         case Centaur if unlocked(u.faction, VeteranCentaurs) => $(AddAttacks(UnitType.ai), SpotsCamo)
         case Commandos if unlocked(u.faction, GammonBombs) => $(Camouflage)
-        case StuG => unlocked(u.faction, TargetWeakPoint).$(AddAttack(UnitType.ap)) ++ unlocked(u.faction, TurretlessTerror).$(Camouflage)
+        case StuG => (unlocked(u.faction, TargetWeakPoint) || unlocked(u.faction, TargetWeakPointDAK)).$(AddAttack(UnitType.ap)) ++ (unlocked(u.faction, TurretlessTerror) || unlocked(u.faction, TurretlessTerrorDAK)).$(Camouflage)
+        case StuGD => unlocked(u.faction, TargetWeakPointDAK).$(AddAttack(UnitType.he)) ++ unlocked(u.faction, TurretlessTerrorDAK).$(Camouflage)
         // the DAK's
         case Flak88 if unlocked(u.faction, VeteranGunners) => $(HealthUp, RemoveSlow, AddAttack(UnitType.ap))
-        case PanzerIII | FlammpanzerIII if unlocked(u.faction, VeteranPanzerIIIs) => $(AddAttack(UnitType.ai), AddAttack(UnitType.ai), DefenseUp)
-        case Semovente if unlocked(u.faction, CamouflageNetting) => $(Camouflage)
-        case Guastatori if unlocked(u.faction, SmokeAndCover) => $(DefenseUp)
+        // Veteran Panzer IIIs, and the Lost Brigade's Veteran Flammpanzer III (Heroic Sacrifice and both AI upgrades)
+        case PanzerIII | FlammpanzerIII if unlocked(u.faction, VeteranPanzerIIIs) || (u.utype == FlammpanzerIII && unlocked(u.faction, VeteranFlammpanzers)) =>
+            $(AddAttack(UnitType.ai), AddAttack(UnitType.ai)) ++ unlocked(u.faction, VeteranPanzerIIIs).$(DefenseUp) ++ (u.utype == FlammpanzerIII && unlocked(u.faction, VeteranFlammpanzers)).$(HeroicSacrifice)
+        case Sturmtiger if unlocked(u.faction, BigRocketBoom) => $(RangeUp)
+        case Fallschirmjager if firstStrike(u) => $(AddAttack(UnitType.ai))
+        case Jeep if boughtEffects(u).has(ObserverUp) => $(SpotsCamo)
+        case EightRad => unlocked(u.faction, DefensivePositions).$(DefenseUp) ++ unlocked(u.faction, GrBLauncher).$(AddAttack(UnitType.he))
+        case Panzerpioneer if unlocked(u.faction, GrBLauncher) => $(AddAttack(UnitType.he))
+        case Obersoldaten if unlocked(u.faction, ValiantAssault) => $(AddAttack(UnitType.ai), SpeedUp)
+        case t if t.vehicle && unlocked(u.faction, SpottingScopes) && bought.getOrElse(u, $[Bought]()).exists(_.slot == 1) => $(SightUp)
+        case PolishLancer if unlocked(u.faction, SeekVengeance) => $(HeroicSacrifice)
+        case Semovente if unlocked(u.faction, VeteranSemovente) => $(AddAttack(UnitType.ap)) ++ unlocked(u.faction, CamouflageNetting).$(Camouflage)
+        case Guastatori | Bersaglieri if unlocked(u.faction, OffShoreSupport) => $(HealthUp, AddAttack(UnitType.ai)) ++ (u.utype == Guastatori && unlocked(u.faction, SmokeAndCover)).$(DefenseUp)
+        // the DAK's Elefant has 4 AP (its cards), the Wehrmacht's 3
+        case Elefant if u.faction.base == DAK => $(AddAttack(UnitType.ap))
+        case Semovente if unlocked(u.faction, CamouflageNetting) && unlocked(u.faction, VeteranSemovente).not => $(Camouflage)
+        case Guastatori if unlocked(u.faction, SmokeAndCover) && unlocked(u.faction, OffShoreSupport).not => $(DefenseUp)
         case CommandTiger if unlocked(u.faction, CounterOffensive) => $(SpotsCamo)
         case L640 => unlocked(u.faction, L640Flame).??($(AddAttack(UnitType.flame), HeroicSacrifice)) ++ unlocked(u.faction, VeteranL640s).??($(SpeedUp, HealthUp))
         case _ => $[Effect]()
@@ -2563,7 +3182,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         (unlocked(u.faction, CovertTraining) && u.kind == Infantry).$((14, Slot(false, 3, $(Camouflage)))) ++
         (unlocked(u.faction, ThompsonSMGs) && (u.utype == InfantrySection || u.utype == RoyalEngineers)).$((15, Slot(false, 4, $(CloseFire)))) ++
         (unlocked(u.faction, InfantrySupport) && u.utype == UniversalCarrier).$((16, Slot(false, 2, $(ReinforceUp)))) ++
-        ((unlocked(u.faction, WillNotDieOld) || unlocked(u.faction, SecondWave)) && u.kind == Infantry).$((17, Slot(false, 3, $(HeroicSacrifice)))) ++
+        ((unlocked(u.faction, WillNotDieOld) || unlocked(u.faction, SecondWave) || unlocked(u.faction, ForTheFatherland) || unlocked(u.faction, ForTheFatherlandOKW)) && u.kind == Infantry).$((17, Slot(false, 3, $(HeroicSacrifice)))) ++
         (unlocked(u.faction, Flammenwerfer) && u.utype == Sturmpioneers).$((18, Slot(false, 4, $(AddAttack(UnitType.flame))))) ++
         (unlocked(u.faction, HEATShells) && (u.utype == Puma || u.utype == Panther)).$((19, Slot(false, 3, $(AddAttack(UnitType.ap))))) ++
         (unlocked(u.faction, LightInfantryTraining) && riflemen(u)).$((20, Slot(false, 2, $(SpeedUp)))) ++
@@ -2578,7 +3197,22 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         // the DAK's
         (unlocked(u.faction, BredaBolster) && u.utype == Bersaglieri).$((29, Slot(false, 4, $(BredaUp)))) ++
         (unlocked(u.faction, ReconTractor) && u.utype == SdKfz250 && has(u, MortarRefit).not).$((30, Slot(false, 2, $(SpotsCamo)))) ++
-        (unlocked(u.faction, CoastalReserves) && u.utype == Panzerjaeger).$((31, Slot(false, 3, $(HealthTwo))))
+        (unlocked(u.faction, CoastalReserves) && u.utype == Panzerjaeger).$((31, Slot(false, 3, $(HealthTwo)))) ++
+        // the 3rd printing's
+        (unlocked(u.faction, TigerAce) && u.utype == Tiger).$((32, Slot(true, 2, $(RangeUp)))) ++
+        (unlocked(u.faction, TankBusterKit) && u.kind == Infantry).$((33, Slot(false, 3, $(BusterKit)))) ++
+        (u.utype == SSFCanadian).$((34, Slot(false, 0, $(AddAttack(UnitType.ai), AddAttack(UnitType.ap))))) ++
+        ((unlocked(u.faction, PrecisionStrike) || unlocked(u.faction, PrecisionStrikeLeFH) || (unlocked(u.faction, PrecisionLeFHBrigade) && u.utype == LeFH18)) && (u.utype == StukaHalftrack || u.utype == LeFH18) && has(u, SplashUp).not).$((35, Slot(true, 1, $(PrecisionUp)))) ++
+        (unlocked(u.faction, OKWCoastalReserves) && u.utype == Sturmpioneers).$((31, Slot(true, 2, $(HealthTwo)))) ++
+        (u.utype == PolishLancer).$((36, Slot(true, 3, $(AddAttacks(UnitType.ap))))) ++
+        (u.utype == Gurkha).$((42, Slot(false, 3, $(GurkhaRecon, GurkhaShock)))) ++
+        ((unlocked(u.faction, ArtilleryObserver) || unlocked(u.faction, ArtilleryObserverPlain)) && u.utype == Jeep).$((43, Slot(true, 1, $(ObserverUp)))) ++
+        (unlocked(u.faction, EngineerDetachments) && (u.utype == InfantrySection || u.utype == RoyalEngineers)).$((39, Slot(false, 4, $(DetachmentKit)))) ++
+        (unlocked(u.faction, ForwardReceivers) && u.utype == Battlegroup).$((40, Slot(false, 4, $(RetreatPointUp)))) ++
+        (unlocked(u.faction, ForwardReceivers) && u.utype == SchwererHQ).$((41, Slot(false, 4, $(SpotsCamo)))) ++
+        (((unlocked(u.faction, ArmoredVehicleDetection) && (u.kind == LightVehicle || u.utype == T70)) || (unlocked(u.faction, RadioNet) && u.kind == LightVehicle)) && unlocked(u.faction, ReconInForce).not).$((11, Slot(false, 2, $(SpotsCamo)))) ++
+        (unlocked(u.faction, VehicleCrewTraining) && (u.utype == T70 || u.utype == T34)).$((38, Slot(false, 3, $(AddAttack(UnitType.ap))))) ++
+        (u.utype == ANZAC).$((37, Slot(true, 2, $(SpotsCamo, AddAttack(UnitType.ai)))))
     )
 
     def slotAt(u : Squad, i : Int) : Slot = (i < 10).?(u.utype.upgrades(i)).|(commanderSlots(u).find(_._1 == i).get._2)
@@ -2589,11 +3223,13 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def slotPrice(u : Squad, i : Int) : Int = {
         val s = slotAt(u, i)
         val f = u.faction
-        if (i == 1 && riflemen(u) && unlocked(f, RangerTraining)) max(0, s.cost - 1)
+        if (i == 1 && riflemen(u) && (unlocked(f, RangerTraining) || unlocked(f, RangerEndurance))) max(0, s.cost - 1)
         else if (i == 1 && u.utype == Jeep && unlocked(f, JeepMG)) max(0, s.cost - 1)
         else if (i == 0 && u.utype == WMortar && unlocked(f, IncendiaryMortars)) 1
         else if (i == 1 && u.utype == SniperSquad && unlocked(f, RangedTactics)) max(0, s.cost - 2)
         else if (i == 1 && u.utype == SovietMortar && unlocked(f, VeteranMortars)) max(0, s.cost - 2)
+        else if (i == 0 && u.utype == SovietMortar && unlocked(f, HM38Mortars)) min(s.cost, 1)
+        else if (i < 2 && ((u.utype == DevilsBrigade && unlocked(f, AssaultOperation)) || (u.utype == SSFCanadian && unlocked(f, AssaultOperationBR)))) 0
         else if (i == 1 && u.utype == UniversalCarrier && unlocked(f, WASPFlamethrower)) max(0, s.cost - 1)
         else if (i == 1 && u.utype == InfantrySection && unlocked(f, TankHunters)) max(0, s.cost - 2)
         // Superior Fire Drills: the Flakvierling's and the Panzer III's AI Munitions upgrades
@@ -2612,6 +3248,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         else if (t == Panther && unlocked(f, PantherReinforcements)) Cost(max(0, c.mp - 1), c.mun, max(0, c.fuel - 1))
         else if (t == Sturmtiger && unlocked(f, SturmtigerReinforcements)) Cost(c.mp, c.mun, max(0, c.fuel - 2))
         else if (t.vehicle && depots.contains(f)) Cost(max(0, c.mp - 1), c.mun, c.fuel)
+        else if (t.vehicle && t.tier == 2 && unlocked(f, PactOfSteel)) Cost(max(0, c.mp - 1), c.mun, c.fuel)
+        else if (t.kind == Infantry && unlocked(f, VolunteerInfantry)) Cost(max(0, c.mp - 1), c.mun, c.fuel)
         else c
     }
 
@@ -2620,6 +3258,14 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         val d = (tier == 3 && unlocked(f, GermanIndustry)).?(Cost(c.mp, c.mun, max(0, c.fuel - 2))).|(c)
         (tier == 3 && unlocked(f, TerrorWestOber)).?(Cost(max(0, d.mp - 1), d.mun, d.fuel)).|(d)
     }
+
+    // the units of the 3rd printing's core Lost Brigades (apart from `calledIn`, whose chain is long)
+    def printingCalledIn(f : Faction) : $[UnitType] =
+        (unlocked(f, PathfinderLMGBeacon) && unlocked(f, PathfinderSquads).not).$(Pathfinder) ++ unlocked(f, TigerAceCallIn).$(TigerAceTank) ++
+        (unlocked(f, PPShGuardsSpawn) && usedIn.get((f, PPShGuardsSpawn)).has(round).not).$(PPShGuards) ++ unlocked(f, KV1CallIn).$(KV1) ++
+        (unlocked(f, FG42Spawn) && usedIn.get((f, FG42Spawn)).has(round).not).$(FG42Jager) ++ unlocked(f, CoastalReservesOKWCallIn).$(CoastalReservesOKW) ++
+        (unlocked(f, MG34CallIn) && unlocked(f, MG34CallInFree).not).$(MG34) ++ (unlocked(f, BlackPrinceCallInPlain) && unlocked(f, BlackPrinceCallIn).not).$(BlackPrince) ++
+        (unlocked(f, PrecisionLeFHBrigade) && unlocked(f, LeFH18Ability).not && unlocked(f, VeteranLeFH).not).$(LeFH18)
 
     // the Commander units a faction may buy
     def calledIn(f : Faction) : $[UnitType] =
@@ -2677,8 +3323,35 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         (unlocked(f, HowitzerCallIn) || unlocked(f, HowitzerBreda)).$(Howitzer105) ++
         (unlocked(f, GuastatoriCallIn) || unlocked(f, GuastatoriCallInFree)).$(Guastatori) ++
         (unlocked(f, PanzerpioneerCallIn) || unlocked(f, PanzerpioneerCallInFree)).$(Panzerpioneer) ++
-        unlocked(f, Artillery21022).$(Artillery210) ++ unlocked(f, L640CallIn).$(L640) ++
-        (unlocked(f, ElefantCallInPlain) && unlocked(f, ElefantCallIn).not).$(Elefant)
+        (unlocked(f, Artillery21022) || unlocked(f, Artillery21022Plain)).$(Artillery210) ++ unlocked(f, L640CallIn).$(L640) ++
+        (unlocked(f, ElefantCallInPlain) && unlocked(f, ElefantCallIn).not).$(Elefant) ++
+        // the 3rd printing Commanders' units
+        (unlocked(f, MarderCallInFree) && unlocked(f, MarderCallIn).not).$(MarderIII) ++
+        unlocked(f, CombatEngineerSpawn).$(CombatEngineers) ++ unlocked(f, MG34CallInFree).$(MG34) ++ (unlocked(f, GurkhaCallIn) || unlocked(f, AyoGorkhali)).$(Gurkha) ++
+        unlocked(f, MedicalStationAbility).$(MedicalStation) ++ unlocked(f, ForwardRepairAssembly).$(ForwardRepair) ++
+        (unlocked(f, CommandPanzerIVCallIn) || unlocked(f, CommandRadioNet)).$(PanzerIVF1) ++ unlocked(f, LandMattressCallIn).$(LandMattress) ++ unlocked(f, LandMattressEmplacementAbility).$(LandMattressEmplacement) ++
+        (unlocked(f, SharpshootersANZAC) && unlocked(f, ANZACCallIn).not && unlocked(f, ANZACCallInFree).not).$(ANZAC) ++
+        (unlocked(f, NebelwerferCallInFree) && unlocked(f, NebelwerferCallIn).not).$(Nebelwerfer) ++ (unlocked(f, PanzerwerferCallInFree) && unlocked(f, PanzerwerferCallIn).not).$(Panzerwerfer) ++
+        (unlocked(f, ShockTroopsAssault) && unlocked(f, ShockTroopsCallIn).not).$(ShockTroops) ++
+        (unlocked(f, CanadianShockCallInFree) && unlocked(f, CanadianShockCallIn).not).$(CanadianShock) ++
+        (unlocked(f, PolishLancerCallIn) || unlocked(f, PolishLancerCallInPlain)).$(PolishLancer) ++ unlocked(f, MatildaCallIn).$(MatildaII) ++
+        unlocked(f, BlackPrinceCallIn).$(BlackPrince) ++ unlocked(f, CanadianShockCallIn).$(CanadianShock) ++
+        (unlocked(f, DingoCallIn) || unlocked(f, DingoCallInFree) || unlocked(f, DingoCallInIS)).$(Dingo) ++
+        (unlocked(f, ANZACCallIn) || unlocked(f, ANZACCallInFree)).$(ANZAC) ++ (unlocked(f, SeventeenPounderANZAC) && unlocked(f, SeventeenPounderAbility).not).$(SeventeenPounder) ++
+        (unlocked(f, StuartHoneyCallIn) || unlocked(f, StuartHoneyCallInFree)).$(Stuart) ++ (unlocked(f, KatyushaCallInFree) && unlocked(f, KatyushaCallIn).not).$(Katyusha) ++
+        (unlocked(f, M3LeeCallIn) || unlocked(f, M3LeeCallInPlain)).$(M3Lee) ++ (unlocked(f, M3GrantCallIn) || unlocked(f, M3GrantCallInPlain)).$(M3Grant) ++
+        (unlocked(f, SSFCanadiansSpawn) || unlocked(f, AssaultOperationBR)).$(SSFCanadian) ++
+        (unlocked(f, AssaultOperation) && unlocked(f, DevilsBrigadeSpawn).not).$(DevilsBrigade) ++
+        unlocked(f, PanzerwerferCallIn).$(Panzerwerfer) ++ unlocked(f, KatyushaCallIn).$(Katyusha) ++
+        ((unlocked(f, TigerCallInPlain) || unlocked(f, TigerAce)) && unlocked(f, TigerCallIn).not).$(Tiger) ++
+        ((unlocked(f, StuGCallInDAK) || unlocked(f, StuGCallInFreeDAK) || unlocked(f, TargetWeakPointDAK)) && unlocked(f, StuGCallIn).not && unlocked(f, StuGCallInFree).not && unlocked(f, TargetWeakPoint).not).$(StuG) ++
+        // the 3rd printing core Lost Brigades' units
+        printingCalledIn(f) ++
+        // the plane unlocked (3rd printing)
+        planeOf.get(f).$ ++ boatsBuyable(f).$(TroopTransport.of(f)) ++
+        // the DAK Lost Brigades' units
+        unlocked(f, MarderCallIn).$(MarderIII) ++ unlocked(f, NebelwerferCallIn).$(Nebelwerfer) ++ unlocked(f, VeteranCoastalReserves).$(CoastalReservesVet) ++
+        unlocked(f, TankBustersCallIn).$(TankBusters) ++ (unlocked(f, VeteranFlammpanzers) && unlocked(f, FlammpanzerCallIn).not).$(FlammpanzerIII)
 
     // the Lost Brigade a player may pick now (once, for its XP)
     def brigadePicks(f : Faction) : $[UserAction] = (brigades && brigadeOf.contains(f).not).??(brigadesDrawn.getOrElse(f, $[Brigade]()).%(b => f.stock(XP) >= b.xp)./(b => BrigadePickAction(f, b)))
@@ -2692,7 +3365,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def onceLeft(f : Faction, a : Ability) = unlocked(f, a) && usedIn.get((f, a)).has(round).not
 
     // the T-70's No-Fire mode, and the Scout Car's with Assault Tactics
-    def noFireMode(u : Squad) = u.utype.captureMode || (u.utype == ScoutCar && unlocked(u.faction, SupplyOperations)) || (u.utype == Stuart && unlocked(u.faction, StrategicManeuvers)) || (u.utype == Kubelwagen && unlocked(u.faction, AssaultSupport))
+    def noFireMode(u : Squad) = u.utype.captureMode || (u.utype == ScoutCar && unlocked(u.faction, SupplyOperations)) || (u.utype == Stuart && (unlocked(u.faction, StrategicManeuvers) || unlocked(u.faction, StrategicManeuversBR))) || (u.utype == Kubelwagen && unlocked(u.faction, AssaultSupport))
 
     // what a unit pays to Smoke its hex at the start of the Damage Phase, if it may: Vehicles 2 Munitions (Defensive Smoke, Smoke
     // Canisters, Smoke Ambush) or 3 with Vehicle Crew Repairs, Emplacements 1 (Smoke Emplacement)
@@ -2731,7 +3404,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         Board.neighbors(where(u)).%(h => terrainAt(h) == Building)./(h => (u, h))))
 
     // Urban Assault: assaulting Riflemen may Smoke the hex they assault
-    def urbanSmoke(v : Squad) = ((riflemen(v) && unlocked(v.faction, UrbanAssault)) || (v.utype == ShockTroops && unlocked(v.faction, ShockTroopsCallIn))) && assaults.get(v).exists(pos.contains)
+    def urbanSmoke(v : Squad) = ((riflemen(v) && unlocked(v.faction, UrbanAssault)) || (v.utype == ShockTroops && (unlocked(v.faction, ShockTroopsCallIn) || unlocked(v.faction, ShockTroopsAssault)))) && assaults.get(v).exists(pos.contains)
 
     // the hex a unit's Smoke goes on
     def smokeHex(v : Squad) = urbanSmoke(v).?(where(assaults(v))).|(where(v))
@@ -2793,12 +3466,15 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         // Armored Assault Tactics' Recon Mode, Emergency War Speed: a free move for a vehicle after its first CP
         (u.utype.vehicle && unlocked(f, ReconMode) && cp.getOrElse(u, 0) == 1 && raided.contains(u).not && f.stock(Munitions) >= 2).$(ReconModeAction(f, u, k)) ++
         (u.utype.vehicle && unlocked(f, EmergencyWarSpeed) && cp.getOrElse(u, 0) == 1 && raided.contains(u).not && health(u) > 1).$(WarSpeedAction(f, u, k)) ++
-        (((u.utype == Grenadiers || u.utype == Osttruppen || u.utype == PanzerGrenadiers) && unlocked(f, HullDown)) || ((u.utype == Panzerjaeger || u.utype == Guastatori || u.utype == Panzerpioneer) && unlocked(f, DAKHullDown))).&&(pointsLeft(u) >= 1 && isPassenger(u).not).??(
+        (((u.utype == Grenadiers || u.utype == Osttruppen || u.utype == PanzerGrenadiers) && unlocked(f, HullDown)) || ((u.utype == Panzerjaeger || u.utype == CoastalReservesVet || u.utype == Guastatori || u.utype == Panzerpioneer) && unlocked(f, DAKHullDown)) || (u.utype == Sturmpioneers && unlocked(f, OKWHullDown))).&&(pointsLeft(u) >= 1 && isPassenger(u).not).??(
             Board.neighbors(where(u))./~(occupant).%(v => v.faction == f && v.utype.vehicle && hullDown.contains(v).not)./(v => HullDownAction(f, u, v, k))) ++
         (u.kind == Infantry && (unlocked(f, RaidPoint) || unlocked(f, RallyPoint)) && cp.getOrElse(u, 0) == 1 && raided.contains(u).not && f.stock(Munitions) >= 1).$(RaidPointAction(f, u, k)) ++
         // Bersaglieri: its first CP of the round spent leaving a Spawn Area or a Transport, a free move
         (u.utype == Bersaglieri && cp.getOrElse(u, 0) == 1 && raided.contains(u).not && isPassenger(u).not && mayMove(u) &&
             leftFrom.get(u).exists { case (h, inside, r) => r == round && (inside || Board.spawn(team(f)).has(h)) }).$(BersaglieriDashAction(f, u, k)) ++
+        // Rapid Production: a Vehicle's first CP of the round spent leaving a Spawn Area, a free move
+        (((u.utype.vehicle && (unlocked(f, RapidProduction) || unlocked(f, TravelSpeed) || unlocked(f, FastDeploy))) || (u.kind == Infantry && u.utype != Bersaglieri && unlocked(f, VolunteerInfantry))) && cp.getOrElse(u, 0) == 1 && raided.contains(u).not && isPassenger(u).not && mayMove(u) &&
+            leftFrom.get(u).exists { case (h, _, r) => r == round && Board.spawn(team(f)).has(h) }).$(RapidProductionAction(f, u, k)) ++
         ((u.utype == SniperSquad || u.utype == GuardsRifle) && unlocked(f, Decoy) && cp.getOrElse(u, 0) == 2 && paidLeft(u) >= 1 && decoyed.contains(u).not && mayMove(u) && isPassenger(u).not).$(DecoyAction(f, u, k)) ++
         (u.utype.vehicle && (unlocked(f, StepOnIt) || unlocked(f, WMBreakthrough) || unlocked(f, OKWBreakthrough) || unlocked(f, PanzerStorm) || unlocked(f, FlakAssault)) && cp.getOrElse(u, 0) == 1 && raided.contains(u).not && f.stock(Munitions) >= 2).$(StepOnItAction(f, u, k)) ++
         // Cavalry Riflemen: after a move, a free Assault on an adjacent hex, once a round
@@ -2816,8 +3492,14 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def openings(f : Faction, k : Int) : $[UserAction] = (abilities && k < 2 && cpLeft == 3).??(
         Commander.opening.keys.$.%(a => onceLeft(f, a)).%(a => cpLeft >= Commander.opening(a)._1 && f.stock(Munitions) >= Commander.opening(a)._2)./~{
             case a @ (ReconSweep | PanzerwerferBarrage | ArtilleryEye) => Board.hexes./(h => OpeningHexAction(f, a, h, k))
-            case a @ (P47Strike | FragmentationBomb | IL2Strike | P47Strafing | StukaStrafe | PerimeterOverwatch | HawkerTyphoon | KatyushaStrike | StukaLoiter) => Board.hexes./(h => OpeningLineStartAction(f, a, h, k))
+            case a @ (P47Strike | FragmentationBomb | StukaAirborneAssault | IL2Strike | P47Strafing | StukaStrafe | PerimeterOverwatch | HawkerTyphoon | KatyushaStrike | StukaLoiter) => Board.hexes./(h => OpeningLineStartAction(f, a, h, k))
             case a @ (HowitzerBarrage | ReconPlane | ConcentrationBarrage | ReconOverflight | ML20Barrage | NebelwerferBarrage | DAKReconPlane) => Board.hexes./(h => OpeningHexAction(f, a, h, k))
+            case a @ (SmokeOperation | NoManLeftBehind | ArmyInExile) => $(OpeningAction(f, a, k))
+            case a @ (MedicalAirdrop | RallyPoints) => Board.hexes./(h => OpeningHexAction(f, a, h, k))
+            case a @ Valour => Board.points.keys.$.%(h => Board.points(h).has(VP) && control.get(h).exists(e => foe(e, f).not).not).sortBy(h => (h.r, h.c))./(h => OpeningHexAction(f, a, h, k))
+            case a @ GoliathMine => Board.hexes.%(h => units(f).exists(b => b.utype.tierBuilding > 0 && Board.distance(where(b), h) <= 3))./(h => OpeningHexAction(f, a, h, k))
+            case a @ EarlyWarning => $(OpeningAction(f, a, k))
+            case a @ (ItalianInfantry | PerimeterMonitor | SLDFlares) => Board.points.keys.$.sortBy(h => (h.r, h.c))./(h => PointPickAction(f, a, $(h), h, k))
             case a @ MarkVehicle => enemies(f)./~(units).%(v => v.utype.vehicle && isPassenger(v).not)./(v => where(v)).distinct./(h => OpeningHexAction(f, a, h, k))
             case a => $(OpeningAction(f, a, k))
         })
@@ -2858,6 +3540,16 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         } ++
         commanderOf.get(f).none.??(drawn.getOrElse(f, $[Commander]()).%(c => f.stock(XP) >= c.tiers(0).xp)./(c => CommanderTierAction(f, c, 0))) ++
         (tiersOf.getOrElse(f, 0) >= 4 && f.stock(XP) >= 2).??(Res.spent./(r => TradeXPAction(f, r))) ++
+        (onceLeft(f, ReserveConscription) && f.stock(Munitions) >= 5).$(ReserveConscriptionAction(f)) ++
+        onceLeft(f, WithdrawAndRefit).??(units(f).%(u => (u.kind == Emplacement || u.kind == LightVehicle) && u.utype.tierBuilding == 0 && isPassenger(u).not && passenger(u).none && spawnRound.get(u).has(round).not)./(u => WithdrawAction(f, u))) ++
+        (onceLeft(f, FallschirmjagerDrop) && affordable(f, Cost(5, 1, 0)) && dropHexes(f).any).$(DropMenuAction(f, FallschirmjagerDrop)) ++
+        (onceLeft(f, JU52Cargo) && affordable(f, Cost(4, 5, 0)) && dropHexes(f).exists(h => dropHexes(f).exists(Board.adjacent(h, _)))).$(DropMenuAction(f, JU52Cargo)) ++
+        (onceLeft(f, AirborneGuardsParadrop) && (affordable(f, Cost(1, 5, 0)) || affordable(f, Cost(5, 1, 0))) && dropHexes(f).any).$(DropMenuAction(f, AirborneGuardsParadrop)) ++
+        (unlocked(f, AttackingSpirit) || unlocked(f, VeteranSquadLeaders)).??(units(f).%(u => u.kind == Infantry && isPassenger(u).not && control.get(where(u)).has(f) && health(u) < maxHealth(u) && spirited.get(u).has(round).not)./~{ u =>
+            val free = capturedIn.get(where(u)).has(round)
+            unlocked(f, AttackingSpirit).??((free || f.stock(Munitions) >= 1).$(SpiritAction(f, u, false, free))) ++ (unlocked(f, VeteranSquadLeaders) && unlocked(f, AttackingSpirit).not).??((free || f.stock(XP) >= 1).$(SpiritAction(f, u, true, free)))
+        }) ++
+        (unlocked(f, VehicleOverRepair) || unlocked(f, SideSkirts)).??((f.stock(Munitions) >= 3).??(units(f).%(u => u.kind == Infantry && wrenchesOf(u) > 0 && isPassenger(u).not)./~(u => units(f).%(v => v.utype.vehicle && overRepaired.contains(v).not && isPassenger(v).not && Board.adjacent(where(u), where(v)))./(v => OverRepairAction(f, u, v))))) ++
         (unlocked(f, WestPointReserves) && units(f).exists(_.utype == Major).not).??(spawnHexes(f, Major)./(h => FreeMajorAction(f, h))) ++
         (unlocked(f, USBreakthrough) && breakthrough.contains(f).not && f.stock(Fuel) >= 1).$(BreakthroughAction(f)) ++
         (onceLeft(f, Paratroopers) && affordable(f, Cost(5, 1, 0)) && dropHexes(f).any).$(DropMenuAction(f, Paratroopers)) ++
@@ -2890,6 +3582,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         case AIPartisansSpawn => stormHexes(f)./(h => (AIPartisans, h))
         case ATPartisansSpawn | ATPartisansSpawnFree => stormHexes(f)./(h => (ATPartisans, h))
         case AirdroppedCombatGroup => beaconTypes(f)./~(t => beaconHexes(f)./(h => (t, h)))
+        case FallschirmjagerDrop => dropHexes(f)./(h => (Fallschirmjager, h))
+        case JU52Cargo => weaponTeams(f)./~(t => dropHexes(f).%(h => dropHexes(f).exists(Board.adjacent(h, _)))./(h => (t, h)))
+        case AirborneGuardsParadrop => (affordable(f, Cost(1, 5, 0)).??(weaponTeams(f)) ++ affordable(f, Cost(5, 1, 0)).$(GuardsRifle))./~(t => dropHexes(f)./(h => (t, h)))
         case _ => weaponTeams(f)./~(t => dropHexes(f)./(h => (t, h)))
     }
 
@@ -2930,6 +3625,25 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             case Pak251 => List((List(Halftrack), "spawn", |(AddAttacks(UnitType.ap))))
             case HowitzerBreda => List((List(Bersaglieri), "spawn", |(BredaUp)))
             case CoastalReserves => List((List(Panzerjaeger), "spawn", |(HealthTwo)))
+            case TravelSpeed => { val l = UnitType.of(f).%(t => t.vehicle && t.tier <= 2 && t.commander.not && t.purchasable) :+ MarderIII ; List((l, "spawn", None), (l, "spawn", None)) }
+            case PactOfSteel => List((UnitType.of(f).%(t => t.tier == 1 && t.kind == Infantry && t.weaponTeam.not && t.commander.not), "spawn", None))
+            case HM38Mortars => List((List(SovietMortar), "spawn", |(SplashUp)))
+            case ArtilleryObserver => List((List(Jeep), "spawn", |(ObserverUp)))
+            case RangerEndurance => List((List(Riflemen), "spawn", |(AddAttack(UnitType.ap))))
+            case StukaAirborneAssault => { usedIn += (f, FallschirmjagerDrop) -> round ; List((List(Fallschirmjager), "drop", None)) }
+            case VolunteerInfantry => List((UnitType.of(f).%(t => t.tier == 1 && t.kind == Infantry && t.weaponTeam.not && t.commander.not), "spawn", None))
+            case SpottingScopes => List((List(PanzerIV), "spawn", |(AddAttack(UnitType.ai))))
+            case CanadianShockCallInFree => List((List(CanadianShock), "spawn", None), (List(CanadianShock), "spawn", None))
+            case LandMattressEmplacementAbility => List((List(LandMattressEmplacement), "builder", None))
+            case JU52Cargo => List((weaponTeams(f).toList, "drop", None), (List(Pak43), "drop2", None))
+            case AirborneGuardsParadrop => List(((weaponTeams(f) :+ GuardsRifle).toList, "drop", None))
+            case PrecisionStrike => List((List(StukaHalftrack), "spawn", |(PrecisionUp)))
+            case AttackingSpirit => List((List(CanadianShock), "spawn", None), (List(CanadianShock), "spawn", None))
+            case SmokeOperation => List(((UnitType.of(f).%(t => t.vehicle && t.commander.not && t.purchasable) :+ MatildaII), "spawn", None))
+            case SeventeenPounderANZAC | PointAssault => List((List(ANZAC), "spawn", |(SpotsCamo)))
+            case PrecisionStrikeLeFH => List((List(LeFH18), "builder", |(PrecisionUp)))
+            case OKWCoastalReserves => List((List(Sturmpioneers), "spawn", |(HealthTwo)))
+            case StuGCallInFreeDAK | TargetWeakPointDAK => List((List(StuG, StuGD), "spawn", None))
             case Artillery21022 => List((List(Artillery210), "builder", None))
             case _ => Commander.free(a, f).toList./(t => (List(t), "spawn", None))
         }
@@ -2976,7 +3690,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                     Shuffle[Commander](Commander.pool(setup(0), options), CommandersShuffledAction(setup(0), _))
                 else
                 if (brigades)
-                    Shuffle[Brigade](Brigade.of(setup(0)), BrigadesShuffledAction(setup(0), _))
+                    Shuffle[Brigade](Brigade.of(setup(0), options), BrigadesShuffledAction(setup(0), _))
                 else
                     Roll[Face]((3 * teams.num).times(Face.die), FirstRolledAction(_))
 
@@ -2986,7 +3700,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 log(f, "drew three Commanders")
                 setup.dropWhile(_ != f).drop(1).starting match {
                     case Some(e) => Shuffle[Commander](Commander.pool(e, options), CommandersShuffledAction(e, _))
-                    case None if brigades => Shuffle[Brigade](Brigade.of(setup(0)), BrigadesShuffledAction(setup(0), _))
+                    case None if brigades => Shuffle[Brigade](Brigade.of(setup(0), options), BrigadesShuffledAction(setup(0), _))
                     case None => Roll[Face]((3 * teams.num).times(Face.die), FirstRolledAction(_))
                 }
 
@@ -2995,7 +3709,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 brigadesDrawn += f -> l.take(3)
                 log(f, "drew three Lost Brigades")
                 setup.dropWhile(_ != f).drop(1).starting match {
-                    case Some(e) => Shuffle[Brigade](Brigade.of(e), BrigadesShuffledAction(e, _))
+                    case Some(e) => Shuffle[Brigade](Brigade.of(e, options), BrigadesShuffledAction(e, _))
                     case None => Roll[Face]((3 * teams.num).times(Face.die), FirstRolledAction(_))
                 }
 
@@ -3015,6 +3729,18 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
             case BrigadeStartSkipAction(f, rest) =>
                 BrigadeOpeningAction(rest)
+
+            case BoatUnlockAction(f) =>
+                gain(f, XP, -1)
+                boatsOf += f
+                log(f, "unlocked", TroopTransport.of(f), "for", 1.hl, XP.icon)
+                PurchaseAction(f)
+
+            case PlaneUnlockAction(f, t) =>
+                gain(f, XP, -2)
+                planeOf += f -> t
+                log(f, "unlocked the", t, "for", 2.hl, XP.icon)
+                PurchaseAction(f)
 
             case BrigadePickAction(f, b) =>
                 gain(f, XP, -b.xp)
@@ -3089,6 +3815,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 raided = Set()
                 charged = Set()
                 decoyed = Set()
+                blitzNow = Map()
+                beaconed = Set()
+                dugIn = Set()
                 bonus = Map()
                 if (full) {
                     finalMoved = Set()
@@ -3171,6 +3900,145 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 path.foreach(h => overwatch(u, h, None))
                 ManeuverAction(f, k)
 
+            case MatildaPointAction(f, u, h, k) =>
+                val from = where(u)
+                raided += u
+                moveSquad(u, h)
+                0.until(6).find(d => Board.toward(from, d).has(h)).foreach(d => facing += u -> d)
+                log(u, "moved onto the Control Point in", h, "for free")
+                overwatch(u, h, None)
+                ManeuverAction(f, k)
+
+            case SpiritAction(f, u, xp, free) =>
+                if (free.not) gain(f, xp.?(XP : Res).|(Munitions), -1)
+                spirited += u -> round
+                health += u -> min(maxHealth(u), health(u) + 1)
+                log(u, "Reinforced 1", free.??("for free"))
+                PurchaseAction(f)
+
+            case OverRepairAction(f, u, v) =>
+                gain(f, Munitions, -3)
+                overRepaired += v
+                health += v -> (health(v) + 1)
+                log(u, "gave", v, "+1 Health for", 3.hl, Munitions.icon)
+                PurchaseAction(f)
+
+            case VengeanceAction(f, u, k) =>
+                spend(u, 1)
+                tempEffects += u -> (round, $(RangeUp))
+                beaconed += u
+                cp += u -> cap(u)
+                log(u, "dropped to the ground: +1 Range this round")
+                ManeuverAction(f, k)
+
+            case WithdrawAction(f, u) =>
+                val c = costOf(f, u.utype)
+                gain(f, Manpower, c.mp)
+                gain(f, Fuel, c.fuel)
+                usedIn += (f, WithdrawAndRefit) -> round
+                log(f, "withdrew", u, "from", where(u), "for", Cost(c.mp, 0, c.fuel).elem)
+                removeSquad(u)
+                PurchaseAction(f)
+
+            case MineLayAction(f, u, d, k) =>
+                gain(f, Munitions, -2)
+                mines += where(u) -> (f, d)
+                mined += u -> (round, mined.get(u).%(_._1 == round)./(_._2).|(0) + 1)
+                log(u, "left a mine in", where(u))
+                ManeuverAction(f, k)
+
+            case MergeAction(f, u, v, k) =>
+                spend(u, 1)
+                val h = where(v)
+                val t = M3Carriage.forTeam(u.utype).get
+                val hp = health(v) + 2
+                val kept = bought.getOrElse(u, $[Bought]()).%(_.slot < 10)
+                removeSquad(u)
+                removeSquad(v)
+                val c = createSquad(f, t, h)
+                bought += c -> kept
+                health += c -> min(maxHealth(c), hp)
+                gain(f, Manpower, 1)
+                log(u, "merged into", v, "as", c, "in", h, "and", f, "gained", 1.hl, Manpower.icon)
+                ManeuverAction(f, k)
+
+            case DigInAction(f, u, w, k) =>
+                dugIn += u
+                if (w) wire += where(u) else traps += where(u)
+                log(u, "left", w.?("Barbed Wire").|("a Tank Trap"), "in", where(u))
+                ManeuverAction(f, k)
+
+            case SapAction(f, u, h, what, k) =>
+                what @@ {
+                    case "Sandbags" => sandbags -= h
+                    case "Barbed Wire" => wire -= h
+                    case "Tank Trap" => traps -= h
+                    case _ => barricades = barricades.filterNot(_._1 == h)
+                }
+                log(u, "removed the", what, "in", h)
+                ManeuverAction(f, k)
+
+            case SapSkipAction(f, k) =>
+                ManeuverAction(f, k)
+
+            case ReserveConscriptionAction(f) =>
+                gain(f, Munitions, -5)
+                usedIn += (f, ReserveConscription) -> round
+                units(f).%(_.kind == Infantry).foreach { u =>
+                    slotsOf(u).find { case (i, s) => s.xp.not && s.options.has(HealthUp) && bought.getOrElse(u, $[Bought]()).count(_.slot == i) < s.times }.foreach { case (i, _) =>
+                        bought += u -> (bought.getOrElse(u, $[Bought]()) :+ Bought(i, HealthUp))
+                    }
+                    health += u -> min(maxHealth(u), health(u) + 1)
+                }
+                log(f, "used Reserve Conscription for", 5.hl, Munitions.icon)
+                PurchaseAction(f)
+
+            case PointPickAction(f, a, picked, _, k) =>
+                val l = Board.points.keys.$.%(h => picked.has(h).not).sortBy(h => (h.r, h.c))
+                Ask(f).each(l)(h => (picked.num >= 2).?(PointsAction(f, a, picked :+ h, k) : UserAction).|(PointPickAction(f, a, picked :+ h, h, k))).cancel
+
+            case PointsAction(f, a, l, k) =>
+                val (c, m) = Commander.opening(a)
+                cpLeft -= c
+                gain(f, Munitions, -m)
+                usedIn += (f, a) -> round
+                if (a == ItalianInfantry)
+                    pointGuards += f -> (round, l)
+                if (a == PerimeterMonitor || a == SLDFlares)
+                    eyes += f -> (eyes.getOrElse(f, Set()) ++ l)
+                log(f, "used", a, "on", l./(_.elem).comma, "for", c.hl, "CP and", m.hl, Munitions.icon)
+                ManeuverAction(f, k)
+
+            case BeaconAction(f, u, k) =>
+                spend(u, 1)
+                gain(f, Munitions, -2)
+                tempEffects += u -> (round, $(Camouflage))
+                beaconed += u
+                log(u, "set up a Disruption Beacon: Camouflage this round")
+                ManeuverAction(f, k)
+
+            case PlaneMoveAction(f, u, path, e, k) =>
+                val from = where(u)
+                spend(u, 1)
+                moveSquad(u, path.last)
+                facing += u -> e
+                log(u, "flew from", from, "to", path.last, (path.num > 1).??("over " + path.head.name), "facing", Facing.names(e))
+                // anti-air Overwatch: 1 damage for each hex it enters in an enemy anti-air unit's reach
+                path.foreach(h => overwatch(u, h, None))
+                ManeuverAction(f, k)
+
+            case BlitzMoveAction(f, u, path, k) =>
+                val from = where(u)
+                noteLeave(u)
+                cpLeft -= 1
+                cp += u -> (cp.getOrElse(u, 0) + 1)
+                blitz += u -> (blitz.getOrElse(u, 0) + 1)
+                blitzNow += u -> (blitzNow.getOrElse(u, 0) + 1)
+                moveSquad(u, path.last)
+                log(u, "blitzed from", from, "to", path.last, (path.num > 1).??("through " + path.head.name), "with an orange cube")
+                path.foreach(h => overwatch(u, h, None))
+                ManeuverAction(f, k)
+
             case HeavyMoveAction(f, u, path, e, k) =>
                 val from = where(u)
                 if (path == $(from)) {
@@ -3188,13 +4056,19 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
             case AssaultAction(f, u, h, e, k) =>
                 val d = occupant(h).get
-                spend(u, 1)
+                // Ayo Gorkhali!: a Gurkha Assaults for free
+                if ((u.utype == Gurkha && unlocked(f, AyoGorkhali)).not)
+                    spend(u, 1)
                 if (e >= 0)
                     facing += u -> e
                 pos += u -> h
                 passenger(u).foreach(p => pos += p -> h)
                 assaults += u -> d
+                if (assaultOp(u))
+                    opAssaulted += u -> (round, h)
                 log(u, "assaulted", d, "in", h)
+                if (full && sapper(u) && defensesIn(h).any)
+                    return Ask(f).each(defensesIn(h))(x => SapAction(f, u, h, x, k)).add(SapSkipAction(f, k))
                 overwatch(u, h, |(d))
                 ManeuverAction(f, k)
 
@@ -3295,6 +4169,12 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 path.foreach(h => overwatch(u, h, None))
                 ManeuverAction(f, k)
 
+            case RapidProductionAction(f, u, k) =>
+                raided += u
+                bonus += u -> (bonus.getOrElse(u, 0) + 1)
+                log(u, "may move once more for free (Rapid Production)")
+                ManeuverAction(f, k)
+
             case BersaglieriDashAction(f, u, k) =>
                 raided += u
                 bonus += u -> (bonus.getOrElse(u, 0) + 1)
@@ -3366,6 +4246,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 val l = units(f).%(u => isPassenger(u).not && retreating.contains(u).not && (a @@ {
                     case ArmorBlitzkrieg | GrandAssault | Outmaneuver | ItalianTankAssault => u.utype.vehicle
                     case CombatGroupAdvance | BreakthroughTactics | TacticalMovement | HeroicCharge | ForMotherRussia => u.kind == Infantry
+                    case StrategicMobility => u.kind == Infantry || (u.utype.vehicle && weaponTeam(u))
+                    case EarlyWarning => u.kind == Infantry && weaponTeam(u)
                     case _ => false
                 }))
                 l.foreach(u => bonus += u -> (bonus.getOrElse(u, 0) + 1))
@@ -3377,6 +4259,14 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                     prepared += f -> round
                 if (a == CombinedArms)
                     combinedArms += f -> round
+                if (a == SmokeOperation)
+                    units(f).%(u => isPassenger(u).not && (u.utype == MatildaII || (u.kind == Infantry && Board.points.contains(where(u)))))./(where).foreach { h => smoke += h ; log("Smoke covered", h) }
+                if (a == NoManLeftBehind)
+                    leftBehind += f -> round
+                if (a == ArmyInExile)
+                    exiled += f -> round
+                if (a == EarlyWarning)
+                    warned += f -> round
                 log(f, "used", a, "for", c.hl, "CP and", m.hl, Munitions.icon)
                 ManeuverAction(f, k)
 
@@ -3390,6 +4280,12 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 else
                 if (a == MarkVehicle)
                     occupant(h).foreach(v => marked += v -> round)
+                else
+                if (a == MedicalAirdrop || a == RallyPoints)
+                    medics += f -> (round, h)
+                else
+                if (a == Valour)
+                    valour += f -> (round, h)
                 else
                     strikes :+= Strike(f, a, $(h))
                 log(f, "used", a, "on", h, "for", c.hl, "CP and", m.hl, Munitions.icon)
@@ -3492,6 +4388,12 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 log(u, "built", (w && t).?("Barbed Wire and a Tank Trap").|(w.?("Barbed Wire").|("a Tank Trap")), "in", where(u))
                 ManeuverAction(f, k)
 
+            case BarricadeAction(f, u, e, k) =>
+                spend(u, 1)
+                barricades += where(u) -> e
+                log(u, "built a Barricade in", where(u), "on its", Sandbags.names(e), "edge")
+                ManeuverAction(f, k)
+
             case SandbagsAction(f, u, e, k) =>
                 spend(u, 1)
                 sandbags += where(u) -> (sandbags.getOrElse(where(u), Set()) ++ Sandbags.edges(e))
@@ -3516,6 +4418,15 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 log(DoubleLine)
                 log("Damage Phase")
                 demolished = Set()
+                rested = Set()
+                // the mines: an enemy unit on a mined hex sets it off (a strike on the hex)
+                mines.toList.foreach { case (h, (e, d)) =>
+                    if (standing(h).exists(t => foe(e, t.faction))) {
+                        strikes :+= Strike(e, (d == AP).?(MineAP : Ability).|(MineHE), $(h))
+                        mines -= h
+                        log("A mine went off in", h)
+                    }
+                }
                 // a Sherman Dozer assaulting destroys the Sandbags of the hex it assaults
                 assaults.toList.foreach { case (u, d) =>
                     if (u.utype == Dozer && pos.contains(d) && sandbags.contains(where(d))) {
@@ -3523,10 +4434,38 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                         log(u, "destroyed the Sandbags in", where(d))
                     }
                 }
+                if (blitzing)
+                    BlitzRestStepAction(turnOrder)
+                else
                 if (abilities)
                     SmokeStepAction(turnOrder)
                 else
                     AssignNextAction(1, turnOrder)
+
+            // Blitz Cubes: at the start of the Damage Phase, before pins, a unit may take off one of its orange cubes and not attack
+            case BlitzRestStepAction(Nil) =>
+                if (abilities)
+                    SmokeStepAction(turnOrder)
+                else
+                    AssignNextAction(1, turnOrder)
+
+            case BlitzRestStepAction(order @ (f :: rest)) =>
+                val l = units(f).%(u => blitz.getOrElse(u, 0) > 0 && rested.contains(u).not)
+                if (l.none)
+                    BlitzRestStepAction(rest)
+                else {
+                    current = f
+                    Ask(f).each(l)(u => BlitzRestAction(f, u, order)).add(BlitzRestDoneAction(f, rest))
+                }
+
+            case BlitzRestAction(f, u, order) =>
+                blitz += u -> (blitz(u) - 1)
+                rested += u
+                log(u, "took off an orange cube and won't attack")
+                BlitzRestStepAction(order)
+
+            case BlitzRestDoneAction(f, rest) =>
+                BlitzRestStepAction(rest)
 
             // Commanders' Smoke: at the start of the Damage Phase, vehicles may pay 2 Munitions to Smoke their hex
             case SmokeStepAction(Nil) =>
@@ -3557,15 +4496,23 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 assignments.foreach { a =>
                     val t = a.target
                     // (in the Full Game Rules, Infantry assaulting into a Building may be pinned)
-                    if (t.kind == Infantry && (inBuilding(where(t)) && (full && assaults.contains(t)).not).not && isPassenger(t).not && (t.utype.machineGun && setUp.contains(t)).not && pinned.contains(t).not && t.utype != PenalBattalion) {
+                    if (t.kind == Infantry && (inBuilding(where(t)) && (full && assaults.contains(t)).not).not && isPassenger(t).not && (t.utype.machineGun && setUp.contains(t)).not && pinned.contains(t).not && t.utype != PenalBattalion && escorted(t).not) {
                         pinned += t -> a.attacker
                         log(t, "was pinned by", a.attacker)
                     }
                 }
 
+                // Stuka Airborne Assault: the Infantry in its hexes is pinned
+                strikes.%(_.ability == StukaAirborneAssault).foreach { s =>
+                    s.hexes./~(standing).%(t => t.kind == Infantry && foe(s.faction, t.faction) && isPassenger(t).not && pinned.contains(t).not && t.utype != PenalBattalion && escorted(t).not).foreach { t =>
+                        pinned += t -> t
+                        log(t, "was pinned by the Stuka Airborne Assault")
+                    }
+                }
+
                 // units on the other team's Control Points neutralize them, unless pinned (or Retreating, or in an Assault)
                 control.toList.foreach { case (h, f) =>
-                    occupant(h).%(u => foe(u.faction, f) && pinned.contains(u).not && (full && (retreating.contains(u) || assaultAt(h))).not).foreach { u =>
+                    occupant(h).%(u => foe(u.faction, f) && u.kind != Plane && pinned.contains(u).not && (full && (retreating.contains(u) || assaultAt(h))).not).foreach { u =>
                         control -= h
                         log(u, "neutralized", f, "Control Point in", h)
                     }
@@ -3590,7 +4537,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             case BraceStepAction(order @ (f :: rest)) =>
                 // Ober Defense: each targeted Obersoldaten squad may buy Defense Dice
                 def targeted(u : Squad) = assignments.exists(_.target == u) || splashes.exists(x => splashed(x.attacker, x.hex).has(u)) || strikes.exists(_.hexes.has(where(u)))
-                val obers = unlocked(f, OberDefense).??(units(f).%(u => u.utype == Obersoldaten && oberBraced.contains(u).not && targeted(u)))
+                val obers = units(f).%(u => ((u.utype == Obersoldaten && unlocked(f, OberDefense)) || ((u.utype == CanadianShock || u.utype == Stuart) && unlocked(f, PointAssault))) && oberBraced.contains(u).not && targeted(u))
                 val l = unlocked(f, AdvancedEmplacements).??(units(f).%(u => u.kind == Emplacement && braced.contains(u).not && (assignments.exists(_.target == u) || splashes.exists(x => splashed(x.attacker, x.hex).has(u)) || strikes.exists(_.hexes.has(where(u)))))).%(_ => f.stock(Munitions) >= 1)
                 val ober = obers./~(u => 1.to(min(f.stock(Munitions), 4)).$./(x => OberBraceAction(f, u, x, order)))
                 if (l.none && ober.none)
@@ -3662,12 +4609,20 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 }
 
             case TargetAction(f, u, t, d, step, order) =>
+                if (has(u, ObserverUp) && d.forall(_ == UnitType.heIndirect)) {
+                    gain(f, Munitions, -3)
+                    log(u, "called the 105mm Howitzer for", 3.hl, Munitions.icon)
+                }
+                if (u.kind == Plane && d == u.utype.alt) {
+                    gain(f, Munitions, -3)
+                    log(u, "fired its", d.head.dmg.name, "ordnance for", 3.hl, Munitions.icon)
+                }
                 if (u.utype == Firefly && d.num == 3 && d.forall(_.dmg == HE)) {
                     gain(f, Munitions, -2)
                     log(u, "fired Tulip rockets for", 2.hl, Munitions.icon)
                 }
                 // Strafing Fire: the same dice may also hit, in full, a unit next to the target
-                val second = (u.utype.strafing || (u.utype == Hetzer && assaults.contains(u))).??(targetsOf(u).filter(p => p._1 != t && Board.adjacent(where(p._1), where(t)) && d.forall(p._2.has)).map(_._1))
+                val second = (u.utype.strafing || has(u, PrecisionUp) || (has(u, ObserverUp) && d.forall(_ == UnitType.heIndirect)) || (u.utype == Hetzer && assaults.contains(u))).??(targetsOf(u).filter(p => p._1 != t && Board.adjacent(where(p._1), where(t)) && d.forall(p._2.has)).map(_._1))
                 assignments :+= Assignment(u, t, d)
                 assigned(u, d)
                 log(u, "attacks", t, "with", d./(_.icon).merge)
@@ -3737,10 +4692,27 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 val (hits, building) = resolveFull(he, |(defense))
                 val fights = assaults.toList
 
-                hits.foreach { h =>
+                hits.foreach { h0 =>
+                    // Medical Airdrop and Rally Points: 1 damage less for the player's Infantry on and around the marked hex
+                    val medic = (h0.damage > 0 && h0.target.kind == Infantry && medics.get(h0.target.faction).exists { case (r, x) => r == round && Board.distance(x, where(h0.target)) <= 1 })
+                    val h = medic.?(h0.copy(damage = h0.damage - 1)).|(h0)
                     health += h.target -> (health(h.target) - h.damage)
                     conscripted(h.target, h.damage)
-                    log(h.target, "in", where(h.target), "took", h.damage.hl, "damage", (h.defense > 0).??("(" + h.defense + " Defense Dice)"))
+                    log(h.target, "in", where(h.target), "took", h.damage.hl, "damage", (h.defense > 0).??("(" + h.defense + " Defense Dice)"), medic.??("(1 less, Medical Airdrop)"))
+                    // No Man Left Behind: Manpower for the damage taken by the player's Infantry this round
+                    if (h.target.kind == Infantry && h.damage > 0 && leftBehind.get(h.target.faction).has(round)) {
+                        gain(h.target.faction, Manpower, h.damage)
+                        log(h.target.faction, "gained", h.damage.hl, Manpower.icon, "(No Man Left Behind)")
+                    }
+                }
+
+                // Rigorous Vehicle Training: 1 XP for each enemy its Heavy Vehicles targeted; Army in Exile: 1 Munitions for each enemy targeted
+                setup.foreach { e =>
+                    val l = assignments.%(a => a.attacker.faction == e && foe(e, a.target.faction))
+                    val heavy = unlocked(e, RigorousVehicleTraining).??(l.%(_.attacker.kind == HeavyVehicle)./(_.target).distinct.num)
+                    if (heavy > 0) { gain(e, XP, heavy) ; log(e, "gained", heavy.hl, XP.icon, "(Rigorous Vehicle Training)") }
+                    val all = exiled.get(e).has(round).??(l./(_.target).distinct.num)
+                    if (all > 0) { gain(e, Munitions, all) ; log(e, "gained", all.hl, Munitions.icon, "(Army in Exile)") }
                 }
 
                 // Buildings: 2 health; a destroyed one is a Destroyed Building
@@ -3758,7 +4730,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 }
 
                 // two or more damage dice on a hex (each splash die once for each unit it hits there and once for the hex) destroy its Sandbags
-                (sandbags.keys.$ ++ wire ++ traps).distinct.foreach { x =>
+                (sandbags.keys.$ ++ wire ++ traps ++ barricades.toList.map(_._1)).distinct.foreach { x =>
                     val direct = assignments.%(a => pos.get(a.target).has(x))./(_.dice.num).sum
                     val shot = shots.%(_.hex == x)./(_.dice.num).sum
                     val splash = splashes.%(s => area(s.hex).has(x))./(s => s.n * (1 + splashed(s.attacker, s.hex).%(t => where(t) == x).num)).sum
@@ -3774,6 +4746,17 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                         log(x, "was destroyed")
                         killed(x, damagers(t))
                         gain(x.faction, XP, 1)
+                        if (x.kind == HeavyVehicle && unlocked(x.faction, RigorousVehicleTraining))
+                            gain(x.faction, XP, 1)
+                        // For the Fatherland: Heroic Sacrifice Infantry lost on a point its team holds gives its Manpower back
+                        if (x.kind == Infantry && has(x, HeroicSacrifice) && (unlocked(x.faction, ForTheFatherland) || unlocked(x.faction, ForTheFatherlandOKW)) && control.get(where(x)).exists(e => foe(e, x.faction).not)) {
+                            gain(x.faction, Manpower, costOf(x.faction, x.utype).mp)
+                            log(x.faction, "got", costOf(x.faction, x.utype).mp.hl, Manpower.icon, "back (For the Fatherland)")
+                        }
+                        damagers(t).distinct.%(e => foe(e, x.faction) && exiled.get(e).has(round)).foreach { e =>
+                            gain(e, XP, 1)
+                            log(e, "gained", 1.hl, XP.icon, "(Army in Exile)")
+                        }
                         if (unlocked(x.faction, BattlefieldSalvage))
                             salvage += x.faction -> (salvage.getOrElse(x.faction, 0) + 1)
                     }
@@ -3872,6 +4855,17 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                         log(x, "was destroyed")
                         killed(x, damagers(t))
                         gain(x.faction, XP, 1)
+                        if (x.kind == HeavyVehicle && unlocked(x.faction, RigorousVehicleTraining))
+                            gain(x.faction, XP, 1)
+                        // For the Fatherland: Heroic Sacrifice Infantry lost on a point its team holds gives its Manpower back
+                        if (x.kind == Infantry && has(x, HeroicSacrifice) && (unlocked(x.faction, ForTheFatherland) || unlocked(x.faction, ForTheFatherlandOKW)) && control.get(where(x)).exists(e => foe(e, x.faction).not)) {
+                            gain(x.faction, Manpower, costOf(x.faction, x.utype).mp)
+                            log(x.faction, "got", costOf(x.faction, x.utype).mp.hl, Manpower.icon, "back (For the Fatherland)")
+                        }
+                        damagers(t).distinct.%(e => foe(e, x.faction) && exiled.get(e).has(round)).foreach { e =>
+                            gain(e, XP, 1)
+                            log(e, "gained", 1.hl, XP.icon, "(Army in Exile)")
+                        }
                         if (unlocked(x.faction, BattlefieldSalvage))
                             salvage += x.faction -> (salvage.getOrElse(x.faction, 0) + 1)
                     }
@@ -3897,10 +4891,22 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                     }
                 }
 
-                Board.points.keys.$.sortBy(h => (h.r, h.c)).foreach { h =>
+                // Assault Operation: a unit still standing neutralizes the points it contests, even pinned or after a failed Assault
+                val operators = abilities.??(all.%(assaultOp).%(pos.contains))
+                operators.foreach { u =>
+                    contests(u).foreach { h =>
+                        control.get(h).%(e => foe(u.faction, e)).foreach { e =>
+                            control -= h
+                            log(u, "neutralized", e, "Control Point in", h)
+                        }
+                    }
+                }
+
+                Board.points.keys.$.%(lostPoint(_).not).sortBy(h => (h.r, h.c)).foreach { h =>
                     if (control.contains(h).not)
-                        occupant(h).%(u => (u.kind == Infantry && pinned.contains(u).not && (full && retreating.contains(u)).not) || u.kind == Emplacement || (u.utype.vehicle && captures(u))).foreach { u =>
+                        occupant(h).%(u => (u.kind == Infantry && pinned.contains(u).not && (full && retreating.contains(u)).not) || u.kind == Emplacement || (u.utype.vehicle && captures(u))).%(u => operators.exists(o => foe(o.faction, u.faction) && contests(o).has(h)).not).foreach { u =>
                             control += h -> u.faction
+                            capturedIn += h -> round
                             log(u, "captured the", Board.points(h)./(_.elem).comma, "Control Point in", h)
                         }
                 }
@@ -3946,6 +4952,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                         .add(unlockable(f)./(t => UnlockAction(f, t)).$)
                         .add(commanderPurchases(f))
                         .add(brigadePicks(f))
+                        .add((planes && planeOf.contains(f).not && f.stock(XP) >= 2).??(Aircraft.of(f)./(t => PlaneUnlockAction(f, t))))
+                        .add((boating && boatsOf.contains(f).not && f.stock(XP) >= 1 && boatTeam(f)).$(BoatUnlockAction(f)))
                         .add(emplacements(f))
                         .add(conversions(f))
                         .add(PassAction(f))
@@ -3966,10 +4974,20 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 }
                 if (t == Stormtroopers)
                     usedIn += (f, StormtrooperSpawn) -> round
+                // PPSh-41 SMG Airborne Guards and FG42 Fallschirmjäger: Double Slow the first round, one a round
+                if (t == PPShGuards || t == FG42Jager) {
+                    usedIn += (f, (t == PPShGuards).?(PPShGuardsSpawn).|(FG42Spawn)) -> round
+                    slowed += u -> (round + 1)
+                    doubleSlow += u
+                }
+                // the M1919A6 LMG Paratrooper Beacon: Riflemen spawned next to a Pathfinder take a Range upgrade
+                if (t == Riflemen && unlocked(f, PathfinderLMGBeacon) && Board.spawn(team(f)).has(h).not && units(f).exists(p => p.utype == Pathfinder && isPassenger(p).not && Board.adjacent(where(p), h))) {
+                    bought += u -> (bought.getOrElse(u, $[Bought]()) :+ Bought(44, RangeUp))
+                }
                 log(f, "spawned", u, "in", h, "for", c.elem)
-                // Osttruppen: two squads for one
-                if (t == Osttruppen) {
-                    freeQueue = List((List(Osttruppen), "spawn", None))
+                // Osttruppen (and the Canadian Shock Troops): two squads for one
+                if (t == Osttruppen || t == CanadianShock) {
+                    freeQueue = List((List(t), "spawn", None))
                     FreeNextAction(f)
                 }
                 else
@@ -3982,11 +5000,22 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                         FreeNextAction(f)
                 }
                 else
-                // in the Full Game Rules a Heavy Vehicle faces a hex side
-                if (full && t.kind == HeavyVehicle)
+                // the Artillery Observers Lost Brigade: a Jeep may spawn as an Artillery Observer
+                if (t == Jeep && unlocked(f, ArtilleryObserverSpawn))
+                    Ask(f).add(ObserverSpawnAction(f, u, true)).add(ObserverSpawnAction(f, u, false))
+                else
+                // in the Full Game Rules a Heavy Vehicle (and a plane) faces a hex side
+                if (full && (t.kind == HeavyVehicle || t.kind == Plane))
                     Ask(f).each(0.until(6).$)(e => SpawnFaceAction(f, u, e))
                 else
                     PurchaseNextAction(f)
+
+            case ObserverSpawnAction(f, u, yes) =>
+                if (yes) {
+                    bought += u -> (bought.getOrElse(u, $[Bought]()) :+ Bought(43, ObserverUp))
+                    log(u, "is an Artillery Observer")
+                }
+                PurchaseNextAction(f)
 
             case SpawnFaceAction(f, u, e) =>
                 facing += u -> e
@@ -4044,6 +5073,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                     case CommandosSpawn => commandosCost(f)
                     case AIPartisansSpawn | ATPartisansSpawn | ATPartisansSpawnFree => Cost(1, 4, 0)
                     case AirdroppedCombatGroup => Cost(5, 6, 0)
+                    case JU52Cargo => Cost(4, 5, 0)
+                    case FallschirmjagerDrop => Cost(5, 1, 0)
+                    case AirborneGuardsParadrop => (t == GuardsRifle).?(Cost(5, 1, 0)).|(Cost(1, 5, 0))
                     case _ => Cost(3, 6, 0)
                 }
                 pay(f, c)
@@ -4084,6 +5116,12 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                     FreeNextAction(f)
                 }
                 else
+                if (a == JU52Cargo) {
+                    lastDrop = |(h)
+                    freeQueue = List((List(Pak43), "drop2", None))
+                    FreeNextAction(f)
+                }
+                else
                     PurchaseNextAction(f)
 
             case BuildMenuAction(f, t) =>
@@ -4108,6 +5146,10 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 PurchaseNextAction(f)
 
             case BuildAction(f, b, t, h) =>
+                if (b.utype == Dingo) {
+                    gain(f, Munitions, -3)
+                    log(b, "paid", 3.hl, Munitions.icon, "more (Towed Heavy Mortar)")
+                }
                 pay(f, t.cost)
                 built += b -> (built.getOrElse(b, 0) + 1)
                 val u = createSquad(f, t, h)
@@ -4155,7 +5197,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                         case AddAttacks(a) if a == UnitType.ap => 23
                         case BredaUp => 29
                         case HealthTwo => 31
-                        case _ => 13
+                        case _ => slotsOf(u).find(_._2.options.has(e))./(_._1).|(13)
                     }
                     // the WASP: both Flame upgrades
                     val n = (e == FlameRefit).?(2).|(1)
@@ -4164,7 +5206,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 if (extra.any)
                     health += u -> maxHealth(u)
                 log(f, "spawned", u, "in", h, "for free", extra./(e => ("with " + e.name).txt).|(Empty))
-                if (full && t.kind == HeavyVehicle)
+                if (full && (t.kind == HeavyVehicle || t.kind == Plane))
                     Ask(f).each(0.until(6).$)(e => SpawnFaceAction(f, u, e))
                 else
                     FreeNextAction(f)

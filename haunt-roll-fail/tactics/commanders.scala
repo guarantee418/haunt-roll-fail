@@ -340,6 +340,152 @@ case object DAKReconPlane extends Ability("Recon Plane", "At the start of your M
 case object ElefantCallInPlain extends Ability("Elefant Call-In", "The Elefant can be bought.")
 case object ItalianTankAssault extends Ability("Italian Tank Assault", "At the start of your Maneuver Phase spend your very first 1 CP and 3 Munitions: every Vehicle may make a free move this turn.")
 
+// the DAK Lost Brigades' own abilities (2026-11-28, brigades.scala)
+case object Artillery21022Plain extends Ability("210/22 Artillery Emplacement", "Panzerjaegers, Guastatori and Panzerpioneers can build the 210/22 Artillery Emplacement (4 health, range 4 to 6, 3 indirect HE) for 5 Manpower.")
+case object MarderCallIn extends Ability("Marder III", "The Marder III can be bought: 2 health, range 4, 2 fixed AP.")
+case object NebelwerferCallIn extends Ability("Nebelwerfer", "The Nebelwerfer can be bought: 4 health, range 2 to 5, 1 indirect Flame and 1 indirect HE, a Weapon Team with no Capture that can't set up in Buildings or Transports; its damage may also go, in full, to a second unit next to its target.")
+case object VeteranCoastalReserves extends Ability("Veteran Coastal Reserves", "Veteran Coastal Reserves can be bought: 5 health, range 3, 1 AI and 1 AP, a Wrench, Camouflage (Panzerjaegers with their Coastal Reserves Health).")
+case object VeteranFlammpanzers extends Ability("Veteran Flammpanzer III", "The Flammpanzer III can be bought, with Heroic Sacrifice and both AI Munitions upgrades: 3 health, range 2, 1 Flame and 3 AI turreted, a Speed Die (a Panzer III for the limit).")
+case object TankBustersCallIn extends Ability("Veteran Tank Busters", "Veteran Tank Busters can be bought: 5 health, range 3, 3 AP, a Speed Die.")
+
+// the 3rd printing's Commanders (2026-11-28; the change sheet's "New commanders", behind the setup's ThirdPrintingCommanders toggle for the
+// core factions; the DAK's versions of the universal German ones are with its expansion Commanders)
+case object RapidProduction extends Ability("Rapid Production", "Spending its first CP of a round to leave a Spawn Area, a Vehicle may move once more for free, as with a Speed Die. One Kubelwagen spawns for free.")
+case object PanzerwerferCallIn extends Ability("Panzerwerfer", "The Panzerwerfer can be bought: 3 health, range 2 to 4, 2 indirect HE, a Speed Die; it sets up with a Firing Arc like a Weapon Team, and its damage may also go, in full, to a second unit next to its target.")
+case object TigerCallInPlain extends Ability("Tiger Call-In", "The Tiger can be bought.")
+case object TigerAce extends Ability("Tiger Ace", "Tigers have a Veterancy option: +1 Range for 2 XP. One Tiger spawns for free.")
+case object HM38Mortars extends Ability("HM-38 120mm Mortars", "The Mortar's Splash XP upgrade costs 1 XP. One Mortar spawns with it for free.")
+case object KatyushaCallIn extends Ability("Katyusha", "The Katyusha can be bought: 2 health, range 2 to 5, 1 indirect Flame and 1 indirect HE, a Speed Die, Slow; it sets up with a Firing Arc like a Weapon Team, and its damage may also go, in full, to a second unit next to its target.")
+case object StuGCallInDAK extends Ability("StuG III G Call-In", "The StuG III G can be bought.")
+case object StuGCallInFreeDAK extends Ability("StuG III G Call-In", "The StuG III G can be bought. One StuG III D or G spawns for free.")
+case object TankDesantDAK extends Ability("Tank Desant Tactics", "Infantry gain +2 Defense Dice next to a Heavy Vehicle (not in a Building, no stacking with other Cover). One Assault Grenadier spawns for free.")
+case object TargetWeakPointDAK extends Ability("Target Weak Point", "StuG III Gs have +1 AP and StuG III Ds +1 HE. One StuG III D or G spawns for free.")
+case object TurretlessTerrorDAK extends Ability("Turretless Terror", "StuG III Ds and Gs have Camouflage. One Stormtrooper spawns for free (it counts toward the one a round).")
+// the universal German Intel Disruption and Tank Buster Doctrines (Wehrmacht, OKW, DAK), and both Special Operations (US, British)
+case object MarderCallInFree extends Ability("Marder III Call-In", "The Marder III can be bought (2 health, range 4, 2 fixed AP). One spawns for free.")
+case object DisruptionBeacons extends Ability("Disruption Beacons", "Spending its first CP of a round, an Infantry may pay 2 Munitions to have Camouflage this round instead of moving. One Marder III spawns for free.")
+case object TravelSpeed extends Ability("Travel Speed", "Spending its first CP of a round to leave a Spawn Area, a Vehicle may move once more for free, as with a Speed Die. Any two Vehicles up to Tier 2, the Marder III among them, spawn for free.")
+case object PactOfSteel extends Ability("Pact of Steel", "Tier 2 Vehicles cost 1 Manpower less. One Infantry spawns for free.")
+case object TankBusterKit extends Ability("Tank Busters", "Infantry can convert to Tank Busters for 3 Munitions: they keep their Health, Defense and Camouflage, but their attack becomes 3 AP at range 3.")
+case object M3LeeCallIn extends Ability("M3 Lee", "The M3 Lee can be bought: 3 health, range 3, 2 fixed AI, 1 turreted AP, 2 fixed HE. One spawns for free.")
+case object M3LeeCallInPlain extends Ability("M3 Lee", "The M3 Lee can be bought: 3 health, range 3, 2 fixed AI, 1 turreted AP, 2 fixed HE.")
+case object AssaultOperation extends Ability("Assault Operation", "Devil's Brigades take one Riflemen XP and one Munitions upgrade for free. A Devil's Brigade still standing neutralizes the Control Point it stands on or Assaulted this round and keeps the enemy from capturing it in the Supply Phase, even Pinned or after a failed Assault. One spawns for free.")
+case object SSFCanadiansSpawn extends Ability("SSF Canadians", "SSF Canadians can be bought: an Infantry Section with +1 AI or AP (picked once, for free), that enters impassable water and gets 3 Defense Dice in a Destroyed Building. One spawns for free.")
+case object M3GrantCallIn extends Ability("M3 Grant", "The M3 Grant can be bought: 3 health, range 3, Sight 3, 1 fixed AI, 1 turreted AP, 2 fixed HE. One spawns for free.")
+case object M3GrantCallInPlain extends Ability("M3 Grant", "The M3 Grant can be bought: 3 health, range 3, Sight 3, 1 fixed AI, 1 turreted AP, 2 fixed HE.")
+case object AssaultOperationBR extends Ability("Assault Operation", "SSF Canadians take their Infantry Section XP Health upgrade and either Munitions upgrade for free. An SSF Canadian still standing neutralizes the Control Point it stands on or Assaulted this round and keeps the enemy from capturing it in the Supply Phase, even Pinned or after a failed Assault. One spawns for free.")
+// Engineering Corps (US), Defense in Depth and Atlantic Wall (OKW), Reserve Army (Soviet), Italian Infantry (DAK)
+case object FastDeploy extends Ability("Fast Deploy", "Spending its first CP of a round to leave a Spawn Area, a Vehicle may move once more for free, as with a Speed Die. One Jeep spawns for free.")
+case object FieldEngineers extends Ability("Field Engineers", "Assault Engineers spending their first CP of a round may leave Barbed Wire or a Tank Trap in the hex they leave; Assaulting, they may remove one Battlefield Defense from the hex.")
+case object DefenseInDepth extends Ability("Defense in Depth", "Sturmpioneers spending their first CP of a round may leave Barbed Wire or a Tank Trap in the hex they leave; Assaulting, they may remove one Battlefield Defense from the hex.")
+case object PrecisionStrike extends Ability("Precision Strike", "Stuka Halftracks and LeFH 18s have a Veterancy option for 1 XP: their damage may also go, in full, to a second unit next to the target (not with the Stuka's Splash upgrade). One Stuka with it spawns for free.")
+case object PrecisionStrikeLeFH extends Ability("Precision Strike", "Stuka Halftracks and LeFH 18s have a Veterancy option for 1 XP: their damage may also go, in full, to a second unit next to the target (not with the Stuka's Splash upgrade). One LeFH 18 with it is built for free next to a Sturmpioneer.")
+case object OKWHullDown extends Ability("Hull Down", "Sturmpioneers may spend 1 CP to sandbag an adjacent Vehicle: 2 Defense Dice until it moves.")
+case object BigRocketBoom extends Ability("Big Rocket Boom", "Sturmtigers have their XP Range upgrade for free. One spawns for free.")
+case object OKWCoastalWall extends Ability("Coastal Wall", "Sturmpioneers get 1 more Defense Die from Sandbags or a Barricade.")
+case object OKWCoastalReserves extends Ability("Coastal Reserves", "Sturmpioneers have a Veterancy option: +2 Health for 2 XP. One spawns with it for free.")
+case object CombatEngineerSpawn extends Ability("Combat Engineers", "Conscripts may spawn as Combat Engineers: 4 health (a Munitions Health upgrade), range 2, 2 AI of which 1 Close Range Firepower, 2 Wrenches, no Speed Die.")
+case object KatyushaCallInFree extends Ability("Katyusha", "The Katyusha can be bought. One spawns for free.")
+case object AdvancedFortifications extends Ability("Advanced Fortifications", "Combat Engineers spending their first CP of a round may leave Barbed Wire or a Tank Trap in the hex they leave; Assaulting, they may remove one Battlefield Defense from the hex.")
+case object ReserveConscription extends Ability("Reserve Conscription", "Once a Supply Phase, for 5 Munitions every Infantry with a Munitions Health upgrade left takes one, and every Infantry Reinforces 1 health. Two Conscripts spawn for free.")
+case object ItalianInfantry extends Ability("Italian Infantry", "At the start of your Maneuver Phase spend your very first 1 CP and 3 Munitions to mark three Control Points: your Infantry on them in the Damage Phase gets 1 more Defense Die this round.")
+case object OffShoreSupport extends Ability("Off Shore Support", "Guastatori and Bersaglieri have a Health and an AI upgrade for free. Two SdKfz 250s spawn for free.")
+// the British Desert Rats and Stuart "Honey" pack
+case object PolishLancerCallIn extends Ability("Polish Lancer Section", "Polish Lancer Sections can be bought: 4 health, range 2 to 3, 1 AI and 1 AP; a Veterancy option, +2 AP for 3 XP. One spawns for free.")
+case object PolishLancerCallInPlain extends Ability("Polish Lancer Section", "Polish Lancer Sections can be bought: 4 health, range 2 to 3, 1 AI and 1 AP; a Veterancy option, +2 AP for 3 XP.")
+case object MatildaCallIn extends Ability("Matilda II", "The Matilda II can be bought: 5 health, range 2, 2 turreted AI, Slow. After spending a CP it may move onto an adjacent Control Point for free, as with a Speed Die.")
+case object RigorousVehicleTraining extends Ability("Rigorous Vehicle Training", "Each enemy your Heavy Vehicles target gives you 1 more XP, and each of your Heavy Vehicles destroyed 1 more XP.")
+case object BlackPrinceCallIn extends Ability("Black Prince", "The Black Prince can be bought (a Churchill for the limit): 6 health, range 4, 3 AP and 2 Close Range AI, a Defense Die, Slow. One spawns for free.")
+case object CanadianShockCallIn extends Ability("Canadian Shock Troops", "Canadian Shock Troops can be bought, two squads for each: 3 health, range 2, 3 AI of which 2 Close Range, a Speed Die.")
+case object AttackingSpirit extends Ability("Attacking Spirit", "In the Supply Phase, each Infantry on a Control Point may pay 1 Munitions to Reinforce 1 health, free if the point was captured this round. One pair of Canadian Shock Troops spawns for free.")
+case object SmokeOperation extends Ability("Smoke Operation", "At the start of your Maneuver Phase spend your very first 2 CP and 2 Munitions: every Matilda II and every Infantry on a Control Point Smokes its hex. One Vehicle spawns for free.")
+case object DingoCallIn extends Ability("Dingo - Forward Observer", "The Dingo can be bought: 1 health, range 3, 1 indirect HE, Capture, Reinforce, 2 Speed Dice.")
+case object DingoCallInFree extends Ability("Dingo - Forward Observer", "The Dingo can be bought (see the card). One spawns for free.")
+case object DingoCallInIS extends Ability("Dingo", "The Dingo can be bought (see the card). One Infantry Section spawns for free.")
+case object ANZACCallIn extends Ability("ANZAC Light Infantry", "ANZAC Light Infantry can be bought: 5 health, range 2, 1 AI, Camouflage, a Wrench; they build Emplacements as Infantry Sections; a Veterancy option for 2 XP, +2 Sight and Spots Camo or +1 AI.")
+case object ANZACCallInFree extends Ability("ANZAC Light Infantry", "ANZAC Light Infantry can be bought (see the card). One spawns for free.")
+case object SeventeenPounderANZAC extends Ability("17 Pounder Emplacement", "ANZAC Light Infantry and Infantry Sections can build the 17 Pounder Emplacement (4 health, range 4, 4 AP, a Defense Die) for 5 Manpower. One Veteran ANZAC spawns for free.")
+case object TowedHeavyMortar extends Ability("Towed Heavy Mortar", "A Dingo may build one Emplacement each round as an Infantry Section with a Wrench, for 3 Munitions more.")
+case object VehicleOverRepair extends Ability("Vehicle Over Repair", "In the Supply Phase, Infantry with a Wrench may pay 3 Munitions to give an adjacent Vehicle +1 Health, once for each Vehicle.")
+case object StuartHoneyCallIn extends Ability("Stuart \"Honey\"", "The M5 Stuart can be bought: 3 health, range 2, 1 AI and 1 AP turreted, 2 Speed Dice.")
+case object StuartHoneyCallInFree extends Ability("Stuart \"Honey\"", "The M5 Stuart can be bought. One spawns for free.")
+case object StrategicManeuversBR extends Ability("Strategic Maneuvers", "Stuarts may spend 1 CP to toggle a No-Fire mode in which they capture, and 1 CP back. One Polish Lancer Section spawns for free.")
+case object NoManLeftBehind extends Ability("No Man Left Behind", "At the start of your Maneuver Phase spend your very first 2 CP and 1 Munitions: this round each damage your Infantry takes gives you 1 Manpower. One Stuart and one Polish Lancer Section spawn for free.")
+case object VeteranSquadLeaders extends Ability("Veteran Squad Leaders", "In the Supply Phase, each Infantry on a Control Point may pay 1 XP to Reinforce 1 health, free if the point was captured this round.")
+case object SideSkirts extends Ability("Side Skirts", "In the Supply Phase, Infantry with a Wrench may pay 3 Munitions to give an adjacent Vehicle +1 Health, once for each Vehicle.")
+case object ArmyInExile extends Ability("Army in Exile", "At the start of your Maneuver Phase spend your very first 2 CP and 1 Munitions: this round each enemy you assign damage to gives you 1 Munitions, and each one you destroy 1 XP.")
+case object PointAssault extends Ability("Point Assault", "Targeted Canadian Shock Troops and Stuarts may pay any Munitions for as many more Defense Dice, after the damage is assigned. One Veteran ANZAC spawns for free.")
+// Army in Exile, Rocketry Support, Field Support (British), Desperate Battle, Last Stand (DAK), Shock Motor, Airborne Troops (Soviet),
+// Luftwaffe Supply (Wehrmacht)
+case object PerimeterMonitor extends Ability("Perimeter Monitor", "At the start of your Maneuver Phase spend your very first 1 CP and 1 Munitions to place an Eye on three Control Points: they (and the hexes around them) are visible to your team this round, Camouflage too.")
+case object SLDFlares extends Ability("SLD Starburst Flares", "At the start of your Maneuver Phase spend your very first 1 CP and 1 Munitions to place an Eye on three Control Points: they (and the hexes around them) are visible to your team this round, Camouflage too.")
+case object LandMattressCallIn extends Ability("Land Mattress", "The Land Mattress can be bought: a Weapon Team, 3 health, range 2 to 6, 2 indirect HE, Slow, no Capture, no Setup in Buildings or Transports, its damage may also go to a second unit next to its target; 2 Manpower less spawned into a Universal Carrier that spawned this round.")
+case object SharpshootersANZAC extends Ability("Sharpshooters", "ANZAC Light Infantry can be bought (see the card). One spawns for free.")
+case object LandMattressEmplacementAbility extends Ability("Artillery Emplacement", "ANZAC and Infantry Sections can build the Land Mattress Emplacement (4 health, the Land Mattress's attack). One is built for free next to one of them.")
+case object SeekVengeance extends Ability("Seek Vengeance", "Polish Lancer Sections have Heroic Sacrifice; one may spend 1 CP to drop to the ground: +1 Range this round, and no more CP, moves or Retreat this round. One spawns for free.")
+case object VeteranSemovente extends Ability("Veteran Semovente", "Semoventes have an AP and an HE upgrade: 3 AP or 3 HE, picked each attack. One spawns for free.")
+case object NebelwerferCallInFree extends Ability("Nebelwerfer", "The Nebelwerfer can be bought. One spawns for free.")
+case object CombinedArmsDAK extends Ability("Combined Arms", "Infantry next to a Light Vehicle can't be pinned or take Overwatch, and gets 1 Defense Die where no better Cover counts, also Assaulting next to it; not in Buildings.")
+case object StrategicMobility extends Ability("Strategic Mobility", "At the start of your Maneuver Phase spend your very first 1 CP and 3 Munitions: Vehicle Weapon Teams and all Infantry may make a free move this turn. One 88mm FLAK 36 spawns for free.")
+case object ArmoredVehicleDetection extends Ability("Armored Vehicle Detection", "Light Vehicles and T-70s can upgrade to +2 Sight and spot Camouflage for 2 Munitions (a T-70 not twice).")
+case object ShockTroopsAssault extends Ability("Shock Troops", "Shock Troops can be bought: 5 health, range 2, 1 AI, Close Range Firepower, a Defense Die; Assaulting, they may pay 1 Munitions to Smoke the assaulted hex at the start of the Damage Phase.")
+case object MechanizedSupport extends Ability("Mechanized Support", "Infantry next to a Heavy Vehicle can't be pinned or take Overwatch, and gets 1 Defense Die where no better Cover counts, also Assaulting next to it; not in Buildings. One T-70 spawns for free.")
+case object VehicleCrewTraining extends Ability("Vehicle Crew Training", "T-70s and T-34s can upgrade to +1 AP for 3 Munitions; T-70s always Capture. One Shock Troops squad spawns for free.")
+case object RadioNet extends Ability("Radio Net", "Light Vehicles can upgrade to +2 Sight and spot Camouflage for 2 Munitions.")
+case object CanadianShockCallInFree extends Ability("Canadian Shock Troops", "Canadian Shock Troops can be bought, two squads for each. One pair spawns for free.")
+case object WithdrawAndRefit extends Ability("Withdraw and Refit", "Once a Supply Phase, return an Emplacement or a Light Vehicle that didn't spawn this round to the supply, for its Manpower and Fuel back. One .55 cal Armor Piercing Sniper spawns for free.")
+case object MedicalAirdrop extends Ability("Medical Airdrop", "At the start of your Maneuver Phase spend your very first 2 CP and 1 Munitions to mark a hex: there and around it your Infantry take 1 less damage this round.")
+case object RallyPoints extends Ability("Rally Points", "At the start of your Maneuver Phase spend your very first 2 CP and 1 Munitions to mark a hex: there and around it your Infantry take 1 less damage this round.")
+case object PanzerwerferCallInFree extends Ability("Panzerwerfer", "The Panzerwerfer can be bought. One spawns for free.")
+case object JU52Cargo extends Ability("JU52 Cargo Supply Drop", "Drop a Weapon Team and a Pak 43 Emplacement on visible adjacent non-Building hexes, Double Slow the first round, for 4 Manpower and 5 Munitions; one a round. One group drops for free.")
+case object AirborneGuardsParadrop extends Ability("Airborne Guards Paradrop", "Drop a Weapon Team (1 Manpower 5 Munitions) or Guards Rifle Infantry (5 Manpower 1 Munitions) on a visible non-Building hex, Double Slow the first round; one a round. One drops for free.")
+// mines (Field Ordnance's Fieldcraft, Demolition Engineers' and Stalling Tactics' Mine Field), Stalling Tactics (DAK), Demolition
+// Engineers (British), Fortified Armor and Jaeger Armor Doctrines (Wehrmacht), Overwatch Doctrine (OKW)
+case object Fieldcraft extends Ability("Fieldcraft", "Infantry may pay 2 Munitions, once a round for each Wrench, to leave an HE or AP die in its hex (not one with an enemy): it stays until an enemy unit is on that hex in a Damage Phase, and then strikes it.")
+case object MineField extends Ability("Mine Field", "Infantry may pay 2 Munitions, once a round for each Wrench, to leave an HE or AP die in its hex (not one with an enemy): it stays until an enemy unit is on that hex in a Damage Phase, and then strikes it.")
+case object MineFieldDAK extends Ability("Mine Field", "Infantry may pay 2 Munitions, once a round for each Wrench, to leave an HE or AP die in its hex (not one with an enemy): it stays until an enemy unit is on that hex in a Damage Phase, and then strikes it.")
+// the mines' strikes (no card): an AP or an HE die
+case object MineAP extends Ability("Mine (AP)", "An AP die left on a hex.")
+case object MineHE extends Ability("Mine (HE)", "An HE die left on a hex.")
+case object DefensivePositions extends Ability("Defensive Positions", "8-Rads have a Defense Die. One spawns for free.")
+case object GrBLauncher extends Ability("GrB Grenade Launcher", "Panzerpioneers and 8-Rads have +1 HE; 8-Rads always Capture. One Panzerpioneer spawns for free.")
+case object EngineerDetachments extends Ability("Engineer Detachments", "Infantry Sections and Royal Engineers can upgrade to +1 Flame and a Defense Die for 4 Munitions. One Universal Carrier spawns for free.")
+case object ForwardRepairAssembly extends Ability("Forward Repair Assembly", "Infantry Sections and Royal Engineers can turn an adjacent empty Building into a Forward Repair Assembly (3 health, a Wrench) for 2 Manpower; Vehicles may spawn next to it, Slow the first round. One at a time.")
+case object CommandPanzerIVCallIn extends Ability("Command Panzer IV", "Panzer IVs may spawn as Panzer IV Ausf. F1s, with 2 HE in place of their AP.")
+case object CommandRadioNet extends Ability("Command Radio Net", "In the Damage Phase every Vehicle next to a Panzer IV Ausf. F1 (not the F1 itself) has 1 more Defense Die. One F1 spawns for free.")
+case object EarlyWarning extends Ability("Early Warning", "At the start of your Maneuver Phase spend your very first 1 CP and 2 Munitions: every Infantry Weapon Team gets a free CP this turn, to set up, pack up, turn or build a Battlefield Defense as with a Wrench.")
+case object ForTheFatherland extends Ability("For the Fatherland", "Infantry can upgrade to Heroic Sacrifice for 3 Munitions; Infantry with Heroic Sacrifice destroyed on a Control Point its team holds gives its Manpower back.")
+case object ForTheFatherlandOKW extends Ability("For the Fatherland", "Infantry can upgrade to Heroic Sacrifice for 3 Munitions; Infantry with Heroic Sacrifice destroyed on a Control Point its team holds gives its Manpower back. One Obersoldaten spawns for free.")
+case object SpottingScopes extends Ability("Spotting Scopes", "Vehicles with their Munitions upgrade have +1 Sight. One Panzer IV with its AI Munitions upgrade spawns for free.")
+case object ForwardReceivers extends Ability("Forward Receivers", "Tier Buildings have +1 Health; the OKW Battlegroup can become a Retreat Point for 4 Munitions, the Schwerer Panzer HQ get +2 Sight and Spots Camo for 4 Munitions.")
+case object GoliathMine extends Ability("Goliath Tracked Mine", "At the start of your Maneuver Phase spend your very first 2 CP and 2 Munitions: a hex within 3 of one of your Tier Buildings takes 2 HE in the Damage Phase (only enemies).")
+case object ValiantAssault extends Ability("Valiant Assault", "Obersoldaten have their AI XP and Speed upgrades for free; one still standing neutralizes the Control Point it stands on or Assaulted this round and keeps the enemy from capturing it in the Supply Phase, even Pinned or after a failed Assault. One spawns for free.")
+// Luftwaffe Ground Forces (OKW), Infantry Assault (British), Field Ordnance and Cavalry Support (US)
+case object FallschirmjagerDrop extends Ability("Fallschirmjäger", "Fallschirmjäger (Volksgrenadiers with +1 Sight in place of their Defense Die) drop on a visible non-Building hex, Double Slow the first round, for 5 Manpower 1 Munitions; one a round.")
+case object MG34CallInFree extends Ability("MG-34 Team", "The MG-34 Team can be bought: 4 health, range 3, 1 AI, a machine gun that pins, Sight 3, a Speed Die, no Capture, no Setup in Transports. One spawns for free.")
+case object FG42Rifles extends Ability("FG42 Rifles", "Fallschirmjäger with both XP Health upgrades have +1 AI and First Strike: they still attack when pinned.")
+case object StukaAirborneAssault extends Ability("Stuka Airborne Assault", "At the start of your Maneuver Phase spend your very first 2 CP and 2 Munitions: 3 hexes in a line each take 1 AI, and their Infantry is pinned, in the Damage Phase. One Fallschirmjäger drops for free (the one a round).")
+case object Valour extends Ability("Valour", "At the start of your Maneuver Phase spend your very first 1 CP and 1 Munitions to mark a VP Control Point you don't hold: this round every unit destroyed there has Heroic Sacrifice, and the point gives 1 more VP in the Supply Phase.")
+case object GurkhaCallIn extends Ability("Gurkha Rifles Section", "Gurkha Rifles Sections can be bought: 5 health, range 2, 1 AI; for 3 Munitions either +1 Range and Sight and +1 AI, or a Defense Die and a Close Range die.")
+case object AyoGorkhali extends Ability("Ayo Gorkhali!", "Gurkhas Assault for free, as with a Speed Die, and deal 1 more HE Assaulting. One Gurkha Rifles Section spawns for free.")
+case object VolunteerInfantry extends Ability("Volunteer Infantry", "Infantry cost 1 Manpower less; spending its first CP of a round to leave a Spawn Area, an Infantry may move once more for free, as with a Speed Die. One Infantry spawns for free.")
+case object MedicalStationAbility extends Ability("Frontline Medical Station", "Riflemen and Assault Engineers can build the Frontline Medical Station (3 health, Spots Camo, Reinforce, a Retreat Point) for 2 Manpower; Infantry may spawn next to it, Slow the first round.")
+case object ArtilleryObserver extends Ability("Artillery Observer", "Jeeps have a Veterancy option for 1 XP: +2 Sight and Spots Camo, no more Transport, and the 105mm Howitzer: for 3 Munitions 2 indirect HE in place of its AI, that may also go to a second unit next to the target. One Veteran Jeep spawns for free.")
+case object ArtilleryObserverPlain extends Ability("Artillery Observer", "Jeeps have a Veterancy option for 1 XP: +2 Sight and Spots Camo, no more Transport, and the 105mm Howitzer: for 3 Munitions 2 indirect HE in place of its AI, that may also go to a second unit next to the target.")
+case object RangerEndurance extends Ability("Ranger Endurance Training", "Riflemen may take 4 CP a round, and their Munitions upgrade costs 1 less. One spawns with its AP Munitions upgrade for free.")
+// the 3rd printing's core Lost Brigades' own abilities (2026-11-28; the setup's ThirdPrintingBrigades)
+case object ArtilleryObserverSpawn extends Ability("Artillery Observers", "Jeeps may spawn as Artillery Observers: +2 Sight and Spots Camo, no more Transport, and the 105mm Howitzer: for 3 Munitions 2 indirect HE in place of its AI, that may also go to a second unit next to the target.")
+case object PathfinderLMGBeacon extends Ability("M1919A6 LMG Paratrooper Beacon", "I.R. Pathfinder Squads can be bought (3 health, range 3, 1 AI, Spots Camo, Camouflage). Riflemen may spawn next to a Pathfinder Squad, with a Range upgrade, Slow the first round.")
+case object TigerAceCallIn extends Ability("Tiger Ace", "The Tiger Ace can be bought (a Tiger for the limit): 6 health, range 3, 3 AP and 1 AI turreted, a Defense Die.")
+case object PPShGuardsSpawn extends Ability("PPSh-41 SMG Airborne Guards", "PPSh-41 SMG Airborne Guards can be bought: 4 health, range 2, 3 AI of which 2 Close Range; they spawn on any visible non-Building hex, Double Slow the first round; one a round.")
+case object KV1CallIn extends Ability("KV-1 Heavy Tank", "The KV-1 can be bought (a KV-8 for the limit): 5 health, range 2, 1 AI and 1 AP turreted, Slow. After spending a CP it may move onto an adjacent Control Point for free, as with a Speed Die.")
+case object FG42Spawn extends Ability("FG42 Fallschirmjäger", "FG42 Fallschirmjäger can be bought: Volksgrenadiers with 2 AI and +1 Sight in place of their Defense Die; they spawn on any visible non-Building hex, Double Slow the first round; one a round.")
+case object PrecisionLeFHBrigade extends Ability("Precision LeFH 18 Artillery", "Sturmpioneers can build LeFH 18 Artillery Emplacements for 4 Munitions; LeFH 18s have a Veterancy option for 1 XP: their damage may also go, in full, to a second unit next to the target.")
+case object MG34CallIn extends Ability("MG-34 Team", "The MG-34 Team can be bought: 4 health, range 3, 1 AI, a machine gun that pins, Sight 3, a Speed Die, no Capture, no Setup in Transports.")
+case object CoastalReservesOKWCallIn extends Ability("Veteran Coastal Reserves", "Veteran Coastal Reserves can be bought: 5 health, range 2, 2 AI of which 1 Close Range and 1 AP, 2 Wrenches; they build Emplacements as Sturmpioneers, the Flak Gun too.")
+case object BlackPrinceCallInPlain extends Ability("Black Prince", "The Black Prince can be bought (a Churchill for the limit): 6 health, range 4, 3 AP and 2 Close Range AI, a Defense Die, Slow.")
+case object M3CarriageMerge extends Ability("M3 Carriage", "For 1 CP an Infantry Weapon Team may merge into an adjacent Jeep (not a Veteran): the M3 Carriage keeps the Jeep's Speed Die and gets +2 Health, the team's range, damage and upgrades, and sets up with a Firing Arc; gain 1 Manpower.")
+
 case object CommandPantherCallIn extends Ability("Command Panther", "The Command Panther can be bought: 5 health, range 3, 2 AP and 2 AI turreted, Spots Camo. One at a time.")
 
 
@@ -424,6 +570,51 @@ case object SovietIndustryTactics extends Commander("soviet-industry", "Soviet I
 // the OKW expansion Commanders (Faction Guide pages 36 and 37); the StuG Pack's two are the Wehrmacht's cards
 case object TerrorDoctrineWest extends Commander("terror-west", "Terror Doctrine West", OKW, $(Tier(TerrorWestOber, 1), Tier(RecoupLosses, 2), Tier(OberDefense, 4, 3), Tier(KingTigerCallIn, 5, 3)))
 case object TankDestroyerWest extends Commander("tank-destroyer-west", "Tank Destroyer West", OKW, $(Tier(MarkVehicle, 1), Tier(PanzerfusilierCallInPlain, 1), Tier(PumaCallIn, 4, 2), Tier(JagdpantherCallIn, 4, 3)))
+// the DAK's versions of the universal German StuG Commanders (the change sheet's "Universal German commanders")
+case object StuGAssaultDoctrineDAK extends Commander("stug-assault-dak", "StuG Assault Doctrine", DAK, $(Tier(StuGCloseRange, 1), Tier(StuGCallInDAK, 1, 2), Tier(TankDesantDAK, 3), Tier(TargetWeakPointDAK, 4, 2)))
+case object StuGTacticsDAK extends Commander("stug-tactics-dak", "StuG Tactics", DAK, $(Tier(StormtrooperSpawn, 2), Tier(StuGCallInFreeDAK, 4, 2), Tier(FragmentationBomb, 1), Tier(TurretlessTerrorDAK, 3)))
+// the 3rd printing's new core Commanders
+sealed abstract class IntelDisruptionDoctrine(f : Faction) extends Commander("intel-disruption-" + f.id, "Intel Disruption Doctrine", f, $(Tier(ReconPlane, 1), Tier(MarderCallIn, 1, 2), Tier(DisruptionBeacons, 4), Tier(TravelSpeed, 5, 2)))
+case object IntelDisruptionWM extends IntelDisruptionDoctrine(Wehrmacht)
+case object IntelDisruptionOKW extends IntelDisruptionDoctrine(OKW)
+case object IntelDisruptionDAK extends IntelDisruptionDoctrine(DAK)
+sealed abstract class TankBusterDoctrine(f : Faction) extends Commander("tank-buster-" + f.id, "Tank Buster Doctrine", f, $(Tier(MarkVehicle, 1), Tier(MarderCallInFree, 4, 2), Tier(PactOfSteel, 3), Tier(TankBusterKit, 2)))
+case object TankBusterWM extends TankBusterDoctrine(Wehrmacht)
+case object TankBusterOKW extends TankBusterDoctrine(OKW)
+case object TankBusterDAK extends TankBusterDoctrine(DAK)
+case object EngineeringCorps extends Commander("engineering-corps", "Engineering Corps", US, $(Tier(FastDeploy, 3), Tier(AssaultEngineerSpawnPlain, 1), Tier(FieldEngineers, 1), Tier(M3LeeCallIn, 4, 3)))
+case object DefenseInDepthDoctrine extends Commander("defense-in-depth", "Defense in Depth", OKW, $(Tier(DefenseInDepth, 1), Tier(PrecisionStrike, 4, 2), Tier(OKWHullDown, 1), Tier(BigRocketBoom, 5, 3)))
+case object AtlanticWall extends Commander("atlantic-wall", "Atlantic Wall", OKW, $(Tier(OKWCoastalWall, 1), Tier(LeFH18Ability, 1), Tier(OKWCoastalReserves, 3), Tier(PrecisionStrikeLeFH, 3)))
+case object ReserveArmy extends Commander("reserve-army", "Reserve Army", Soviet, $(Tier(CombatEngineerSpawn, 1), Tier(KatyushaCallInFree, 4, 2), Tier(AdvancedFortifications, 1), Tier(ReserveConscription, 5)))
+case object ItalianInfantryCommander extends Commander("italian-infantry", "Italian Infantry", DAK, $(Tier(ItalianInfantry, 1), Tier(GuastatoriCallIn, 1), Tier(BersaglieriCallInFree, 3), Tier(OffShoreSupport, 5, 2)))
+case object PolishCarpathian extends Commander("polish-carpathian", "Polish Carpathian Brigade", British, $(Tier(PolishLancerCallIn, 3), Tier(MatildaCallIn, 1, 2), Tier(RigorousVehicleTraining, 1), Tier(BlackPrinceCallIn, 5, 3)))
+case object ShockAssaultRegiment extends Commander("shock-assault", "Shock Assault Regiment", British, $(Tier(CanadianShockCallIn, 1), Tier(MatildaCallIn, 1, 2), Tier(AttackingSpirit, 3), Tier(SmokeOperation, 4, 3)))
+case object LogisticalSupremacy extends Commander("logistical-supremacy", "Logistical Supremacy", British, $(Tier(DingoCallIn, 1), Tier(ANZACCallIn, 1), Tier(SeventeenPounderANZAC, 3), Tier(BlackPrinceCallIn, 5, 3)))
+case object ArtillerySupportBR extends Commander("artillery-support", "Artillery Support", British, $(Tier(DingoCallInFree, 3), Tier(MatildaCallIn, 1, 2), Tier(TowedHeavyMortar, 1, 2), Tier(M3GrantCallIn, 4, 3)))
+case object HeavyArmorSupport extends Commander("heavy-armor-support", "Heavy Armor Support", British, $(Tier(VehicleOverRepair, 1), Tier(DingoCallInIS, 3), Tier(M3GrantCallInPlain, 1, 3), Tier(BlackPrinceCallIn, 5, 3)))
+case object PolishCavalry extends Commander("polish-cavalry", "Polish Cavalry Regiment", British, $(Tier(PolishLancerCallInPlain, 1), Tier(StuartHoneyCallIn, 1, 2), Tier(StrategicManeuversBR, 3), Tier(NoManLeftBehind, 5)))
+case object CommonwealthDefense extends Commander("commonwealth-defense", "Commonwealth Defense", British, $(Tier(ANZACCallIn, 1), Tier(CanadianShockCallIn, 1), Tier(StuartHoneyCallInFree, 4, 2), Tier(PointAssault, 3)))
+case object ArmyInExileCommander extends Commander("army-in-exile", "Army in Exile", British, $(Tier(ArmyInExile, 1), Tier(PolishLancerCallIn, 3), Tier(LandMattressCallIn, 1, 2), Tier(SeekVengeance, 3)))
+case object RocketrySupport extends Commander("rocketry-support", "Rocketry Support", British, $(Tier(PerimeterMonitor, 1), Tier(LandMattressCallIn, 1, 2), Tier(SharpshootersANZAC, 3), Tier(LandMattressEmplacementAbility, 3, 2)))
+case object FieldSupport extends Commander("field-support", "Field Support", British, $(Tier(RadioNet, 1), Tier(APSniperCallInPlain, 1), Tier(CanadianShockCallInFree, 3), Tier(WithdrawAndRefit, 3)))
+case object DesperateBattle extends Commander("desperate-battle", "Desperate Battle", DAK, $(Tier(VeteranSquadLeaders, 1), Tier(SLDFlares, 1), Tier(NebelwerferCallInFree, 4, 2), Tier(VeteranSemovente, 4, 2)))
+case object LastStand extends Commander("last-stand", "Last Stand", DAK, $(Tier(CombinedArmsDAK, 1), Tier(NebelwerferCallIn, 1, 2), Tier(KradCallInFree, 3), Tier(StrategicMobility, 4, 3)))
+case object ShockMotor extends Commander("shock-motor", "Shock Motor Heavy Tactics", Soviet, $(Tier(ArmoredVehicleDetection, 1), Tier(ShockTroopsAssault, 1), Tier(MechanizedSupport, 4, 2), Tier(VehicleCrewTraining, 3)))
+case object AirborneTroops extends Commander("airborne-troops", "Airborne Troops Tactics", Soviet, $(Tier(RallyPoints, 1), Tier(DShKCallIn, 3), Tier(GuardsRifleCallIn, 1), Tier(AirborneGuardsParadrop, 4)))
+case object LuftwaffeSupply extends Commander("luftwaffe-supply", "Luftwaffe Supply Doctrine", Wehrmacht, $(Tier(MedicalAirdrop, 1), Tier(Pak43Emplacement, 1), Tier(PanzerwerferCallInFree, 4, 2), Tier(JU52Cargo, 4)))
+case object StallingTactics extends Commander("stalling-tactics", "Stalling Tactics", DAK, $(Tier(MineFieldDAK, 1), Tier(PanzerpioneerCallIn, 1), Tier(DefensivePositions, 4, 2), Tier(GrBLauncher, 3)))
+case object DemolitionEngineers extends Commander("demolition-engineers", "Demolition Engineers", British, $(Tier(MineField, 1), Tier(RoyalEngineerSpawn, 3), Tier(EngineerDetachments, 4), Tier(ForwardRepairAssembly, 2)))
+case object FortifiedArmor extends Commander("fortified-armor", "Fortified Armor Doctrine", Wehrmacht, $(Tier(SideSkirts, 1), Tier(OsttruppenSquads, 3), Tier(CommandPanzerIVCallIn, 1, 3), Tier(CommandRadioNet, 4, 3)))
+case object JaegerArmor extends Commander("jaeger-armor", "Jaeger Armor Doctrine", Wehrmacht, $(Tier(EarlyWarning, 1), Tier(JaegerSniperFree, 3), Tier(ForTheFatherland, 1), Tier(SpottingScopes, 4, 3)))
+case object OverwatchDoctrine extends Commander("overwatch-doctrine", "Overwatch Doctrine", OKW, $(Tier(ForwardReceivers, 2), Tier(GoliathMine, 1, 2), Tier(ForTheFatherlandOKW, 3, 3), Tier(ValiantAssault, 3, 3)))
+case object LuftwaffeGroundForces extends Commander("luftwaffe-ground", "Luftwaffe Ground Forces", OKW, $(Tier(FallschirmjagerDrop, 2), Tier(MG34CallInFree, 3), Tier(FG42Rifles, 1), Tier(StukaAirborneAssault, 3)))
+case object InfantryAssault extends Commander("infantry-assault", "Infantry Assault", British, $(Tier(Valour, 2), Tier(GurkhaCallIn, 1), Tier(AyoGorkhali, 3), Tier(VolunteerInfantry, 3)))
+case object FieldOrdnance extends Commander("field-ordnance", "Field Ordnance", US, $(Tier(Fieldcraft, 1), Tier(AssaultEngineerSpawn, 3), Tier(MedicalStationAbility, 2), Tier(ArtilleryObserver, 3)))
+case object CavalrySupport extends Commander("cavalry-support", "Cavalry Support", US, $(Tier(RangerEndurance, 3), Tier(M3CarriageMerge, 1), Tier(ArtilleryObserverPlain, 1), Tier(M3LeeCallIn, 4, 3)))
+case object SpecialOperationsUS extends Commander("special-operations-us", "Special Operations", US, $(Tier(MarkVehicle, 1), Tier(DevilsBrigadeSpawn, 3), Tier(M3LeeCallInPlain, 1, 3), Tier(AssaultOperation, 3)))
+case object SpecialOperationsBR extends Commander("special-operations-british", "Special Operations", British, $(Tier(MarkVehicle, 1), Tier(SSFCanadiansSpawn, 3), Tier(M3GrantCallInPlain, 1, 3), Tier(AssaultOperationBR, 3)))
+case object BreakthroughOffensive extends Commander("breakthrough-offensive", "Breakthrough Offensive", Wehrmacht, $(Tier(RapidProduction, 3), Tier(PanzerwerferCallIn, 1, 2), Tier(TigerCallInPlain, 1, 3), Tier(TigerAce, 5, 3)))
+case object ShockArmy extends Commander("shock-army", "Shock Army", Soviet, $(Tier(HM38Mortars, 3), Tier(PenalBattalionCallIn, 1), Tier(KatyushaCallIn, 1, 2), Tier(T3485CallIn, 4, 3)))
 case object StuGAssaultDoctrineOKW extends Commander("stug-assault-okw", "StuG Assault Doctrine", OKW, StuGAssaultDoctrine.tiers)
 case object StuGTacticsOKW extends Commander("stug-tactics-okw", "StuG Tactics", OKW, StuGTactics.tiers)
 case object StormDoctrine extends Commander("storm", "Storm Doctrine", OKW, $(Tier(VeteranKettenkrad, 3), Tier(LeFH18Ability, 1), Tier(StukaStrafe, 1), Tier(HetzerCallIn, 4, 3)))
@@ -468,7 +659,23 @@ object Commander {
         TerrorDoctrineWest, TankDestroyerWest, StuGAssaultDoctrineOKW, StuGTacticsOKW, StormDoctrine, EncirclementDoctrine, JointOperationsDoctrine,
         ArmoredWarfareSupport, ArmoredAirpowerSupport, ItalianCombinedArmor, ItalianCombinedArms, ItalianFieldEngineers, DefensiveWarfare,
         DesertSkorpion, ItalianCoastal,
-        ItalianLightSupport, ItalianDesertRaid, DAKAssaultSupportDoctrine, ItalianTankAssaultCommander)
+        ItalianLightSupport, ItalianDesertRaid, DAKAssaultSupportDoctrine, ItalianTankAssaultCommander,
+        StuGAssaultDoctrineDAK, StuGTacticsDAK, BreakthroughOffensive, ShockArmy,
+        IntelDisruptionWM, IntelDisruptionOKW, IntelDisruptionDAK, TankBusterWM, TankBusterOKW, TankBusterDAK, SpecialOperationsUS, SpecialOperationsBR,
+        EngineeringCorps, DefenseInDepthDoctrine, AtlanticWall, ReserveArmy, ItalianInfantryCommander,
+        PolishCarpathian, ShockAssaultRegiment, LogisticalSupremacy, ArtillerySupportBR, HeavyArmorSupport, PolishCavalry, CommonwealthDefense,
+        ArmyInExileCommander, RocketrySupport, FieldSupport, DesperateBattle, LastStand, ShockMotor, AirborneTroops, LuftwaffeSupply,
+        StallingTactics, DemolitionEngineers, FortifiedArmor, JaegerArmor, OverwatchDoctrine,
+        LuftwaffeGroundForces, InfantryAssault, FieldOrdnance, CavalrySupport)
+
+    // the 3rd printing's new Commanders of the core factions (the setup's ThirdPrintingCommanders)
+    val printing = $[Commander](BreakthroughOffensive, ShockArmy,
+        IntelDisruptionWM, IntelDisruptionOKW, IntelDisruptionDAK, TankBusterWM, TankBusterOKW, TankBusterDAK, SpecialOperationsUS, SpecialOperationsBR,
+        EngineeringCorps, DefenseInDepthDoctrine, AtlanticWall, ReserveArmy, ItalianInfantryCommander,
+        PolishCarpathian, ShockAssaultRegiment, LogisticalSupremacy, ArtillerySupportBR, HeavyArmorSupport, PolishCavalry, CommonwealthDefense,
+        ArmyInExileCommander, RocketrySupport, FieldSupport, DesperateBattle, LastStand, ShockMotor, AirborneTroops, LuftwaffeSupply,
+        StallingTactics, DemolitionEngineers, FortifiedArmor, JaegerArmor, OverwatchDoctrine,
+        LuftwaffeGroundForces, InfantryAssault, FieldOrdnance, CavalrySupport)
 
     // the expansion Commanders (the setup's Expansion Commanders option)
     val expansion = $[Commander](LightCavalryCompany, HeavyCavalryCompany, TacticalSupportCompany, MotorPoolCompany, PathfinderCompany,
@@ -480,16 +687,17 @@ object Commander {
         FrontalAssaultDoctrine, GuardsMotorTactics, UrbanDefenseTactics, UrbanAssaultTactics, CounterattackTactics, HeroesOfStalingrad,
         SiegeMilitia, FrontlineTactics, SpetsnazBrigade, TerrorTactics, ShockRifleTactics, SovietIndustryTactics,
         TerrorDoctrineWest, TankDestroyerWest, StuGAssaultDoctrineOKW, StuGTacticsOKW, StormDoctrine, EncirclementDoctrine, JointOperationsDoctrine,
-        ItalianLightSupport, ItalianDesertRaid, DAKAssaultSupportDoctrine, ItalianTankAssaultCommander)
+        ItalianLightSupport, ItalianDesertRaid, DAKAssaultSupportDoctrine, ItalianTankAssaultCommander,
+        StuGAssaultDoctrineDAK, StuGTacticsDAK)
 
     // the core six (the DAK's eight) of a faction (every game without the option, and every game made before it)
-    def of(f : Faction) = all.diff(expansion).%(_.faction == f.base)
+    def of(f : Faction) = all.diff(expansion).diff(printing).%(_.faction == f.base)
 
     // the Commanders a player draws from
-    def pool(f : Faction, options : $[BaseOption]) = options.has(ExpansionCommanders).?(all.%(_.faction == f.base)).|(of(f))
+    def pool(f : Faction, options : $[BaseOption]) = options.has(ExpansionCommanders).?(all.diff(printing).%(_.faction == f.base)).|(of(f)) ++ options.has(ThirdPrintingCommanders).??(printing.%(_.faction == f.base))
 
     // the abilities spent at the start of a Maneuver Phase: CP, Munitions
-    val opening = Map[Ability, (Int, Int)](ReconSweep -> (1, 1), P47Strike -> (2, 2), CombatGroupAdvance -> (1, 3), PanzerwerferBarrage -> (1, 1), FragmentationBomb -> (2, 2), ArmorBlitzkrieg -> (1, 3),
+    val opening = Map[Ability, (Int, Int)](ItalianInfantry -> (1, 3), SmokeOperation -> (2, 2), NoManLeftBehind -> (2, 1), ArmyInExile -> (2, 1), StukaAirborneAssault -> (2, 2), Valour -> (1, 1), EarlyWarning -> (1, 2), GoliathMine -> (2, 2), PerimeterMonitor -> (1, 1), SLDFlares -> (1, 1), MedicalAirdrop -> (2, 1), RallyPoints -> (2, 1), StrategicMobility -> (1, 3), ReconSweep -> (1, 1), P47Strike -> (2, 2), CombatGroupAdvance -> (1, 3), PanzerwerferBarrage -> (1, 1), FragmentationBomb -> (2, 2), ArmorBlitzkrieg -> (1, 3),
         ArtilleryEye -> (1, 1), IL2Strike -> (2, 2), BreakthroughTactics -> (1, 3), GrandAssault -> (1, 3), RapidConscription -> (2, 1), FortifiedCamo -> (1, 1),
         CombinedArms -> (2, 2), P47Strafing -> (2, 2), Outmaneuver -> (1, 3), HowitzerBarrage -> (1, 1),
         StukaStrafe -> (2, 2), MarkVehicle -> (1, 2), ReconPlane -> (1, 1), TacticalMovement -> (1, 3),
@@ -508,7 +716,42 @@ object Commander {
         case EliteATCrew => $(ATGun)
         case VeteranOstwinds => $(Ostwind)
         case IncendiaryMortars => $(WMortar)
-        case TigerCallIn => $(Tiger)
+        case TigerCallIn | TigerAce => $(Tiger)
+        case RapidProduction => $(Kubelwagen)
+        case TankDesantDAK => $(AssaultGrenadiers)
+        case MarderCallInFree | DisruptionBeacons => $(MarderIII)
+        case FastDeploy => $(Jeep)
+        case MG34CallInFree => $(MG34)
+        case AyoGorkhali => $(Gurkha)
+        case DefensivePositions => $(EightRad)
+        case GrBLauncher => $(Panzerpioneer)
+        case EngineerDetachments => $(UniversalCarrier)
+        case CommandRadioNet => $(PanzerIVF1)
+        case ForTheFatherlandOKW | ValiantAssault => $(Obersoldaten)
+        case SeekVengeance => $(PolishLancer)
+        case VeteranSemovente => $(Semovente)
+        case NebelwerferCallInFree => $(Nebelwerfer)
+        case StrategicMobility => $(Flak88)
+        case MechanizedSupport => $(T70)
+        case VehicleCrewTraining => $(ShockTroops)
+        case WithdrawAndRefit => $(APSniper)
+        case SharpshootersANZAC => $(ANZAC)
+        case PanzerwerferCallInFree => $(Panzerwerfer)
+        case PolishLancerCallIn | StrategicManeuversBR => $(PolishLancer)
+        case BlackPrinceCallIn => $(BlackPrince)
+        case DingoCallInFree => $(Dingo)
+        case DingoCallInIS => $(InfantrySection)
+        case StuartHoneyCallInFree => $(Stuart)
+        case NoManLeftBehind => $(Stuart, PolishLancer)
+        case BigRocketBoom => $(Sturmtiger)
+        case KatyushaCallInFree => $(Katyusha)
+        case ReserveConscription => $(Conscripts, Conscripts)
+        case OffShoreSupport => $(SdKfz250, SdKfz250)
+        case M3LeeCallIn => $(M3Lee)
+        case M3GrantCallIn => $(M3Grant)
+        case AssaultOperation => $(DevilsBrigade)
+        case SSFCanadiansSpawn | AssaultOperationBR => $(SSFCanadian)
+        case TurretlessTerrorDAK => $(Stormtroopers)
         case MG42ArmoredCars => $(SdKfz222)
         case Mechanized222Surge => $(SdKfz222, PanzerGrenadiers)
         case GermanIndustry => $(Kubelwagen)
@@ -616,6 +859,14 @@ case object NoCommanders extends CommandersChoice("No Commanders", "No Commander
 
 // the expansion packs' Commanders (Elite Commanders Collection, Pathfinder, StuG, Eastern Reinforcements, Lost Brigades), drawn with the
 // core ones (2026-11-24); only with Draw three Commanders
+// the 3rd printing's new Commanders of the core factions, drawn with the others (2026-11-28; only with Draw three Commanders)
+case object ThirdPrintingCommanders extends GameOption with ToggleOption {
+    val group = "3rd printing".txt
+    def valueOn = "New Commanders".hl
+    override val explain = $[Elem]("The players also draw from the 3rd printing's new Commanders of the core factions (from Bad Crow's change sheet; those played so far, which RULES.md lists).".txt)
+    override def required(all : $[BaseOption]) = $($(DrawCommanders))
+}
+
 case object ExpansionCommanders extends GameOption with ToggleOption {
     val group = CommandersChoice.group
     def valueOn = "Expansion Commanders".hl
@@ -645,6 +896,10 @@ case class Strike(faction : Faction, ability : Ability, hexes : $[Hex]) extends 
         case IL2Strike => $(Attack(AP), Attack(AP))
         case StukaLoiter => $(Attack(AP), Attack(AP))
         case NebelwerferBarrage => $(Attack(HE))
+        case MineAP => $(Attack(AP))
+        case StukaAirborneAssault => $(Attack(AI))
+        case MineHE => $(Attack(HE))
+        case GoliathMine => $(Attack(HE), Attack(HE))
         case _ => $[Attack]()
     }
 }

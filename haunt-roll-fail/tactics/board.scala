@@ -29,6 +29,13 @@ case object Ruin extends Terrain("Destroyed Building")
 // Ardennes Forest: the Cathedral, an indestructible multi-hex Special Building, and the frozen lake's Ice tiles (Full Game Rules 10.2, 10.4)
 case object Cathedral extends Terrain("Cathedral")
 case object Ice extends Terrain("Ice")
+// the 3rd printing's maps: Black Gold's Fortifications (ringed light blue: 3 Defense Dice to Infantry, 1 to Vehicles and Emplacements,
+// blocking sight like a Building, never destroyed, no Battlefield Defenses built), and Twin Beaches' Sea (the water and beach inside the
+// brown shorelines: every unit may enter it, and Troop Transports keep to it) and Anchorages (water ringed in red with an anchor: only
+// Troop Transports enter them)
+case object Fortification extends Terrain("Fortification")
+case object Sea extends Terrain("Sea")
+case object Anchorage extends Terrain("Anchorage")
 
 sealed abstract class Cover(val name : String, val dice : Int) extends Record
 case object LightCover extends Cover("Light Cover", 1)
@@ -47,7 +54,7 @@ case class Hex(c : Int, r : Int) extends Record with Elementary {
 // are multi-hex Buildings (Full Game Rules 10.2: units see and fire inside one, and get no Cover from units in the same Building)
 // (and how many panels wide it is, 1200 px a panel; the starting Infantry each player places, else 3, 2 in team games; how many
 // players it takes, if not any; how far from the edge, in hexes, its side Spawn Areas reach)
-class MapData(val id : String, val name : String, val image : String, val stock : (Int, Int, Int), val multiHex : Boolean, val data : $[String], val x0 : Double = 185.2, val sides : Boolean = false, val areas : $[$[Hex]] = $(), val trigger : |[Int] = None, val panels : Int = 2, val infantry : |[Int] = None, val players : |[Int] = None, val edge : Double = 0.75, val rows : Int = 1, val optional : $[String] = $()) {
+class MapData(val id : String, val name : String, val image : String, val stock : (Int, Int, Int), val multiHex : Boolean, val data : $[String], val x0 : Double = 185.2, val sides : Boolean = false, val areas : $[$[Hex]] = $(), val trigger : |[Int] = None, val panels : Int = 2, val infantry : |[Int] = None, val players : |[Int] = None, val edge : Double = 0.75, val rows : Int = 1, val optional : $[String] = $(), val boats : |[$[Int]] = None) {
     val width = 1200 * panels
     val height = 1800 * rows
 
@@ -58,7 +65,7 @@ class MapData(val id : String, val name : String, val image : String, val stock 
         new MapData(id, name, image, stock, multiHex, data./{ l =>
             val p = l.split(" ")
             o.get(p(0) + " " + p(1))./(n => $(p(0), p(1), n(2), (n(2) == "B").?("......").|(p(3)), n(3)).mkString(" ")).|(l)
-        }, x0, sides, areas, trigger, panels, infantry, players, edge, rows, $())
+        }, x0, sides, areas, trigger, panels, infantry, players, edge, rows, $(), boats)
     }
 
     val dx = 184.6
@@ -83,6 +90,9 @@ class MapData(val id : String, val name : String, val image : String, val stock 
         case "D" => Ruin
         case "C" => Cathedral
         case "I" => Ice
+        case "F" => Fortification
+        case "S" => Sea
+        case "A" => Anchorage
         case _ => Open
     }) }.toMap
 
@@ -108,6 +118,17 @@ class MapData(val id : String, val name : String, val image : String, val stock 
     } }.toSet
 
     val traps : $[Hex] = parsed.%(_._4.contains('T'))./(_._1)
+
+    // the 3rd printing's permanent barbed wire on hex edges ("p" and the edges in the extras): no Infantry moves across, Vehicles do, an
+    // Assault may go across, and it is never destroyed
+    val permanentWire : Set[(Hex, Hex)] = parsed./~{ case (h, _, _, x) => x.dropWhile(_ != 'p').drop(1).takeWhile(_.isDigit).toList./~(d => toward(h, d - '0')./~(n => $((h, n), (n, h)))) }.toSet
+
+    def wired(a : Hex, b : Hex) = permanentWire.contains((a, b))
+
+    // a Control Point in a tower ("t" in the extras), lost when its Building is destroyed (Sainte-Mère-Église)
+    val tower : |[Hex] = parsed.%(_._4.contains('t'))./(_._1).single
+
+    def wet(h : Hex) = terrain(h) == Sea || terrain(h) == Anchorage
 
     // Bunkers (Full Game Rules 10.1, "K" in the extras): Special Buildings with 4 health, whose Infantry gets an AP die attacking out
     val bunkers : $[Hex] = parsed.%(_._4.contains('K'))./(_._1)
@@ -141,7 +162,7 @@ class MapData(val id : String, val name : String, val image : String, val stock 
     // the Spawn Areas: the back rows, or with `sides` the hexes along the left (Team 1) and right (Team 2) edges, as the Mission Booklet's
     // Across the Don and Road to Moscow put them (its numbered badges mark the full hexes of that column; the half hexes there are taken too)
     // a free-for-all mission's numbered Spawn Areas, one a player; else the back rows (or the left and right edges)
-    def spawn(team : Int) : $[Hex] = if (areas.any) areas(team) else sides.?(hexes.%(h => (team == 0).?(x(h) < dx * edge).|(x(h) > width - dx * edge))).|(hexes.%(h => h.r == (team == 0).?(0).|(12))).%(h => terrain(h) != Water)
+    def spawn(team : Int) : $[Hex] = if (areas.any) areas(team) else sides.?(hexes.%(h => (team == 0).?(x(h) < dx * edge).|(x(h) > width - dx * edge))).|(hexes.%(h => h.r == (team == 0).?(0).|(12))).%(h => terrain(h) != Water && terrain(h) != Anchorage)
 
     // LINE OF SIGHT: Buildings and Destroyed Buildings between two hexes block it; a line running along an edge isn't blocked,
     // so it is drawn twice, nudged to either side, and blocked only if both are
@@ -172,7 +193,7 @@ class MapData(val id : String, val name : String, val image : String, val stock 
         }
     }
 
-    def blocks(h : Hex) = terrain(h) == Building || terrain(h) == Ruin || terrain(h) == Cathedral
+    def blocks(h : Hex) = terrain(h) == Building || terrain(h) == Ruin || terrain(h) == Cathedral || terrain(h) == Fortification
 
     // the multi-hex Buildings: each group of adjacent Buildings (and the Cathedral), on maps that have them
     val buildingGroup : Map[Hex, Int] = {
@@ -441,6 +462,10 @@ object Board {
     def closed = current.closed
     def traps = current.traps
     def bunkers = current.bunkers
+    def boats = current.boats
+    def wet(h : Hex) = current.wet(h)
+    def tower = current.tower
+    def wired(a : Hex, b : Hex) = current.wired(a, b)
     def points = current.points
     def neighbors = current.neighbors
     def adjacent(a : Hex, b : Hex) = current.adjacent(a, b)

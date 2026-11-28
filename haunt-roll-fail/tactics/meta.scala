@@ -30,7 +30,7 @@ object Meta extends MetaGame { mmm =>
 
     val minPlayers = 2
 
-    val options = $[O]() ++ RankingOption.all ++ RulesChoice.all ++ CommandersChoice.all ++ $(ExpansionCommanders) ++ $(LostBrigades) ++ MapChoice.ordered ++ $(OptionalMapFeatures) ++ Length.all ++ hiddenOptions
+    val options = $[O]() ++ RankingOption.all ++ RulesChoice.all ++ CommandersChoice.all ++ $(ExpansionCommanders) ++ $(LostBrigades) ++ $(ThirdPrintingCommanders, ThirdPrintingBrigades, Barricades, BlitzCubes, Planes, TroopTransports) ++ MapChoice.ordered ++ $(OptionalMapFeatures) ++ Length.all ++ hiddenOptions
 
     // hidden rules fixes every new game gets, so games made before keep their rules
     override def hiddenOptions = $[O](TeamRetreatPoints, TutorialOption)

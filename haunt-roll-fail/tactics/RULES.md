@@ -576,6 +576,235 @@ Lost Brigade (8.0), a Command Panther of each faction ("Captured" for the Allies
   - Elite Grenadier Squad Leaders: 4 health, range 3, 2 AI (the boxed figure read as a second AI die) and 1 HE (the green
     explosion), Camouflage and a Wrench, 4 Manpower 3 Munitions.
   - Command Panther: 5 health, range 3, 2 AP and 2 AI turreted, Spots Camo, 3 Manpower 5 Fuel, one at a time.
+- The Deutsches Afrikakorps' seventeen (2026-11-28; the change sheet's "Lost brigades: Dak" cards, its sixteen and a Command Panther):
+  105 Howitzer (2 XP), 210/22 Artillery Emplacement (2), Bersaglieri (0, one as starting Infantry), Command Panther (3), Elefant (3),
+  Guastatori (0, one), Kradschützen (1), L6/40 (1), Marder III (1), Nebelwerfer (1), Panzerpioneer (0, one), Semovente (1), Veteran G43
+  Stormtroopers (3), StuG III G (1), Veteran Coastal Reserves (2), Veteran Flammpanzer III (2), Veteran Tank Busters (2). Readings:
+  - The units the DAK Commanders already bring are those units (the cards print the same figures), at the card's price.
+  - Marder III: 2 health, range 4, 2 fixed AP, 2 Manpower 3 Fuel. Veteran Tank Busters: 5 health, range 3, 3 AP, a Speed Die,
+    4 Manpower 3 Munitions.
+  - Nebelwerfer: an Infantry Weapon Team, 4 health, range 2 to 5, 1 indirect Flame and 1 indirect HE (one curved arrow over both), no
+    Capture (the red sign), no Setup in Buildings or Transports, 5 Manpower 1 Fuel. "Targets two units adjacent to each other" is the
+    Centaur's Strafing Fire: its damage may go, in full, to a second unit next to its target (the sheet's FAQ: each target takes the
+    HE, rolled for each).
+  - Veteran Coastal Reserves: a unit of its own (a Panzerjaeger with Coastal Reserves' Health, its AP and its Camouflage): 5 health,
+    range 3, 1 AI 1 AP, a Wrench, Camouflage, 4 Manpower 3 Munitions; it counts as a Panzerjaeger for the 210/22, Hull Down and
+    Coastal Wall.
+  - Veteran Flammpanzer III: the Flammpanzer III with Heroic Sacrifice and both AI Munitions upgrades (3 AI turreted, the star and the
+    three figures on the card), 3 Manpower 2 Fuel, a Panzer III for the limit.
+  - The DAK's Elefant has 4 AP, as both its cards print (the Wehrmacht's has 3): a fourth AP for the DAK's, the Commanders' too.
+
+## 3rd printing
+
+Bad Crow's "3rd printing balance changes" sheet's new rules, each a setup toggle in the "3rd printing" section (off in every older game):
+
+- **Barricades** (`Barricades`, Full Game Rules only; 2026-11-28): Infantry with a Wrench builds one on an edge of its hex for 1 CP (not in
+  a Building, a Transport or an Assault). It is barbed wire and Sandbags on that edge: Infantry in the hex gets 2 Defense Dice of Cover
+  against attacks across that edge, and no unit moves across it from either hex (the builder neither), a Retreat neither; Assaults go
+  across it. Two damage to the hex destroys it with the hex's other Battlefield Defenses, and units may fire at it as at barbed wire.
+  Readings: the Cover goes only to the hex it was built in ("to the hex on the side it's placed on"); a Heavy Vehicle can't drive across
+  it, an Assault on foot can.
+- **Blitz Cubes** (`BlitzCubes`; 2026-11-28): in its team's first turn of each round a player may spend any of the turn's 3 cubes as
+  orange cubes: each moves one unit up to 2 hexes (through an occupied hex into an empty one, as a 2 CP move; a Heavy Vehicle in the Full
+  Game Rules straight ahead, keeping its facing), Overwatch as usual. It is also a CP on that unit this round. It builds nothing, sets
+  up or packs up nothing and pays for no Commander ability. The orange cubes stay on the unit: each takes a CP off what it may spend
+  in the later rounds (with 3, none). At the start of the Damage Phase, before pins, each unit with orange cubes may take one off and
+  then doesn't attack. Readings: the orange cubes are the turn's own 3 cubes ("instead of the regular CP"), the first turn is each team's
+  first turn of the round, and the cubes placed this round don't lower the unit's cap until the next round.
+- **Planes and anti-air** (`Planes`, Full Game Rules only; 2026-11-28; the sheet's Planes rules and its eighteen plane cards, three
+  a faction: Anti-Tank, Bomber and Recon; the P47 Thunderbolt for the US, the Stuka JU-87 for the three German factions, the IL-2
+  for the Soviets and the Hawker Typhoon for the British). A plane (`Aircraft` in `game.scala`, kind `Plane`): 2 health, range 2, 1 AI
+  forward, a Speed Die, 2 Fuel, one at a time; the Recon has +2 Sight and Spots Camo. Each player's three cards lie by its Commander
+  (the sheet's first way; the other, shuffling them into the Lost Brigade deck, isn't played); once a game, in the purchases, one is
+  unlocked for its 2 XP, then bought (spawned in the Spawn Area, facing a hex side) for 2 Fuel.
+  - It moves only forward: each CP (or its Speed Die) flies it one hex and turns it one hex side or not, or two hexes straight on, over
+    anything (Buildings, water, impassable lines, units, Barricades) onto an empty hex. It never captures, neutralizes, retreats, sets
+    up, assaults or is assaulted (the sheet: its "hover" over units isn't played in TTS either; one unit a hex, as there).
+  - It fires forward only. The Anti-Tank and the Bomber may pay 3 Munitions for an attack of 2 AP or 2 HE in place of its AI (the
+    sheet's rules say "instead of their standard 1 AI damage", the cards "add": the rules are followed).
+  - Only AI damages it, and only from an anti-air unit (the sheet's list: the Willys Jeep, M4A3 Sherman, SdKfz 222, Ostwind, M3A1 Scout
+    Car, SU-76 with its HE as AI, Bofors, Centaur, Flak 37 emplacement, Schwerer Panzer HQ with its AP as AI, and the DAK's Flakvierling
+    and 88mm FLAK 36), in range and seen, in its arc if set up or a fixed gun; a set-up unit must be set up. Splash, strikes and the rest
+    do nothing to it (`Matrix`). It rolls a Defense Die for each AI, as a Light Vehicle.
+  - Anti-air Overwatch: each hex a plane flies onto in the range of an enemy anti-air unit (one that sets up only set up and in its
+    arc; not pinned) deals it 1 damage, once for the hex however many cover it.
+  - Readings: the Command Tiger's marker never goes on a plane (it isn't a Vehicle); the 88mm FLAK 36, with only AP, gives Overwatch but
+    can't fire at a plane.
+- **New Commanders** (`ThirdPrintingCommanders`, with Draw three Commanders; 2026-11-28): the sheet's new core-faction Commanders join each
+  player's draw (`Commander.printing`), the expansion ones only with Expansion Commanders too. Played so far:
+  - Wehrmacht **Breakthrough Offensive**: Rapid Production (3 XP; a Vehicle spending its first CP of the round to leave a Spawn Area may
+    move once more for free, as Bersaglieri; one Kubelwagen free), Panzerwerfer (1 XP, Tier 2: 3 health, range 2 to 4, 2 indirect HE, a
+    Speed Die, sets up with a Firing Arc, the second target as the Centaur's Strafing Fire, 1 Manpower 4 Fuel), Tiger Call-In (1 XP, Tier 3,
+    no free Tiger), Tiger Ace (5 XP, Tier 3: a Veterancy option, +1 Range for 2 XP, read off the blue target icon; one Tiger free).
+  - Soviet **Shock Army**: HM-38 120mm Mortars (3 XP: the Mortar's Splash XP upgrade costs 1 XP; one Mortar spawns with it free), Penal
+    Battalions (1 XP, the existing call-in), Katyusha (1 XP, Tier 2: 2 health, range 2 to 5, 1 indirect Flame and 1 indirect HE, a Speed
+    Die, Slow, sets up with a Firing Arc, the second target as above, 1 Manpower 4 Fuel), T-34-85 (4 XP, Tier 3, one free).
+  - The DAK's versions of the universal German **StuG Assault Doctrine** and **StuG Tactics** (with the DAK's expansion Commanders): as the
+    Wehrmacht's, but Tank Desant's free Infantry is an Assault Grenadier, Target Weak Point gives StuG III Ds +1 HE, Turretless Terror gives
+    Ds Camouflage too, and the free StuG is a III D or G, the player's pick. "Panzerjaegers can attack with just CRF at Range 1" isn't
+    played yet.
+  - **Intel Disruption Doctrine** and **Tank Buster Doctrine**, the universal German cards, one each for the Wehrmacht, the OKW and the
+    DAK: Intel Disruption is the Recon Plane opening; Marder III Call-In (the DAK's Marder III, with the Wehrmacht's and OKW's tokens);
+    Disruption Beacons (an Infantry's first CP of a round and 2 Munitions: Camouflage this round, and it moves no more); Travel Speed
+    (Rapid Production; the two free Vehicles up to Tier 2 are picked from the faction's board and the Marder III); the Tank Buster
+    Doctrine opening is the Mark Vehicle one; Pact of Steel (Tier 2 Vehicles 1 Manpower less; the free Infantry any Tier 1 Infantry of
+    the board, no Weapon Team); Tank Busters (a Munitions upgrade of any Infantry for 3: its attack becomes 3 AP at range 3, its Close
+    Range dice gone; Health, Defense and Camouflage kept).
+  - US **Special Operations**: Mark Vehicle; SSF Commandos (the Devil's Brigade call-in, whose unit is the one the card describes); M3 Lee
+    (3 health, range 3, 2 fixed AI, 1 turreted AP, 2 fixed HE, 1 Manpower 4 Fuel); Assault Operation (a Devil's Brigade buys its Riflemen
+    XP and Munitions upgrades for nothing, one option each; one still standing neutralizes in the Supply Phase the Control Point it stands
+    on or assaulted this round, even pinned or after a failed Assault, and no enemy captures it there).
+  - British **Special Operations**: Mark Vehicle; SSF Canadians (an Infantry Section, with its upgrades, that takes +1 AI or AP for nothing
+    once, crosses water and gets 3 Defense Dice in a Destroyed Building, 4 Manpower); M3 Grant (as the Lee with 1 AI and Sight 3); Assault
+    Operation (the same, with the Infantry Section's XP Health and either Munitions upgrade).
+  - US **Engineering Corps**: Fast Deploy (Rapid Production; one Jeep free), Assault Engineers (the plain call-in), Field Engineers, M3 Lee
+    (one free). OKW **Defense in Depth**: Defense in Depth, Precision Strike (a Veterancy option of Stuka Halftracks and LeFH 18s for 1 XP:
+    the Strafing Fire second target; not with the Stuka's Splash, nor Splash after it; one Stuka with it free), Hull Down (Sturmpioneers),
+    Big Rocket Boom (the Sturmtiger's XP Range upgrade free; one free). OKW **Atlantic Wall**: Coastal Wall (Sturmpioneers 1 more Defense
+    Die behind Sandbags or a Barricade), LeFH 18 Artillery (the existing ability), Coastal Reserves (a Sturmpioneer Veterancy option, +2
+    Health for 2 XP; one with it free), Precision Strike (one LeFH 18 with it built free next to a Sturmpioneer).
+    Soviet **Reserve Army**: Combat Engineers (a unit of their own, as with the other "spawn as" Commanders: 4 health, range 2, 2 AI of
+    which 1 Close Range, 2 Wrenches, no Speed Die, Conscripts' Flame XP and one Health Munitions upgrade left; 4 Manpower), Katyusha (one
+    free), Advanced Fortifications, Reserve Conscription (once a Supply Phase, 5 Munitions: each Infantry takes one Munitions Health
+    upgrade it has left, then every Infantry Reinforces 1; two Conscripts free). DAK **Italian Infantry**: Italian Infantry (the opening
+    marks three Control Points, picked one at a time; the player's Infantry on one in the Damage Phase gets 1 more Defense Die, stacking
+    with Cover), Guastatori, Bersaglieri (one free), Off Shore Support (Guastatori and Bersaglieri get a Health and an AI upgrade free; two
+    SdKfz 250 free).
+  - The British **Desert Rats** and **Stuart "Honey"** Commanders: Polish Carpathian Brigade, Shock Assault Regiment, Logistical Supremacy,
+    Artillery Support, Heavy Armor Support, Polish Cavalry Regiment, Commonwealth Defense. Their units: the Polish Lancer Section (4
+    health, range 2 to 3 as its grey and red range icons read, 1 AI 1 AP, 4 Manpower 1 Munitions; a Veterancy option, +2 AP for 3 XP),
+    the Matilda II (5 health, range 2, 2 turreted AI, Slow, 2 Manpower 3 Fuel; after spending a CP, once a round, it may move onto an
+    adjacent empty Control Point for free, facing the way it went), the Black Prince (a Churchill for the limit: 6 health, range 4, 3 AP
+    turreted (the card shows one turreted and two forward; one arc is played for all three), 2 Close Range AI, a Defense Die, Slow, 3
+    Manpower 5 Fuel), the Canadian Shock Troops (two squads a purchase: 3 health, range 2, 3 AI of which 2 Close Range, a Speed Die, 4
+    Manpower 1 Munitions), the ANZAC Light Infantry (5 health, range 2, 1 AI, Camouflage, a Wrench, building every Emplacement an
+    Infantry Section builds; a Veterancy option for 2 XP, +2 Sight and Spots Camo or +1 AI; a "Veteran ANZAC" spawns with Spots Camo),
+    the Dingo (1 health, range 3, 1 indirect HE, Capture, Reinforce, 2 Speed Dice, 2 Manpower 1 Fuel) and the Stuart (the US's M5).
+    Abilities: Rigorous Vehicle Training (in the Damage Phase, 1 XP for each enemy its Heavy Vehicles assigned damage to, and 1 XP more
+    for each of its Heavy Vehicles destroyed), Attacking Spirit (a Supply Phase purchase: each Infantry of the player on a Control Point
+    it holds may Reinforce 1 for 1 Munitions, free if the point was captured that Supply Phase, once a round each), Smoke Operation (the
+    opening Smokes those hexes at once, for the round), Towed Heavy Mortar (a Dingo builds as an Infantry Section with one Wrench, 3
+    Munitions more), Vehicle Over Repair (a Supply Phase purchase: an Infantry with a Wrench gives an adjacent Vehicle +1 Health and
+    Health, once a Vehicle), Strategic Maneuvers (the US's No-Fire mode for Stuarts), No Man Left Behind (this round 1 Manpower for each
+    damage the player's Infantry take), Point Assault (the Ober Defense step: any Munitions for as many Defense Dice, after the damage is
+    assigned).
+  - British **Army in Exile** (the opening: this round 1 Munitions for each enemy the player assigns damage to, in the Damage Phase, and 1
+    XP for each it destroys; Polish Lancers; the Land Mattress; Seek Vengeance: Lancers have Heroic Sacrifice, and 1 CP drops one to the
+    ground, +1 Range this round, no more CP, moves or Retreat this round), British **Rocketry Support** (Perimeter Monitor: an Eye on three
+    Control Points, picked one at a time, as the Recon Plane's; the Land Mattress, a Weapon Team of 3 health, range 2 to 6, 2 indirect HE,
+    Slow, no Capture, a second target next to the first, 5 Manpower 1 Fuel, 2 Manpower less spawned into a Universal Carrier that spawned
+    this round; Sharpshooters, ANZAC with one free; the Land Mattress Emplacement, the same as an Emplacement of 4 health built by
+    Infantry Sections and ANZAC for the same price, one built free), British **Field Support** (Radio Net: Light Vehicles' +2 Sight Spots
+    Camo upgrade for 2 Munitions; the AP Sniper; a free pair of Canadian Shock Troops; Withdraw and Refit: once a Supply Phase an
+    Emplacement or Light Vehicle, not a Tier Building and not spawned this round, goes back to the supply for its Manpower and Fuel).
+  - DAK **Desperate Battle** (Veteran Squad Leaders: Attacking Spirit for 1 XP; SLD Starburst Flares, the Perimeter Monitor; Nebelwerfer;
+    Veteran Semovente: +1 AP, and 3 HE in place of its 2, picked each attack; one free) and **Last Stand** (Combined Arms: Infantry next
+    to a Light Vehicle, not in a Building, is never pinned or hit by Overwatch, and gets 1 Defense Die where no better Cover counts, the
+    sheet's FAQ; Nebelwerfer; Kradschützen; Strategic Mobility: a free move for every Infantry and Vehicle Weapon Team; one 88 free).
+  - Soviet **Shock Motor Heavy Tactics** (Armored Vehicle Detection: the Light Vehicles' and T-70s' +2 Sight Spots Camo upgrade, never twice
+    on a T-70; Shock Troops with their Smoke when Assaulting; Mechanized Support: Combined Arms beside Heavy Vehicles, one T-70 free;
+    Vehicle Crew Training: T-70s and T-34s +1 AP for 3 Munitions, T-70s always Capture, one Shock Troops free) and **Airborne Troops
+    Tactics** (Rally Points: the opening marks a hex, and the player's Infantry there and around it take 1 damage less from each hit
+    this round; the DShK; Guards Rifle; Airborne Guards Paradrop: a purchase dropping a Weapon Team, 1 Manpower 5 Munitions, or Guards
+    Rifle, 5 Manpower 1 Munitions, on a visible hex, Double Slow, one a round, one free).
+  - Wehrmacht **Luftwaffe Supply Doctrine** (Medical Airdrop, as Rally Points; Pak 43 Emplacement; Panzerwerfer, one free; JU52 Cargo Supply
+    Drop: a purchase dropping a Weapon Team and a Pak 43 beside it, 4 Manpower 5 Munitions, Double Slow, one a round, one group free).
+  - The mines (US Fieldcraft, British and DAK Mine Field): Infantry with Wrenches of a player with one may pay 2 Munitions, once a round
+    for each Wrench, to leave an AP or HE die in its hex (not where an Assault is going on, nor a hex with a mine). It is a Maneuver Phase
+    action of its own, read as "when leaving a hex": the player then moves the unit. The mine stays until an enemy unit stands on the hex
+    at the start of a Damage Phase, and then strikes that hex with its die, as a Commander's strike does, and is gone. Mines are drawn on
+    the map (the die's icon), for both sides, as the dice on the table are.
+  - DAK **Stalling Tactics** (Mine Field, Panzerpioneer, Defensive Positions: 8-Rads have a Defense Die, one free; GrB Grenade Launcher:
+    Panzerpioneers and 8-Rads +1 HE, 8-Rads always Capture, one Panzerpioneer free). British **Demolition Engineers** (Mine Field; Royal
+    Engineers, one free; Engineer Detachments: Infantry Sections and Royal Engineers upgrade to +1 Flame and a Defense Die for 4 Munitions,
+    one Universal Carrier free; Forward Repair Assembly: the Soviet Forward Station's rules, built in a Building by Infantry Sections and
+    Royal Engineers). Wehrmacht **Fortified Armor Doctrine** (Side Skirts, as Vehicle Over Repair; Osttruppen; Command Panzer IV: the Panzer
+    IV Ausf. F1, a Panzer IV with 2 HE in place of its 2 AP, its board's upgrades, a Panzer IV for the limit; Command Radio Net: every other
+    Vehicle next to an F1 has 1 more Defense Die; one F1 free) and **Jaeger Armor Doctrine** (Early Warning: each Infantry Weapon Team gets
+    a free CP this turn, and those with no Wrench one this round, for setting up, packing up, turning or a Battlefield Defense; the site
+    doesn't stop that CP paying for a move; the Jaeger Sniper; For the Fatherland: a Heroic Sacrifice upgrade for 3 Munitions, and
+    Heroic Sacrifice Infantry destroyed on a Control Point its team holds gives its Manpower back; Spotting Scopes: a Vehicle that bought
+    its Munitions upgrade has +1 Sight, one Panzer IV with its AI Munitions upgrade free). OKW **Overwatch Doctrine** (Forward Receivers: Tier
+    Buildings +1 Health, the Battlegroup's Retreat Point and the Schwerer HQ's +2 Sight Spots Camo for 4 Munitions each; Goliath Tracked
+    Mine: an opening on a hex within 3 of a Tier Building, 2 HE there in the Damage Phase, hitting only enemies; For the Fatherland, one
+    Obersoldaten free; Valiant Assault: Obersoldaten have their AI XP and Speed upgrades, and Assault Operation's hold on points; one free).
+  - OKW **Luftwaffe Ground Forces**: Fallschirmjäger (a purchase dropping one on a visible non-Building hex, Double Slow, 5 Manpower 1
+    Munitions, one a round: Volksgrenadiers with Sight 3 and no Defense Die, their upgrades), the MG-34 Team (one free: a Weapon Team, 4
+    health, range 3, 1 AI, a machine gun, Sight 3, a Speed Die, no Capture, 4 Manpower 1 Munitions), FG42 Rifles (a Fallschirmjäger with
+    both its XP Health upgrades has +1 AI and still attacks pinned), Stuka Airborne Assault (the opening's 3 hexes in a line each take 1
+    AI, and the enemy Infantry in them is pinned at the pin step; the free Fallschirmjäger, dropped, uses up that round's one).
+  - British **Infantry Assault**: Valour (the opening marks a VP Control Point the player's team doesn't hold: this round every unit
+    destroyed there gives no VP, and in the Supply Phase the point gives its holder 1 more VP), the Gurkha Rifles Section (5 health,
+    range 2, 1 AI, 4 Manpower 1 Munitions; for 3 Munitions either +1 Range, +1 Sight and +1 AI, or a Defense Die and a Close Range die,
+    read off the package icons), Ayo Gorkhali! (a Gurkha Assaults spending no CP, with 1 more HE in that Assault; one free), Volunteer
+    Infantry (Infantry 1 Manpower less, and Rapid Production's free move for Infantry; one board Infantry free).
+  - US **Field Ordnance** (Fieldcraft, the mines; Assault Engineers; the Frontline Medical Station, the British Forward Emplacement's rules,
+    built by Riflemen and Assault Engineers for 2 Manpower; Artillery Observer: a Jeep Veterancy option for 1 XP, Spots Camo (+2 Sight),
+    no Transport, and for 3 Munitions 2 indirect HE in place of its attack, with the Strafing second target, at what the Jeep could fire
+    at; one Veteran Jeep free) and **Cavalry Support** (Ranger Endurance Training: the Ranger Training rules, one Riflemen with the AP
+    Munitions upgrade free, the card not saying which; M3 Carriage: for 1 CP an Infantry Weapon Team, not set up, merges into an adjacent
+    Jeep that isn't a Veteran Observer: the M3 Carriage (one type per Weapon Team, a Jeep for the limit) has the Jeep's health +2, the team's
+    range, attacks, upgrades bought and to buy, sets up with a Firing Arc, Captures; the player gains 1 Manpower; Artillery Observer; M3
+    Lee, one free).
+  - Defense in Depth, Field Engineers and Advanced Fortifications (their engineers): spending its first CP of a round, the unit may leave
+    Barbed Wire or a Tank Trap in its hex for nothing (read as "in the hex they are leaving": the player then moves it; Sandbags, which
+    need a facing, and Barricades are left out); when it Assaults, it may remove one Battlefield Defense of the assaulted hex at once.
+  - Every Commander of the sheet is played (`tools/third-printing-art.py` lists them by picture).
+- **New Lost Brigades** (`ThirdPrintingBrigades`, only with the Lost Brigades; `Brigade.printing` in `brigades.scala`, 2026-11-28): the
+  sheet's 26 new Lost Brigades of the core factions (pictures 69 to 94, cut by `tools/core-brigade-art.py`) are shuffled into each
+  faction's deck with its others. US: Artillery Observers (1 XP), M3 Lee (2), I.R. Pathfinders (0, one as starting Infantry), Rangers
+  (0, up to three); Wehrmacht: Command Panzer IV (2), Marder III (1), Panzerwerfer (1), Tiger Ace (4); Soviet: PPSh-41 SMG Airborne
+  Guards (3), Katyusha (1), KV-1 Heavy Tank (1), Combat Engineers (0, up to three); OKW: FG42 Fallschirmjägers (3), Precision LeFH 18
+  Artillery (1), MG 34 Team (0, one), Veteran Coastal Reserves (2), Marder III (1); British: ANZAC Light Infantry (0, one), Dingo (1),
+  M3 Grant (2), Matilda II (1), Polish Lancer Section (0, one), M3 Stuart "Honey" (1), Black Prince Churchill (3), Canadian Shock Troops
+  (1), Land Mattress (1). Readings:
+  - A unit a 3rd printing Commander already brings is that unit, with its rules (the Matilda's free move onto a Control Point, the Land
+    Mattress's discount in a new Universal Carrier, the Canadian Shock Troops' two squads), at the card's price. The M3 Stuart "Honey" is
+    the M5 Stuart the Commanders bring (the card prints its stats), and the Marder IIIs are the DAK's.
+  - Artillery Observers: a Jeep bought may spawn as an Artillery Observer (asked when it spawns), the Field Ordnance Veterancy option for
+    free; no Jeep can take it later. The brigade has no unit of its own, so the Jeep keeps its board price.
+  - I.R. Pathfinders: the Pathfinder Squad for 3 Manpower. "Riflemen squads can spawn adjacent to a Pathfinder Squad with a Range upgrade,
+    but spawn with Slow the first round" is read as Riflemen spawning next to a Pathfinder Squad, with a +1 Range upgrade (the M1919A6 LMG)
+    for free, Slow the first round; with the Pathfinder Company's Airdrop Beacon too (the card's "compatible"), every Riflemen spawned next
+    to a Pathfinder gets the LMG.
+  - Rangers: Ranger Training (4 CP a round, the Munitions upgrade 1 less) for every Riflemen; "up to three may be selected as starting
+    infantry" changes nothing, as Riflemen are the US starting Infantry anyway.
+  - Tiger Ace: a unit of its own, the Tiger with range 3 (6 health, 3 AP and 1 AI turreted, a Defense Die), a Tiger for the limit, 3
+    Manpower 5 Fuel. KV-1: 5 health, range 2, 1 AI and 1 AP turreted, Slow, the Matilda's free move onto an adjacent Control Point, a
+    KV-8 for the limit (it uses that model), 2 Manpower 3 Fuel.
+  - PPSh-41 SMG Airborne Guards (4 health, range 2, 3 AI of which 2 Close Range, 5 Manpower 2 Munitions) and FG42 Fallschirmjäger
+    (Volksgrenadiers with 2 AI and Sight 3 in place of their Defense Die, the two figures on the card, 5 Manpower 2 Munitions) are bought
+    in the purchases like the G43 Stormtroopers, one a round, on any visible non-Building hex, Double Slow the first round.
+  - Precision LeFH 18 Artillery: the LeFH 18 Emplacement the Sturmpioneers build for 4 Munitions, with the Veterancy option for 1 XP of
+    Precision Strike (its damage may also go to a second unit next to the target).
+  - OKW Veteran Coastal Reserves: a unit of its own (not the DAK's): 5 health, range 2, 2 AI of which 1 Close Range and 1 AP, 2 Wrenches,
+    4 Manpower 3 Munitions; it builds what the Sturmpioneers build, the Flak Gun among them.
+  - Black Prince Churchill and MG 34 Team: as their Commanders bring them, with no free one.
+- **Troop Transports** (`TroopTransports`, Full Game Rules, only on maps with Sea; `TroopTransport` in `game.scala`, cards and tokens by
+  `tools/boat-art.py`; 2026-11-28): the sheet's boats. A player may unlock them for 1 XP in the purchases (not a Lost Brigade), then buy up
+  to three, 2 Manpower 1 Fuel each. Readings:
+  - Who may: the map's own list (Twin Beaches and Across Moro River: Team 2, the sheet's "red side starts with the troop transport"), else
+    the teams whose Spawn Area has Sea or an Anchorage in it or next to it; a Troop Transport spawns there.
+  - It is a Light Vehicle of 2 health with a Speed Die (the card's yellow heart and running man) and no attack. It keeps to the Sea and
+    the Anchorages ("treat brown lines as impassable", "ignores red line impassable terrain with an anchor"), tank traps stop it, and it
+    never captures or neutralizes.
+  - It carries one Vehicle or Infantry: Infantry boards it as any transport, a Vehicle (not one carrying a passenger) by spending 1 CP next
+    to it, and either leaves it to an adjacent hex. A Vehicle or Infantry bought may spawn in an empty Troop Transport wherever it is (not
+    the Spawn Area for Commander abilities); a jeep spawned into it doesn't let Infantry spawn in the jeep.
+- **The new maps' hexes** (`board.scala`): Black Gold's Fortifications (ringed light blue: 3 Defense Dice to Infantry, as a Building's,
+  1 to Vehicles and Emplacements, blocking sight like a Building, never destroyed, no Sandbags, barbed wire, tank traps or Barricade built
+  in them; Vehicles enter them); Twin Beaches' Sea (the water and beach hexes inside the brown shorelines; every unit may enter it, and
+  Emplacements be built on it) and Anchorages (water ringed in red with an anchor: only Troop Transports); its permanent barbed wire (the red
+  symbols on hex edges, read by `tools/map-edges.py`'s beach mode): no Infantry moves or retreats across it, Vehicles do, an Assault may go
+  across, and it is never destroyed (its cover line still counts).
+- **The 17 scenarios** (the setup's Map section "3rd printing"; `tools/missions-printing.py`, maps in `missions.scala`): Black Gold, Twin
+  Beaches, Across Moro River, El Alamein, Iron Hill, Desert's Edge, Battle of the Scheldt, Kasserine Pass, Operation Crusader, Tobruk, Mareth
+  Line, Operation Husky, Sainte-Mère-Église, Salerno, Closed Port, Seaside Village and Storm the Beach, with the sheet's starting stockpiles.
+  Each picture's panels were matched against the mod's panel art (which are turned round). The Spawn Areas are the sheet's bars (the full
+  row under a bar and the half row behind it) or its circles (one hex each, along the edges). The Control Points are the sheet's counters
+  (Black Gold's, Twin Beaches' and Across Moro River's from their bags in the mod). Tobruk's and Mareth Line's added Destroyed Building is on
+  the hex the note names; Sainte-Mère-Église's Manpower and Munitions point is in the church's middle hex, lost once that hex is destroyed.
+  The sheet gives no Victory Point totals, so the game length setting decides as on the other maps.
 
 ## Units
 
