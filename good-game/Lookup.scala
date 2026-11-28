@@ -65,7 +65,7 @@ object CardLookup extends BotCommand {
     // the image files the list names (and so /art serves; the rulebook pages are RuleLookup's)
     def served(path : String) = arts.exists(_.path == path)
 
-    def registration = "{\"name\":\"card\",\"type\":1,\"description\":\"Show a card or other art from Root or Northgard, as the site has it\",\"options\":[" +
+    def registration = "{\"name\":\"card\",\"type\":1,\"description\":\"Show a card or other art from any game on the site, as the site has it\",\"options\":[" +
         "{\"type\":3,\"name\":\"name\",\"description\":\"The card's name (pick from the suggestions)\",\"required\":true,\"autocomplete\":true,\"max_length\":100}," +
         "{\"type\":3,\"name\":\"game\",\"description\":\"Only this game's cards\",\"required\":false,\"choices\":[" +
         Lookup.games.toList.map { case (v, n) => "{\"name\":" + Lfg.json(n) + ",\"value\":" + Lfg.json(v) + "}" }.mkString(",") + "]}," +
@@ -236,8 +236,9 @@ object RuleLookup extends BotCommand {
 
 object Lookup {
     // the games the list has: its game field -> the name shown
-    val games = scala.collection.immutable.ListMap("root" -> "Root", "nort" -> "Northgard")
-    val colors = Map("root" -> 0xd9792b, "nort" -> 0x5b8fb9)
+    // (Pincer, Company of Heroes and Cyclades since 2026-11-28, asked for: /card for every game; /rule stays Root's and Northgard's)
+    val games = scala.collection.immutable.ListMap("root" -> "Root", "nort" -> "Northgard", "pincer" -> "Pincer", "tactics" -> "Company of Heroes", "cyclades" -> "Cyclades")
+    val colors = Map("root" -> 0xd9792b, "nort" -> 0x5b8fb9, "pincer" -> 0x8b2e2e, "tactics" -> 0x5a6b3a, "cyclades" -> 0x2e86c1)
 
     // the same card in another deck's art (the Frankendeck's and the Dark Deck's ambushes ...) after the usual one
     def later(group : String) = if (group == "Frankendeck" || group == "Dark Deck") 1 else 0

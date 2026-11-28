@@ -1,4 +1,38 @@
 game	kind	name	group	path
+cyclades	god	Apollo	God	webp2/cyclades/images/god/apollo.webp
+cyclades	god	Ares	God	webp2/cyclades/images/god/ares.webp
+cyclades	god	Athena	God	webp2/cyclades/images/god/athena.webp
+cyclades	creature	Chimera	Creature	webp2/cyclades/images/creature/chimera.webp
+cyclades	creature	Chiron	Creature	webp2/cyclades/images/creature/chiron.webp
+cyclades	creature	Chiron (figure)	Creature figure	webp2/cyclades/images/figure/chiron.webp
+cyclades	creature	Cyclops	Creature	webp2/cyclades/images/creature/cyclops.webp
+cyclades	creature	Dryad	Creature	webp2/cyclades/images/creature/dryad.webp
+cyclades	building	Fortress	Building, Ares	webp2/cyclades/images/building/fortress.webp
+cyclades	creature	Giant	Creature	webp2/cyclades/images/creature/giant.webp
+cyclades	creature	Griffon	Creature	webp2/cyclades/images/creature/griffon.webp
+cyclades	creature	Harpy	Creature	webp2/cyclades/images/creature/harpy.webp
+cyclades	creature	Kraken	Creature	webp2/cyclades/images/creature/kraken.webp
+cyclades	creature	Kraken (figure)	Creature figure	webp2/cyclades/images/figure/kraken.webp
+cyclades	creature	Medusa	Creature	webp2/cyclades/images/creature/medusa.webp
+cyclades	creature	Medusa (figure)	Creature figure	webp2/cyclades/images/figure/medusa.webp
+cyclades	building	Metropolis	Building	webp2/cyclades/images/building/metropolis.webp
+cyclades	creature	Minotaur	Creature	webp2/cyclades/images/creature/minotaur.webp
+cyclades	creature	Minotaur (figure)	Creature figure	webp2/cyclades/images/figure/minotaur.webp
+cyclades	creature	Pegasus	Creature	webp2/cyclades/images/creature/pegasus.webp
+cyclades	card	Philosopher	Card	webp2/cyclades/images/card/philosopher.webp
+cyclades	creature	Polyphemus	Creature	webp2/cyclades/images/creature/polyphemus.webp
+cyclades	creature	Polyphemus (figure)	Creature figure	webp2/cyclades/images/figure/polyphemus.webp
+cyclades	building	Port	Building, Poseidon	webp2/cyclades/images/building/port.webp
+cyclades	god	Poseidon	God	webp2/cyclades/images/god/poseidon.webp
+cyclades	card	Priest	Card	webp2/cyclades/images/card/priest.webp
+cyclades	creature	Satyr	Creature	webp2/cyclades/images/creature/satyr.webp
+cyclades	creature	Siren	Creature	webp2/cyclades/images/creature/siren.webp
+cyclades	creature	Sphinx	Creature	webp2/cyclades/images/creature/sphinx.webp
+cyclades	creature	Sylph	Creature	webp2/cyclades/images/creature/sylph.webp
+cyclades	building	Temple	Building, Zeus	webp2/cyclades/images/building/temple.webp
+cyclades	creature	The Fates	Creature	webp2/cyclades/images/creature/fates.webp
+cyclades	building	University	Building, Athena	webp2/cyclades/images/building/university.webp
+cyclades	god	Zeus	God	webp2/cyclades/images/god/zeus.webp
 nort	card	Abundance	Lion Clan	webp2/nort/images/card/clan/lion-abundance.webp
 nort	card	Adventure	Starting card	webp2/nort/images/card/start/blue-adventure.webp
 nort	card	Allies from the Wild	Development	webp2/nort/images/card/dev/allies-from-the-wild.webp
@@ -292,6 +326,33 @@ nort	card	Wood Trader	Achievement	webp2/nort/images/card/achievement/wood-trader
 nort	card	Woodcutters	Development	webp2/nort/images/card/dev/woodcutters.webp
 nort	card	Woodland Bounty	Raid	webp2/nort/images/card/raid/woodland-bounty.webp
 nort	creature	Wyvern	Creature, card 1	webp2/nort/images/card/creature/wyvern-1.webp
+pincer	card	Ambush	Maneuver, Lumber deck	webp2/pincer/images/card/ambush.webp
+pincer	seal	Black Powder Volley	Royal Seal, Badge	webp2/pincer/images/seal/black-powder-volley.webp
+pincer	card	Broadside	Maneuver, Fish deck	webp2/pincer/images/card/broadside.webp
+pincer	seal	Colonial Equine	Royal Seal, Company	webp2/pincer/images/seal/colonial-equine.webp
+pincer	seal	Crossroads Guild	Royal Seal, Society	webp2/pincer/images/seal/crossroads-guild.webp
+pincer	seal	Crown & Chisel	Royal Seal, Company	webp2/pincer/images/seal/crown-and-chisel.webp
+pincer	card	Fish	Resource card	webp2/pincer/images/card/fish.webp
+pincer	card	Fortify	Maneuver, Mustang deck	webp2/pincer/images/card/fortify.webp
+pincer	seal	Founder's Oath Society	Royal Seal, Society	webp2/pincer/images/seal/founders-oath.webp
+pincer	seal	Golden Grain	Royal Seal, Company	webp2/pincer/images/seal/golden-grain.webp
+pincer	card	Hideout	Maneuver, Iron deck	webp2/pincer/images/card/hideout.webp
+pincer	card	Iron	Resource card	webp2/pincer/images/card/iron.webp
+pincer	seal	Iron Mark	Royal Seal, Company	webp2/pincer/images/seal/iron-mark.webp
+pincer	card	Lumber	Resource card	webp2/pincer/images/card/lumber.webp
+pincer	seal	Maritime Exchange Guild	Royal Seal, Society	webp2/pincer/images/seal/maritime-exchange.webp
+pincer	seal	Mounted Vanguard	Royal Seal, Badge	webp2/pincer/images/seal/mounted-vanguard.webp
+pincer	card	Mustang	Resource card	webp2/pincer/images/card/mustang.webp
+pincer	seal	Naval Supremacy	Royal Seal, Badge	webp2/pincer/images/seal/naval-supremacy.webp
+pincer	seal	Neptune's Bounty	Royal Seal, Company	webp2/pincer/images/seal/neptunes-bounty.webp
+pincer	seal	Northern Axe	Royal Seal, Company	webp2/pincer/images/seal/northern-axe.webp
+pincer	card	Outflank	Maneuver, Stone deck	webp2/pincer/images/card/outflank.webp
+pincer	card	Player Reference	Reference card	webp2/pincer/images/card/reference.webp
+pincer	card	Retreat	Maneuver, Wheat deck	webp2/pincer/images/card/retreat.webp
+pincer	seal	Royal Musket Badge	Royal Seal, Badge	webp2/pincer/images/seal/royal-musket.webp
+pincer	card	Stone	Resource card	webp2/pincer/images/card/stone.webp
+pincer	seal	Stonewall Society	Royal Seal, Society	webp2/pincer/images/seal/stonewall-society.webp
+pincer	card	Wheat	Resource card	webp2/pincer/images/card/wheat.webp
 root	card	A Visit to Friends	Dark Deck	webp2/root/images/card/dark/dark-a-visit-to-friends.webp
 root	card	A Visit to Friends	Frankendeck	webp2/root/images/card/franken/franken-a-visit-to-friends.webp
 root	card	A Visit to Friends	Might and Right	webp2/root/images/card/deck/a-visit-to-friends.webp
@@ -685,3 +746,313 @@ root	faction	Winged Menace	Faction board	webp2/root/images/faction/menace/wm-boa
 root	faction	Woodland Alliance	Faction board	webp2/root/images/faction/insurgent/wa-board.webp
 root	card	Woodland Runners	Might and Right	webp2/root/images/card/deck/woodland-runners.webp
 root	card	Words of Undoing	Dark Deck	webp2/root/images/card/dark/dark-words-of-undoing.webp
+tactics	unit	.50 Cal MG Team	US Forces unit	webp2/tactics/images/token/fifty-cal-us.webp
+tactics	unit	.55 cal Armor Piercing Sniper	British Forces unit	webp2/tactics/images/token/ap-sniper-british.webp
+tactics	brigade	.55 cal Armor-Piercing Sniper	British Forces Lost Brigade	webp2/tactics/images/brigade/lb-ap-sniper.webp
+tactics	unit	105 Howitzer	Deutsches Afrikakorps unit	webp2/tactics/images/token/howitzer105-dak.webp
+tactics	brigade	17 Pounder Emplacement	British Forces Lost Brigade	webp2/tactics/images/brigade/lb-17-pounder.webp
+tactics	unit	17 Pounder Emplacement	British Forces unit	webp2/tactics/images/token/seventeen-pounder-british.webp
+tactics	unit	210/22 Artillery Emplacement	Deutsches Afrikakorps unit	webp2/tactics/images/token/artillery21022-dak.webp
+tactics	unit	6 Pounder Anti-Tank Gun	British Forces unit	webp2/tactics/images/token/six-pounder-british.webp
+tactics	unit	76mm AT Gun	Soviet Forces unit	webp2/tactics/images/token/zis3-soviet.webp
+tactics	unit	8-Rad	Deutsches Afrikakorps unit	webp2/tactics/images/token/eight-rad-dak.webp
+tactics	unit	88mm FLAK 36 Anti-Tank Gun	Deutsches Afrikakorps unit	webp2/tactics/images/token/flak88-dak.webp
+tactics	commander	Advanced Emplacements	British Forces Commander	webp2/tactics/images/commander/advanced-emplacements.webp
+tactics	commander	Airborne Company	US Forces Commander	webp2/tactics/images/commander/airborne.webp
+tactics	unit	Anti-Infantry Partisans	Soviet Forces unit	webp2/tactics/images/token/ai-partisans-soviet.webp
+tactics	brigade	Anti-Tank / Anti-Infantry Partisans	Soviet Forces Lost Brigade	webp2/tactics/images/brigade/lb-partisans.webp
+tactics	unit	Anti-Tank Partisans	Soviet Forces unit	webp2/tactics/images/token/at-partisans-soviet.webp
+tactics	commander	Armor Company	US Forces Commander	webp2/tactics/images/commander/armor-company.webp
+tactics	commander	Armored Airpower Support	Deutsches Afrikakorps Commander	webp2/tactics/images/commander/dak-armored-airpower.webp
+tactics	commander	Armored Assault Tactics	Soviet Forces Commander	webp2/tactics/images/commander/armored-assault.webp
+tactics	commander	Armored Warfare Support	Deutsches Afrikakorps Commander	webp2/tactics/images/commander/dak-armored-warfare.webp
+tactics	brigade	Assault Engineers	US Forces Lost Brigade	webp2/tactics/images/brigade/lb-assault-engineers.webp
+tactics	unit	Assault Engineers	US Forces unit	webp2/tactics/images/token/assault-engineers-us.webp
+tactics	unit	Assault Grenadiers	Deutsches Afrikakorps unit	webp2/tactics/images/token/assault-grenadiers-dak.webp
+tactics	commander	Assault Infantry Regiment	British Forces Commander	webp2/tactics/images/commander/assault-infantry.webp
+tactics	commander	Assault Officer Regiment	British Forces Commander	webp2/tactics/images/commander/assault-officer.webp
+tactics	commander	Assault Support Doctrine	Deutsches Afrikakorps Commander	webp2/tactics/images/commander/dak-assault-support.webp
+tactics	commander	Assault Support Doctrine	Wehrmacht Commander	webp2/tactics/images/commander/assault-support.webp
+tactics	commander	Assault Tactics	Soviet Forces Commander	webp2/tactics/images/commander/assault-tactics.webp
+tactics	unit	Bersaglieri Squad	Deutsches Afrikakorps unit	webp2/tactics/images/token/bersaglieri-dak.webp
+tactics	unit	Bofors Emplacement	British Forces unit	webp2/tactics/images/token/bofors-british.webp
+tactics	commander	Breakthrough Doctrine	Oberkommando West Commander	webp2/tactics/images/commander/breakthrough.webp
+tactics	board	British Forces Tier 1	Building Board	webp2/tactics/images/board/british-1.webp
+tactics	board	British Forces Tier 2	Building Board	webp2/tactics/images/board/british-2.webp
+tactics	board	British Forces Tier 3	Building Board	webp2/tactics/images/board/british-3.webp
+tactics	brigade	Calliope	US Forces Lost Brigade	webp2/tactics/images/brigade/lb-calliope.webp
+tactics	brigade	Captured Command Panther	British Forces Lost Brigade	webp2/tactics/images/brigade/lb-command-panther-british.webp
+tactics	unit	Captured Command Panther	British Forces unit	webp2/tactics/images/token/command-panther-british.webp
+tactics	brigade	Captured Command Panther	Soviet Forces Lost Brigade	webp2/tactics/images/brigade/lb-command-panther-soviet.webp
+tactics	unit	Captured Command Panther	Soviet Forces unit	webp2/tactics/images/token/command-panther-soviet.webp
+tactics	brigade	Captured Command Panther	US Forces Lost Brigade	webp2/tactics/images/brigade/lb-command-panther-us.webp
+tactics	unit	Captured Command Panther	US Forces unit	webp2/tactics/images/token/command-panther-us.webp
+tactics	commander	Cavalry Rifle Company	US Forces Commander	webp2/tactics/images/commander/cavalry-rifle.webp
+tactics	brigade	Cavalry Riflemen	US Forces Lost Brigade	webp2/tactics/images/brigade/lb-cavalry-riflemen.webp
+tactics	unit	Cavalry Riflemen	US Forces unit	webp2/tactics/images/token/cavalry-riflemen-us.webp
+tactics	unit	Centaur AA	British Forces unit	webp2/tactics/images/token/centaur-british.webp
+tactics	unit	Churchill	British Forces unit	webp2/tactics/images/token/churchill-british.webp
+tactics	unit	Churchill AVRE	British Forces unit	webp2/tactics/images/token/churchill-avre-british.webp
+tactics	brigade	Churchill Crocodile	British Forces Lost Brigade	webp2/tactics/images/brigade/lb-crocodile.webp
+tactics	brigade	Comet	British Forces Lost Brigade	webp2/tactics/images/brigade/lb-comet.webp
+tactics	unit	Comet	British Forces unit	webp2/tactics/images/token/comet-british.webp
+tactics	brigade	Command Panther	Oberkommando West Lost Brigade	webp2/tactics/images/brigade/lb-command-panther-okw.webp
+tactics	unit	Command Panther	Oberkommando West unit	webp2/tactics/images/token/command-panther-okw.webp
+tactics	brigade	Command Panther	Wehrmacht Lost Brigade	webp2/tactics/images/brigade/lb-command-panther-wehrmacht.webp
+tactics	unit	Command Panther	Wehrmacht unit	webp2/tactics/images/token/command-panther-wehrmacht.webp
+tactics	unit	Command Tiger	Deutsches Afrikakorps unit	webp2/tactics/images/token/command-tiger-dak.webp
+tactics	commander	Commando Regiment	British Forces Commander	webp2/tactics/images/commander/commando.webp
+tactics	unit	Commandos	British Forces unit	webp2/tactics/images/token/commandos-british.webp
+tactics	commander	Conscript Support Tactics	Soviet Forces Commander	webp2/tactics/images/commander/conscript-support.webp
+tactics	unit	Conscripts	Soviet Forces unit	webp2/tactics/images/token/conscripts-soviet.webp
+tactics	commander	Counterattack Tactics	Soviet Forces Commander	webp2/tactics/images/commander/counterattack.webp
+tactics	unit	Cromwell	British Forces unit	webp2/tactics/images/token/cromwell-british.webp
+tactics	commander	Defensive Warfare	Deutsches Afrikakorps Commander	webp2/tactics/images/commander/dak-defensive-warfare.webp
+tactics	commander	Desert Skorpion	Deutsches Afrikakorps Commander	webp2/tactics/images/commander/dak-desert-skorpion.webp
+tactics	board	Deutsches Afrikakorps Tier 1	Building Board	webp2/tactics/images/board/dak-1.webp
+tactics	board	Deutsches Afrikakorps Tier 2	Building Board	webp2/tactics/images/board/dak-2.webp
+tactics	board	Deutsches Afrikakorps Tier 3	Building Board	webp2/tactics/images/board/dak-3.webp
+tactics	commander	Devil's Brigade	US Forces Commander	webp2/tactics/images/commander/devils-brigade.webp
+tactics	unit	Devil's Brigade	US Forces unit	webp2/tactics/images/token/devils-brigade-us.webp
+tactics	brigade	DShK 38 Heavy Machine Gun	Soviet Forces Lost Brigade	webp2/tactics/images/brigade/lb-dshk.webp
+tactics	unit	DShK 38 HMG	Soviet Forces unit	webp2/tactics/images/token/dshk-soviet.webp
+tactics	unit	Elefant	Deutsches Afrikakorps unit	webp2/tactics/images/token/elefant-dak.webp
+tactics	brigade	Elefant	Wehrmacht Lost Brigade	webp2/tactics/images/brigade/lb-elefant.webp
+tactics	unit	Elefant	Wehrmacht unit	webp2/tactics/images/token/elefant-wehrmacht.webp
+tactics	commander	Elite Armored Doctrine	Oberkommando West Commander	webp2/tactics/images/commander/elite-armored.webp
+tactics	commander	Elite Artillery Tactics	Soviet Forces Commander	webp2/tactics/images/commander/elite-artillery.webp
+tactics	brigade	Elite Grenadier Squad Leaders	Wehrmacht Lost Brigade	webp2/tactics/images/brigade/lb-elite-grenadiers.webp
+tactics	unit	Elite Grenadier Squad Leaders	Wehrmacht unit	webp2/tactics/images/token/elite-grenadiers-wehrmacht.webp
+tactics	commander	Elite Troops Doctrine	Wehrmacht Commander	webp2/tactics/images/commander/elite-troops.webp
+tactics	commander	Encirclement Doctrine	Oberkommando West Commander	webp2/tactics/images/commander/encirclement.webp
+tactics	commander	Engineer Assault Company	US Forces Commander	webp2/tactics/images/commander/engineer-assault.webp
+tactics	commander	Festung Armor Doctrine	Wehrmacht Commander	webp2/tactics/images/commander/festung.webp
+tactics	commander	Festung Support Doctrine	Wehrmacht Commander	webp2/tactics/images/commander/festung-support.webp
+tactics	commander	Firestorm Doctrine	Oberkommando West Commander	webp2/tactics/images/commander/firestorm.webp
+tactics	unit	Flak 37	Oberkommando West unit	webp2/tactics/images/token/flak-okw.webp
+tactics	unit	Flakpanzer "Ostwind"	Wehrmacht unit	webp2/tactics/images/token/ostwind-wehrmacht.webp
+tactics	unit	Flakvierling	Deutsches Afrikakorps unit	webp2/tactics/images/token/flakvierling-dak.webp
+tactics	brigade	Flammpanzer 38 Hetzer	Oberkommando West Lost Brigade	webp2/tactics/images/brigade/lb-hetzer.webp
+tactics	unit	Flammpanzer 38 Hetzer	Oberkommando West unit	webp2/tactics/images/token/hetzer-okw.webp
+tactics	unit	Flammpanzer III	Deutsches Afrikakorps unit	webp2/tactics/images/token/flammpanzer-iii-dak.webp
+tactics	commander	Fortifications Doctrine	Oberkommando West Commander	webp2/tactics/images/commander/fortifications.webp
+tactics	brigade	Forward Emplacement	British Forces Lost Brigade	webp2/tactics/images/brigade/lb-forward-emplacement.webp
+tactics	unit	Forward Emplacement	British Forces unit	webp2/tactics/images/token/forward-emplacement-british.webp
+tactics	brigade	Forward HQ	Soviet Forces Lost Brigade	webp2/tactics/images/brigade/lb-forward-hq.webp
+tactics	unit	Forward HQ	Soviet Forces unit	webp2/tactics/images/token/forward-hq-soviet.webp
+tactics	unit	Forward Station	Soviet Forces unit	webp2/tactics/images/token/forward-station-soviet.webp
+tactics	commander	Frontal Assault Doctrine	Soviet Forces Commander	webp2/tactics/images/commander/frontal-assault.webp
+tactics	commander	Frontline Tactics	Soviet Forces Commander	webp2/tactics/images/commander/frontline.webp
+tactics	commander	Grand Offense Doctrine	Oberkommando West Commander	webp2/tactics/images/commander/grand-offense.webp
+tactics	unit	Grenadiers	Wehrmacht unit	webp2/tactics/images/token/grenadiers-wehrmacht.webp
+tactics	commander	Guards Motor Tactics	Soviet Forces Commander	webp2/tactics/images/commander/guards-motor.webp
+tactics	brigade	Guards Rifle Infantry	Soviet Forces Lost Brigade	webp2/tactics/images/brigade/lb-guards-rifle.webp
+tactics	unit	Guards Rifle Infantry	Soviet Forces unit	webp2/tactics/images/token/guards-rifle-soviet.webp
+tactics	unit	Guastatori	Deutsches Afrikakorps unit	webp2/tactics/images/token/guastatori-dak.webp
+tactics	commander	Hammer Doctrine	British Forces Commander	webp2/tactics/images/commander/hammer.webp
+tactics	commander	Heavy Cavalry Company	US Forces Commander	webp2/tactics/images/commander/heavy-cavalry.webp
+tactics	commander	Heroes of Stalingrad	Soviet Forces Commander	webp2/tactics/images/commander/stalingrad.webp
+tactics	unit	I.R. Pathfinder Squad	US Forces unit	webp2/tactics/images/token/pathfinder-us.webp
+tactics	unit	Infantry Section	British Forces unit	webp2/tactics/images/token/infantry-section-british.webp
+tactics	commander	Infantry Storm Doctrine	Wehrmacht Commander	webp2/tactics/images/commander/infantry-storm.webp
+tactics	commander	Infantry Support Regiment	British Forces Commander	webp2/tactics/images/commander/infantry-support.webp
+tactics	brigade	IS-2 Heavy Tank	Soviet Forces Lost Brigade	webp2/tactics/images/brigade/lb-is2.webp
+tactics	unit	IS-2 Heavy Tank	Soviet Forces unit	webp2/tactics/images/token/is2-soviet.webp
+tactics	unit	ISU-152	Soviet Forces unit	webp2/tactics/images/token/isu152-soviet.webp
+tactics	brigade	ISU-152 Heavy Assault Gun	Soviet Forces Lost Brigade	webp2/tactics/images/brigade/lb-isu152.webp
+tactics	commander	Italian Coastal	Deutsches Afrikakorps Commander	webp2/tactics/images/commander/dak-coastal.webp
+tactics	commander	Italian Combined Armor	Deutsches Afrikakorps Commander	webp2/tactics/images/commander/dak-combined-armor.webp
+tactics	commander	Italian Combined Arms	Deutsches Afrikakorps Commander	webp2/tactics/images/commander/dak-combined-arms.webp
+tactics	commander	Italian Desert Raid	Deutsches Afrikakorps Commander	webp2/tactics/images/commander/dak-desert-raid.webp
+tactics	commander	Italian Field Engineers	Deutsches Afrikakorps Commander	webp2/tactics/images/commander/dak-field-engineers.webp
+tactics	commander	Italian Light Support	Deutsches Afrikakorps Commander	webp2/tactics/images/commander/dak-light-support.webp
+tactics	commander	Italian Tank Assault	Deutsches Afrikakorps Commander	webp2/tactics/images/commander/dak-tank-assault.webp
+tactics	commander	Jaeger Infantry Doctrine	Wehrmacht Commander	webp2/tactics/images/commander/jaeger.webp
+tactics	brigade	Jaeger Recon Squad	Oberkommando West Lost Brigade	webp2/tactics/images/brigade/lb-jaeger-recon.webp
+tactics	unit	Jaeger Recon Squad	Oberkommando West unit	webp2/tactics/images/token/jaeger-recon-okw.webp
+tactics	brigade	Jaeger Sniper	Wehrmacht Lost Brigade	webp2/tactics/images/brigade/lb-jaeger-sniper.webp
+tactics	unit	Jaeger Sniper	Wehrmacht unit	webp2/tactics/images/token/jaeger-sniper-wehrmacht.webp
+tactics	brigade	Jagdpanther	Oberkommando West Lost Brigade	webp2/tactics/images/brigade/lb-jagdpanther-okw.webp
+tactics	unit	Jagdpanther	Oberkommando West unit	webp2/tactics/images/token/jagdpanther-okw.webp
+tactics	brigade	Jagdpanther	Wehrmacht Lost Brigade	webp2/tactics/images/brigade/lb-jagdpanther.webp
+tactics	unit	Jagdpanther	Wehrmacht unit	webp2/tactics/images/token/jagdpanther-wehrmacht.webp
+tactics	commander	Joint Operations Doctrine	Oberkommando West Commander	webp2/tactics/images/commander/joint-operations.webp
+tactics	brigade	Kettenkrad	Oberkommando West Lost Brigade	webp2/tactics/images/brigade/lb-kettenkrad.webp
+tactics	unit	Kettenkrad	Oberkommando West unit	webp2/tactics/images/token/kettenkrad-okw.webp
+tactics	brigade	King Tiger	Oberkommando West Lost Brigade	webp2/tactics/images/brigade/lb-king-tiger-okw.webp
+tactics	unit	King Tiger	Oberkommando West unit	webp2/tactics/images/token/king-tiger-okw.webp
+tactics	brigade	King Tiger	Wehrmacht Lost Brigade	webp2/tactics/images/brigade/lb-king-tiger.webp
+tactics	unit	King Tiger	Wehrmacht unit	webp2/tactics/images/token/king-tiger-wehrmacht.webp
+tactics	unit	Kradschützen	Deutsches Afrikakorps unit	webp2/tactics/images/token/kradschutzen-dak.webp
+tactics	unit	Kradschützen Rider	Deutsches Afrikakorps unit	webp2/tactics/images/token/krad-scout-dak.webp
+tactics	unit	Kubelwagen	Wehrmacht unit	webp2/tactics/images/token/kubelwagen-wehrmacht.webp
+tactics	brigade	KV-2 Assault Gun	Soviet Forces Lost Brigade	webp2/tactics/images/brigade/lb-kv2.webp
+tactics	unit	KV-2 Assault Gun	Soviet Forces unit	webp2/tactics/images/token/kv2-soviet.webp
+tactics	unit	KV-8 Flame Tank	Soviet Forces unit	webp2/tactics/images/token/kv8-soviet.webp
+tactics	brigade	KV-8 Flamethrower Tank	Soviet Forces Lost Brigade	webp2/tactics/images/brigade/lb-kv8.webp
+tactics	unit	L6/40 Light Tank	Deutsches Afrikakorps unit	webp2/tactics/images/token/l640-dak.webp
+tactics	brigade	LeFH 18 Artillery	Oberkommando West Lost Brigade	webp2/tactics/images/brigade/lb-lefh18.webp
+tactics	unit	LeFH 18 Artillery	Oberkommando West unit	webp2/tactics/images/token/lefh18-okw.webp
+tactics	commander	Lend Lease Assault Tactics	British Forces Commander	webp2/tactics/images/commander/lend-lease.webp
+tactics	commander	Light Cavalry Company	US Forces Commander	webp2/tactics/images/commander/light-cavalry.webp
+tactics	commander	Lightning War Doctrine	Wehrmacht Commander	webp2/tactics/images/commander/lightning-war.webp
+tactics	unit	Luchs Light Tank	Oberkommando West unit	webp2/tactics/images/token/luchs-okw.webp
+tactics	unit	M1 57mm AT Gun	US Forces unit	webp2/tactics/images/token/at-gun-us.webp
+tactics	unit	M10 Wolverine	US Forces unit	webp2/tactics/images/token/wolverine-us.webp
+tactics	unit	M26 Pershing	US Forces unit	webp2/tactics/images/token/pershing-us.webp
+tactics	brigade	M2HB .50 cal Heavy Machine Gun Bunker	US Forces Lost Brigade	webp2/tactics/images/brigade/lb-us-mg-bunker.webp
+tactics	brigade	M36 Jackson	US Forces Lost Brigade	webp2/tactics/images/brigade/lb-jackson.webp
+tactics	unit	M36 Jackson	US Forces unit	webp2/tactics/images/token/jackson-us.webp
+tactics	unit	M3A1 Scout Car	Soviet Forces unit	webp2/tactics/images/token/scout-car-soviet.webp
+tactics	unit	M4A3 Sherman	US Forces unit	webp2/tactics/images/token/sherman-us.webp
+tactics	unit	M5 Stuart	US Forces unit	webp2/tactics/images/token/stuart-us.webp
+tactics	brigade	M5A1 Stuart	US Forces Lost Brigade	webp2/tactics/images/brigade/lb-stuart.webp
+tactics	unit	M7 Priest	US Forces unit	webp2/tactics/images/token/priest-us.webp
+tactics	brigade	M7B1 Priest Howitzer Motor Carriage	US Forces Lost Brigade	webp2/tactics/images/brigade/lb-priest.webp
+tactics	unit	M8 Greyhound	US Forces unit	webp2/tactics/images/token/greyhound-us.webp
+tactics	unit	Major	US Forces unit	webp2/tactics/images/token/major-us.webp
+tactics	commander	Mechanized Company	US Forces Commander	webp2/tactics/images/commander/mechanized-company.webp
+tactics	commander	Mechanized Doctrine	Wehrmacht Commander	webp2/tactics/images/commander/mechanized-doctrine.webp
+tactics	unit	MG Bunker	Deutsches Afrikakorps unit	webp2/tactics/images/token/mg-bunker-dak.webp
+tactics	unit	MG Bunker	US Forces unit	webp2/tactics/images/token/mg-bunker-us.webp
+tactics	unit	MG Bunker	Wehrmacht unit	webp2/tactics/images/token/mg-bunker-wehrmacht.webp
+tactics	brigade	MG42 Heavy Machine Gun Bunker	Wehrmacht Lost Brigade	webp2/tactics/images/brigade/lb-mg42-bunker.webp
+tactics	unit	MG42 Team	Wehrmacht unit	webp2/tactics/images/token/mg42-wehrmacht.webp
+tactics	commander	Mobile Support Company	US Forces Commander	webp2/tactics/images/commander/mobile-support.webp
+tactics	unit	Mortar Emplacement	British Forces unit	webp2/tactics/images/token/mortar-emplacement-british.webp
+tactics	unit	Mortar Team	Soviet Forces unit	webp2/tactics/images/token/sov-mortar-soviet.webp
+tactics	unit	Mortar Team	US Forces unit	webp2/tactics/images/token/us-mortar-us.webp
+tactics	unit	Mortar Team	Wehrmacht unit	webp2/tactics/images/token/wm-mortar-wehrmacht.webp
+tactics	commander	Motor Pool	US Forces Commander	webp2/tactics/images/commander/motor-pool.webp
+tactics	commander	NKVD Disruption Tactics	Soviet Forces Commander	webp2/tactics/images/commander/nkvd.webp
+tactics	board	Oberkommando West Tier 1	Building Board	webp2/tactics/images/board/okw-1.webp
+tactics	board	Oberkommando West Tier 2	Building Board	webp2/tactics/images/board/okw-2.webp
+tactics	board	Oberkommando West Tier 3	Building Board	webp2/tactics/images/board/okw-3.webp
+tactics	unit	Obersoldaten	Oberkommando West unit	webp2/tactics/images/token/obersoldaten-okw.webp
+tactics	unit	OKW Battlegroup	Oberkommando West unit	webp2/tactics/images/token/battlegroup-okw.webp
+tactics	card	Operations card 1	Operations deck	webp2/tactics/images/ops/ops-0.webp
+tactics	card	Operations card 2	Operations deck	webp2/tactics/images/ops/ops-1.webp
+tactics	card	Operations card 3	Operations deck	webp2/tactics/images/ops/ops-2.webp
+tactics	card	Operations card 4	Operations deck	webp2/tactics/images/ops/ops-3.webp
+tactics	card	Operations card 5	Operations deck	webp2/tactics/images/ops/ops-4.webp
+tactics	card	Operations card 6	Operations deck	webp2/tactics/images/ops/ops-5.webp
+tactics	card	Operations card 7	Operations deck	webp2/tactics/images/ops/ops-6.webp
+tactics	brigade	Osttruppen	Wehrmacht Lost Brigade	webp2/tactics/images/brigade/lb-osttruppen.webp
+tactics	unit	Osttruppen	Wehrmacht unit	webp2/tactics/images/token/osttruppen-wehrmacht.webp
+tactics	brigade	Pak 43 Emplacement	Oberkommando West Lost Brigade	webp2/tactics/images/brigade/lb-pak43-okw.webp
+tactics	unit	Pak 43 Emplacement	Oberkommando West unit	webp2/tactics/images/token/okw-pak43-okw.webp
+tactics	brigade	Pak 43 Emplacement	Wehrmacht Lost Brigade	webp2/tactics/images/brigade/lb-pak43.webp
+tactics	unit	Pak 43 Emplacement	Wehrmacht unit	webp2/tactics/images/token/pak43-wehrmacht.webp
+tactics	unit	Panther	Oberkommando West unit	webp2/tactics/images/token/panther-okw.webp
+tactics	unit	Panzer Grenadiers	Wehrmacht unit	webp2/tactics/images/token/panzer-grenadiers-wehrmacht.webp
+tactics	unit	Panzer III	Deutsches Afrikakorps unit	webp2/tactics/images/token/panzer-iii-dak.webp
+tactics	unit	Panzer IV	Wehrmacht unit	webp2/tactics/images/token/panzer-iv-wehrmacht.webp
+tactics	unit	Panzerfusiliers	Oberkommando West unit	webp2/tactics/images/token/panzerfusilier-okw.webp
+tactics	brigade	Panzerfüsilier	Oberkommando West Lost Brigade	webp2/tactics/images/brigade/lb-panzerfusilier.webp
+tactics	unit	Panzerjaeger	Deutsches Afrikakorps unit	webp2/tactics/images/token/panzerjaeger-dak.webp
+tactics	commander	Panzerkorps Doctrine	Wehrmacht Commander	webp2/tactics/images/commander/panzerkorps.webp
+tactics	unit	Panzerpioneer	Deutsches Afrikakorps unit	webp2/tactics/images/token/panzerpioneer-dak.webp
+tactics	brigade	Paradrop Equipment	US Forces Lost Brigade	webp2/tactics/images/brigade/lb-paradrop.webp
+tactics	commander	Pathfinder Company	US Forces Commander	webp2/tactics/images/commander/pathfinder.webp
+tactics	brigade	Penal Battalion	Soviet Forces Lost Brigade	webp2/tactics/images/brigade/lb-penal.webp
+tactics	unit	Penal Battalion	Soviet Forces unit	webp2/tactics/images/token/penal-soviet.webp
+tactics	brigade	Pershing	US Forces Lost Brigade	webp2/tactics/images/brigade/lb-pershing.webp
+tactics	brigade	Puma	Oberkommando West Lost Brigade	webp2/tactics/images/brigade/lb-puma.webp
+tactics	unit	Puma	Oberkommando West unit	webp2/tactics/images/token/puma-okw.webp
+tactics	unit	Raketenwerfer	Oberkommando West unit	webp2/tactics/images/token/raketenwerfer-okw.webp
+tactics	commander	Ranger Company	US Forces Commander	webp2/tactics/images/commander/ranger.webp
+tactics	commander	Recon Support Company	US Forces Commander	webp2/tactics/images/commander/recon-support.webp
+tactics	brigade	Repair Station	Soviet Forces Lost Brigade	webp2/tactics/images/brigade/lb-repair-station.webp
+tactics	unit	Riflemen	US Forces unit	webp2/tactics/images/token/riflemen-us.webp
+tactics	commander	Royal Armored Corps	British Forces Commander	webp2/tactics/images/commander/royal-armored.webp
+tactics	commander	Royal Artillery Regiment	British Forces Commander	webp2/tactics/images/commander/royal-artillery.webp
+tactics	commander	Royal Engineer Regiment	British Forces Commander	webp2/tactics/images/commander/royal-engineer.webp
+tactics	brigade	Royal Engineers	British Forces Lost Brigade	webp2/tactics/images/brigade/lb-royal-engineers.webp
+tactics	unit	Royal Engineers	British Forces unit	webp2/tactics/images/token/royal-engineers-british.webp
+tactics	commander	Scavenge Doctrine	Oberkommando West Commander	webp2/tactics/images/commander/scavenge.webp
+tactics	unit	Schwerer Panzer HQ	Oberkommando West unit	webp2/tactics/images/token/schwerer-hq-okw.webp
+tactics	unit	SdKfz 222	Wehrmacht unit	webp2/tactics/images/token/sdkfz-222-wehrmacht.webp
+tactics	unit	SdKfz 250 Half-Track	Deutsches Afrikakorps unit	webp2/tactics/images/token/sdkfz250-dak.webp
+tactics	brigade	SdKfz 251 Half-track	Wehrmacht Lost Brigade	webp2/tactics/images/brigade/lb-halftrack.webp
+tactics	unit	SdKfz 251 Half-track	Wehrmacht unit	webp2/tactics/images/token/sdkfz251-wehrmacht.webp
+tactics	unit	Semovente Assault Gun	Deutsches Afrikakorps unit	webp2/tactics/images/token/semovente-dak.webp
+tactics	brigade	Sexton Gun Carriage	British Forces Lost Brigade	webp2/tactics/images/brigade/lb-sexton.webp
+tactics	unit	Sexton Gun Carriage	British Forces unit	webp2/tactics/images/token/sexton-british.webp
+tactics	brigade	Sherman 105mm Bulldozer	US Forces Lost Brigade	webp2/tactics/images/brigade/lb-dozer.webp
+tactics	unit	Sherman 105mm Dozer	US Forces unit	webp2/tactics/images/token/dozer-us.webp
+tactics	brigade	Sherman Easy Eight	US Forces Lost Brigade	webp2/tactics/images/brigade/lb-easy-eight.webp
+tactics	unit	Sherman Easy Eight	US Forces unit	webp2/tactics/images/token/easy-eight-us.webp
+tactics	brigade	Sherman Firefly	British Forces Lost Brigade	webp2/tactics/images/brigade/lb-firefly.webp
+tactics	unit	Sherman Firefly	British Forces unit	webp2/tactics/images/token/firefly-british.webp
+tactics	commander	Shock Rifle Tactics	Soviet Forces Commander	webp2/tactics/images/commander/shock-rifle.webp
+tactics	brigade	Shock Troops	Soviet Forces Lost Brigade	webp2/tactics/images/brigade/lb-shock-troops.webp
+tactics	unit	Shock Troops	Soviet Forces unit	webp2/tactics/images/token/shock-troops-soviet.webp
+tactics	commander	Siege Militia	Soviet Forces Commander	webp2/tactics/images/commander/siege-militia.webp
+tactics	unit	Sniper Squad	Soviet Forces unit	webp2/tactics/images/token/sniper-soviet.webp
+tactics	board	Soviet Forces Tier 1	Building Board	webp2/tactics/images/board/soviet-1.webp
+tactics	board	Soviet Forces Tier 2	Building Board	webp2/tactics/images/board/soviet-2.webp
+tactics	board	Soviet Forces Tier 3	Building Board	webp2/tactics/images/board/soviet-3.webp
+tactics	commander	Soviet Industry Tactics	Soviet Forces Commander	webp2/tactics/images/commander/soviet-industry.webp
+tactics	commander	Soviet Ranged Tactics	Soviet Forces Commander	webp2/tactics/images/commander/ranged-tactics.webp
+tactics	commander	Soviet Spetsnaz Brigade	Soviet Forces Commander	webp2/tactics/images/commander/spetsnaz.webp
+tactics	commander	Spearhead Doctrine	Wehrmacht Commander	webp2/tactics/images/commander/spearhead.webp
+tactics	commander	Special Service Brigade	British Forces Commander	webp2/tactics/images/commander/special-service.webp
+tactics	commander	Special Weapons Doctrine	British Forces Commander	webp2/tactics/images/commander/special-weapons.webp
+tactics	brigade	Staghound	British Forces Lost Brigade	webp2/tactics/images/brigade/lb-staghound.webp
+tactics	unit	Staghound	British Forces unit	webp2/tactics/images/token/staghound-british.webp
+tactics	brigade	StG44 Rifle Volksgrenadiers	Oberkommando West Lost Brigade	webp2/tactics/images/brigade/lb-stg44-volks.webp
+tactics	unit	StG44 Rifle Volksgrenadiers	Oberkommando West unit	webp2/tactics/images/token/stg44-volks-okw.webp
+tactics	commander	Storm Doctrine	Oberkommando West Commander	webp2/tactics/images/commander/storm.webp
+tactics	unit	Stormtroopers	Oberkommando West unit	webp2/tactics/images/token/stormtroopers-okw.webp
+tactics	unit	Stormtroopers	Wehrmacht unit	webp2/tactics/images/token/stormtroopers-wehrmacht.webp
+tactics	commander	StuG Assault Doctrine	Oberkommando West Commander	webp2/tactics/images/commander/stug-assault-okw.webp
+tactics	commander	StuG Assault Doctrine	Wehrmacht Commander	webp2/tactics/images/commander/stug-assault.webp
+tactics	brigade	StuG III Ausf. G Assault Gun	Oberkommando West Lost Brigade	webp2/tactics/images/brigade/lb-stug-okw.webp
+tactics	brigade	StuG III Ausf. G Assault Gun	Wehrmacht Lost Brigade	webp2/tactics/images/brigade/lb-stug.webp
+tactics	unit	StuG III D Assault Gun	Deutsches Afrikakorps unit	webp2/tactics/images/token/stug-d-dak.webp
+tactics	unit	StuG III G	Oberkommando West unit	webp2/tactics/images/token/stug-okw.webp
+tactics	unit	StuG III G	Wehrmacht unit	webp2/tactics/images/token/stug-wehrmacht.webp
+tactics	commander	StuG Tactics	Oberkommando West Commander	webp2/tactics/images/commander/stug-tactics-okw.webp
+tactics	commander	StuG Tactics	Wehrmacht Commander	webp2/tactics/images/commander/stug-tactics.webp
+tactics	unit	Stuka Halftrack	Oberkommando West unit	webp2/tactics/images/token/stuka-halftrack-okw.webp
+tactics	unit	Sturmpanzer "Brummbar"	Wehrmacht unit	webp2/tactics/images/token/brummbar-wehrmacht.webp
+tactics	unit	Sturmpioneers	Oberkommando West unit	webp2/tactics/images/token/sturmpioneers-okw.webp
+tactics	unit	Sturmtiger	Oberkommando West unit	webp2/tactics/images/token/sturmtiger-okw.webp
+tactics	unit	SU-76 Assault Gun	Soviet Forces unit	webp2/tactics/images/token/su76-soviet.webp
+tactics	unit	SU-85 Tank Destroyer	Soviet Forces unit	webp2/tactics/images/token/su85-soviet.webp
+tactics	unit	SWS Supply Truck	Oberkommando West unit	webp2/tactics/images/token/sws-truck-okw.webp
+tactics	unit	T-34 Tank	Soviet Forces unit	webp2/tactics/images/token/t34-soviet.webp
+tactics	brigade	T-34-85 Medium Tank	Soviet Forces Lost Brigade	webp2/tactics/images/brigade/lb-t3485.webp
+tactics	unit	T-34-85 Medium Tank	Soviet Forces unit	webp2/tactics/images/token/t3485-soviet.webp
+tactics	unit	T-70 Light Tank	Soviet Forces unit	webp2/tactics/images/token/t70-soviet.webp
+tactics	unit	T34 Calliope	US Forces unit	webp2/tactics/images/token/calliope-us.webp
+tactics	commander	Tactical Support Company	US Forces Commander	webp2/tactics/images/commander/tactical-support.webp
+tactics	commander	Tank Destroyer Doctrine	Wehrmacht Commander	webp2/tactics/images/commander/tank-destroyer.webp
+tactics	commander	Tank Destroyer West	Oberkommando West Commander	webp2/tactics/images/commander/tank-destroyer-west.webp
+tactics	commander	Tank Hunter Regiment	British Forces Commander	webp2/tactics/images/commander/tank-hunter.webp
+tactics	commander	Terror Doctrine	Wehrmacht Commander	webp2/tactics/images/commander/terror.webp
+tactics	commander	Terror Doctrine West	Oberkommando West Commander	webp2/tactics/images/commander/terror-west.webp
+tactics	commander	Terror Tactics	Soviet Forces Commander	webp2/tactics/images/commander/terror-tactics.webp
+tactics	brigade	Tiger	Wehrmacht Lost Brigade	webp2/tactics/images/brigade/lb-tiger.webp
+tactics	unit	Tiger	Wehrmacht unit	webp2/tactics/images/token/tiger-wehrmacht.webp
+tactics	unit	Universal Carrier	British Forces unit	webp2/tactics/images/token/universal-carrier-british.webp
+tactics	commander	Urban Assault Company	US Forces Commander	webp2/tactics/images/commander/urban-assault.webp
+tactics	commander	Urban Assault Tactics	Soviet Forces Commander	webp2/tactics/images/commander/urban-assault-tactics.webp
+tactics	commander	Urban Defense Tactics	Soviet Forces Commander	webp2/tactics/images/commander/urban-defense.webp
+tactics	board	US Forces Tier 1	Building Board	webp2/tactics/images/board/us-1.webp
+tactics	board	US Forces Tier 2	Building Board	webp2/tactics/images/board/us-2.webp
+tactics	board	US Forces Tier 3	Building Board	webp2/tactics/images/board/us-3.webp
+tactics	brigade	Valentine Mk. XI	British Forces Lost Brigade	webp2/tactics/images/brigade/lb-valentine.webp
+tactics	unit	Valentine Mk. XI	British Forces unit	webp2/tactics/images/token/valentine-british.webp
+tactics	commander	Vanguard Operations Regiment	British Forces Commander	webp2/tactics/images/commander/vanguard.webp
+tactics	brigade	Veteran Churchill AVRE	British Forces Lost Brigade	webp2/tactics/images/brigade/lb-churchill-avre.webp
+tactics	brigade	Veteran Commandos	British Forces Lost Brigade	webp2/tactics/images/brigade/lb-commandos.webp
+tactics	brigade	Veteran Devil's Brigade	US Forces Lost Brigade	webp2/tactics/images/brigade/lb-veteran-devils.webp
+tactics	brigade	Veteran G43 Stormtroopers	Oberkommando West Lost Brigade	webp2/tactics/images/brigade/lb-stormtroopers-okw.webp
+tactics	brigade	Veteran G43 Stormtroopers	Wehrmacht Lost Brigade	webp2/tactics/images/brigade/lb-stormtroopers.webp
+tactics	unit	Vickers .303 Machine Gun	British Forces unit	webp2/tactics/images/token/vickers-british.webp
+tactics	unit	Volksgrenadiers	Oberkommando West unit	webp2/tactics/images/token/volksgrenadiers-okw.webp
+tactics	board	Wehrmacht Tier 1	Building Board	webp2/tactics/images/board/wehrmacht-1.webp
+tactics	board	Wehrmacht Tier 2	Building Board	webp2/tactics/images/board/wehrmacht-2.webp
+tactics	board	Wehrmacht Tier 3	Building Board	webp2/tactics/images/board/wehrmacht-3.webp
+tactics	unit	Willys Jeep	US Forces unit	webp2/tactics/images/token/jeep-us.webp
