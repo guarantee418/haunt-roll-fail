@@ -780,6 +780,31 @@ Bad Crow's "3rd printing balance changes" sheet's new rules, each a setup toggle
   - OKW Veteran Coastal Reserves: a unit of its own (not the DAK's): 5 health, range 2, 2 AI of which 1 Close Range and 1 AP, 2 Wrenches,
     4 Manpower 3 Munitions; it builds what the Sturmpioneers build, the Flak Gun among them.
   - Black Prince Churchill and MG 34 Team: as their Commanders bring them, with no free one.
+- **Troop Transports** (`TroopTransports`, Full Game Rules, only on maps with Sea; `TroopTransport` in `game.scala`, cards and tokens by
+  `tools/boat-art.py`; 2026-11-28): the sheet's boats. A player may unlock them for 1 XP in the purchases (not a Lost Brigade), then buy up
+  to three, 2 Manpower 1 Fuel each. Readings:
+  - Who may: the map's own list (Twin Beaches and Across Moro River: Team 2, the sheet's "red side starts with the troop transport"), else
+    the teams whose Spawn Area has Sea or an Anchorage in it or next to it; a Troop Transport spawns there.
+  - It is a Light Vehicle of 2 health with a Speed Die (the card's yellow heart and running man) and no attack. It keeps to the Sea and
+    the Anchorages ("treat brown lines as impassable", "ignores red line impassable terrain with an anchor"), tank traps stop it, and it
+    never captures or neutralizes.
+  - It carries one Vehicle or Infantry: Infantry boards it as any transport, a Vehicle (not one carrying a passenger) by spending 1 CP next
+    to it, and either leaves it to an adjacent hex. A Vehicle or Infantry bought may spawn in an empty Troop Transport wherever it is (not
+    the Spawn Area for Commander abilities); a jeep spawned into it doesn't let Infantry spawn in the jeep.
+- **The new maps' hexes** (`board.scala`): Black Gold's Fortifications (ringed light blue: 3 Defense Dice to Infantry, as a Building's,
+  1 to Vehicles and Emplacements, blocking sight like a Building, never destroyed, no Sandbags, barbed wire, tank traps or Barricade built
+  in them; Vehicles enter them); Twin Beaches' Sea (the water and beach hexes inside the brown shorelines; every unit may enter it, and
+  Emplacements be built on it) and Anchorages (water ringed in red with an anchor: only Troop Transports); its permanent barbed wire (the red
+  symbols on hex edges, read by `tools/map-edges.py`'s beach mode): no Infantry moves or retreats across it, Vehicles do, an Assault may go
+  across, and it is never destroyed (its cover line still counts).
+- **The 17 scenarios** (the setup's Map section "3rd printing"; `tools/missions-printing.py`, maps in `missions.scala`): Black Gold, Twin
+  Beaches, Across Moro River, El Alamein, Iron Hill, Desert's Edge, Battle of the Scheldt, Kasserine Pass, Operation Crusader, Tobruk, Mareth
+  Line, Operation Husky, Sainte-Mère-Église, Salerno, Closed Port, Seaside Village and Storm the Beach, with the sheet's starting stockpiles.
+  Each picture's panels were matched against the mod's panel art (which are turned round). The Spawn Areas are the sheet's bars (the full
+  row under a bar and the half row behind it) or its circles (one hex each, along the edges). The Control Points are the sheet's counters
+  (Black Gold's, Twin Beaches' and Across Moro River's from their bags in the mod). Tobruk's and Mareth Line's added Destroyed Building is on
+  the hex the note names; Sainte-Mère-Église's Manpower and Munitions point is in the church's middle hex, lost once that hex is destroyed.
+  The sheet gives no Victory Point totals, so the game length setting decides as on the other maps.
 
 ## Units
 

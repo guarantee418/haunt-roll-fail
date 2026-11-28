@@ -55,6 +55,7 @@ class GameEvaluation(val game : Game, val self : Faction) {
             case PackUpAction(_, u, _) => true |=> -100 -> "stay set up"
             case SandbagsAction(_, u, _, _) => (Board.points.contains(where(u))) |=> 150 -> "dig in"
             case PlaneUnlockAction(_, t) => true |=> 200 -> "plane"
+            case BoatUnlockAction(_) => true |=> 150 -> "boats"
             case PlaneMoveAction(_, u, p, e, _) =>
                 (nearest(p.last) < nearest(where(u))) |=> 200 -> "closer"
                 (facingAway(p.last, e) < 60) |=> 100 -> "facing"

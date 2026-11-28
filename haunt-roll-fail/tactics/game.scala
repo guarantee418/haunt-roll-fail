@@ -344,7 +344,8 @@ object UnitType {
         ForwardRepair, PanzerIVF1, Fallschirmjager, MG34, Gurkha, MedicalStation, M3CarriageMortar, M3CarriageMG, M3CarriageAT,
         P47AntiTank, P47Bomber, P47Recon, StukaAntiTankWM, StukaBomberWM, StukaReconWM, IL2Bomber, IL2AntiTank, IL2Recon,
         StukaAntiTankOKW, StukaBomberOKW, StukaReconOKW, TyphoonBomber, TyphoonAntiTank, TyphoonRecon, StukaAntiTankDAK, StukaBomberDAK, StukaReconDAK,
-        TigerAceTank, KV1, PPShGuards, FG42Jager, CoastalReservesOKW)
+        TigerAceTank, KV1, PPShGuards, FG42Jager, CoastalReservesOKW,
+        TroopTransportUS, TroopTransportWM, TroopTransportBR, TroopTransportSU, TroopTransportOKW, TroopTransportDAK)
 
     // the Wehrmacht units the OKW's expansion Commanders bring too (the StuG Pack's shared Commanders, and the ECC's King Tiger and
     // Jagdpanther): an OKW squad of the Wehrmacht's type, drawn with its own token
@@ -1330,6 +1331,26 @@ case object StukaAntiTankDAK extends Aircraft(DAK, "Stuka JU-87", "Anti-Tank")
 case object StukaBomberDAK extends Aircraft(DAK, "Stuka JU-87", "Bomber")
 case object StukaReconDAK extends Aircraft(DAK, "Stuka JU-87", "Recon")
 
+// THE 3RD PRINTING'S TROOP TRANSPORTS (boats; the setup's TroopTransports, on maps with Sea): unlocked for 1 XP in the purchases (not a Lost
+// Brigade), then up to three bought for 2 Manpower 1 Fuel; a Light Vehicle of 2 health with a Speed Die and no attack that keeps to the Sea and
+// the Anchorages, never captures or neutralizes, and carries one Vehicle or Infantry, which may spawn inside it wherever it is
+sealed abstract class TroopTransport(f : Faction) extends UnitType("Troop Transport", f, 1, LightVehicle, 2, 0, 0, $, Cost(2, 0, 1), $) {
+    override def id = "troop-transport"
+    override def commander = true
+    override def transport = true
+    override def capture = false
+}
+case object TroopTransportUS extends TroopTransport(US)
+case object TroopTransportWM extends TroopTransport(Wehrmacht)
+case object TroopTransportBR extends TroopTransport(British)
+case object TroopTransportSU extends TroopTransport(Soviet)
+case object TroopTransportOKW extends TroopTransport(OKW)
+case object TroopTransportDAK extends TroopTransport(DAK)
+
+object TroopTransport {
+    def of(f : Faction) : UnitType = UnitType.all.collect { case t : TroopTransport if t.faction == f.base => t }.head
+}
+
 // the 3rd printing's core Lost Brigades' own units (2026-11-28): the Tiger Ace (a Tiger for the limit), the KV-1 (the KV-8's model), the
 // PPSh-41 SMG Airborne Guards and FG42 Fallschirmjäger (dropped like Stormtroopers, one a round), and the OKW's Veteran Coastal Reserves
 case object TigerAceTank extends UnitType("Tiger Ace", Wehrmacht, 3, HeavyVehicle, 6, 1, 3, $(ap, ap, ap, ai), Cost(3, 0, 5), $) {
@@ -1546,6 +1567,13 @@ case object BlitzCubes extends GameOption with ToggleOption {
 
 // Planes (Full Game Rules): each player's three plane cards lie by its Commander; once a game one may be unlocked for its XP in the
 // purchases, then bought for 2 Fuel, one at a time
+case object TroopTransports extends GameOption with ToggleOption {
+    val group = "3rd printing".txt
+    def valueOn = "Troop Transports".hl
+    override val explain = $[Elem]("On maps with Sea (the Twin Beaches panels), the players whose Spawn Area is by the Sea (or the map's side that starts with them) may unlock Troop Transports for 1 XP in the purchases, then buy up to three for 2 Manpower 1 Fuel each. A Troop Transport keeps to the Sea and the Anchorages, has no attack, never captures or neutralizes, and carries one Vehicle or Infantry, which may spawn inside it wherever it is (Full Game Rules only).".txt)
+    override def required(all : $[BaseOption]) = $($(FullGameRules))
+}
+
 case object Planes extends GameOption with ToggleOption {
     val group = "3rd printing".txt
     def valueOn = "Planes and anti-air".hl
@@ -1566,10 +1594,15 @@ object MapChoice {
 
     // the booklet's chapters, in its order
     val sections = $("Core missions", "Skirmishes", "Core panels, 3 panels", "Large Map Pack, 2 panels", "Large Map Pack, 3 panels",
-        "Large Map Pack, 4 panels", "Large Map Pack, square", "Free-for-all")
+        "Large Map Pack, 4 panels", "Large Map Pack, square", "Free-for-all", "3rd printing")
+
+    // the 3rd printing's 1v1 scenarios (Bad Crow's change sheet), on the Black Gold and Twin Beaches panels and the older ones
+    val printing = $[MapData](BlackGold, TwinBeaches, AcrossMoroRiver, ElAlamein, IronHill, DesertsEdge, BattleOfTheScheldt, KasserinePass,
+        OperationCrusader, Tobruk, MarethLine, OperationHusky, SainteMereEglise, Salerno, ClosedPort, SeasideVillage, StormTheBeach)
 
     def sectionOf(m : MapData) : String =
-        if (m.areas.num > 2) "Free-for-all"
+        if (printing.has(m)) "3rd printing"
+        else if (m.areas.num > 2) "Free-for-all"
         else if (m.panels == 1) "Skirmishes"
         else if (core.has(m)) (m.panels == 3).?("Core panels, 3 panels").|("Core missions")
         else if (m.rows > 1) "Large Map Pack, square"
@@ -1663,6 +1696,7 @@ case class PackUpAction(self : Faction, squad : Squad, k : Int) extends BaseActi
 case class DefensesAction(self : Faction, squad : Squad, wire : Boolean, trap : Boolean, k : Int) extends BaseAction(squad, "builds in", (g : Game) => g.where(squad).elem, (g : Game) => g.costNote(squad, 1))((wire && trap).?("Barbed Wire and a Tank Trap").|(wire.?("Barbed Wire").|("a Tank Trap")).hl)
 case class BarricadeAction(self : Faction, squad : Squad, edge : Int, k : Int) extends BaseAction(squad, "builds a Barricade in", (g : Game) => g.where(squad).elem, (g : Game) => g.costNote(squad, 1))("on its", Sandbags.names(edge).hl, "edge")
 case class BlitzMoveAction(self : Faction, squad : Squad, path : $[Hex], k : Int) extends BaseAction(squad, "in", (g : Game) => g.where(squad).elem)("Blitz to", path.last, (path.num > 1).?(("(through " + path.head.name + ")").txt).|(Empty), "for an orange cube".spn(styles.small)) with HexKey { def hex = path.last }
+case class BoatUnlockAction(self : Faction) extends BaseAction("Troop Transports", "(then up to three)".spn(styles.small))("Unlock", Images.token(Squad(self, TroopTransport.of(self), 0)) ~ TroopTransport.of(self).elem, "for", 1.hlb, XP.icon)
 case class PlaneUnlockAction(self : Faction, t : UnitType) extends BaseAction("Planes", "(one for the game)".spn(styles.small))("Unlock", Images.token(Squad(self, t, 0)) ~ t.elem, "for", 2.hlb, XP.icon)
 case class PlaneMoveAction(self : Faction, squad : Squad, path : $[Hex], edge : Int, k : Int) extends BaseAction(squad, "in", (g : Game) => g.where(squad).elem, "facing", (g : Game) => g.facingNote(squad))("Fly to", path.last, (path.num > 1).?(("(over " + path.head.name + ")").txt).|(Empty), "facing", Facing.names(edge).hl, (g : Game) => g.costNote(squad, 1)) with HexKey { def hex = path.last }
 case class BeaconAction(self : Faction, squad : Squad, k : Int) extends BaseAction(squad, "in", (g : Game) => g.where(squad).elem)("Disruption Beacon: Camouflage this round for", 2.hlb, Munitions.icon, (g : Game) => g.costNote(squad, 1))
@@ -1947,7 +1981,21 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     var pointGuards = Map[Faction, (Int, $[Hex])]()
     // Planes (3rd printing): the plane each player unlocked
     def planes = full && options.has(Planes)
+
+    // TROOP TRANSPORTS (3rd printing): on a map with Sea, for the teams the map names, else those whose Spawn Area is by the Sea
+    def boating = full && options.has(TroopTransports) && Board.terrain.values.exists(_ == Sea)
+    def boat(u : Squad) = u.utype.isInstanceOf[TroopTransport]
+    def boatTeam(f : Faction) = Board.boats./(_.has(team(f))).|(boatSpawn(f).any)
+    // where a Troop Transport spawns: the Sea and Anchorages in its Spawn Area or next to it
+    def boatSpawn(f : Faction) : $[Hex] = Board.hexes.%(h => Board.wet(h) && Board.traps.has(h).not && traps.contains(h).not && (Board.spawn(team(f)).has(h) || Board.spawn(team(f)).exists(Board.adjacent(h, _))))
+    def boatsBuyable(f : Faction) = boating && boatsOf.contains(f)
+    // a Troop Transport's empty hold, where a Vehicle or Infantry may spawn
+    def holds(f : Faction) : $[Squad] = units(f).%(v => boat(v) && passenger(v).none && retreating.contains(v).not)
+    // a Control Point in a tower is lost with its Building (Sainte-Mère-Église)
+    def lostPoint(h : Hex) = Board.tower.has(h) && ruined.contains(h)
     var planeOf = Map[Faction, UnitType]()
+    // the players who unlocked Troop Transports
+    var boatsOf = Set[Faction]()
     def barricading = full && options.has(Barricades)
     var control = Map[Hex, Faction]()
     var spawned = Map[UnitType, Int]()
@@ -2098,7 +2146,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def camouflaged(u : Squad) = has(u, Camouflage) || (u.kind == Emplacement && fortified.get(u.faction).has(round)) || preparedNow(u)
     // Prepared Positions: Emplacements and Vehicle Weapon Teams, Camouflaged with a Defense Die this round
     def preparedNow(u : Squad) = prepared.get(u.faction).has(round) && (u.kind == Emplacement || (u.utype.vehicle && weaponTeam(u)))
-    def defenseOf(u : Squad) = u.utype.defense + effects(u).count(DefenseUp) + effects(u).count(DetachmentKit) + effects(u).count(GurkhaShock) + radioNet(u).??(1) + preparedNow(u).??(1)
+    def defenseOf(u : Squad) = u.utype.defense + effects(u).count(DefenseUp) + effects(u).count(DetachmentKit) + effects(u).count(GurkhaShock) + radioNet(u).??(1) + preparedNow(u).??(1) +
+        // a Fortification (3rd printing): 1 Defense Die to Vehicles and Emplacements in it (its Infantry gets 3 as in a Building)
+        (u.kind != Infantry && u.kind != Plane && pos.get(u).exists(h => terrainAt(h) == Fortification) && isPassenger(u).not).??(1)
     def speedOf(u : Squad) = u.utype.speed + effects(u).count(SpeedUp)
     def reinforces(u : Squad) = u.utype.reinforce || has(u, ReinforceUp)
     def maxHealth(u : Squad) = u.utype.health + overRepaired.contains(u).??(1) + (u.utype.tierBuilding > 0 && unlocked(u.faction, ForwardReceivers)).??(1) + effects(u).count(HealthUp) + 2 * effects(u).count(BredaUp) + 2 * effects(u).count(HealthTwo)
@@ -2106,7 +2156,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def terrainAt(h : Hex) : Terrain = ruined.contains(h).?(Ruin : Terrain).|(Board.terrain(h))
     def inBuilding(h : Hex) = terrainAt(h) == Building || terrainAt(h) == Ruin || terrainAt(h) == Cathedral
     // open ground, Ice too
-    def isOpen(h : Hex) = terrainAt(h) == Open || terrainAt(h) == Ice
+    def isOpen(h : Hex) = terrainAt(h) == Open || terrainAt(h) == Ice || terrainAt(h) == Sea
     // Ice tiles (Full Game Rules)
     def onIce(u : Squad) = full && pos.contains(u) && terrainAt(where(u)) == Ice
     // a hex of a multi-hex Building that is still standing
@@ -2135,7 +2185,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     // CONTROL POINTS and income: 1 of each resource, and 1 for each resource of each Control Point held
 
-    def pointsOf(f : Faction) : $[Hex] = control.toList.filter(_._2 == f).map(_._1).sortBy(h => (h.r, h.c))
+    def pointsOf(f : Faction) : $[Hex] = control.toList.filter(_._2 == f).map(_._1).%(lostPoint(_).not).sortBy(h => (h.r, h.c))
 
     def income(f : Faction, r : Res) : Int = (r != VP).??(1) + pointsOf(f)./(h => Board.points(h).count(r)).sum + (r == VP).??(pointsOf(f).count(valourAt)) +
         // Assault Tactics: a Scout Car in No-Fire mode on a Control Point, 1 more of its (first) resource
@@ -2184,10 +2234,10 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     }
 
     // Moro River's tank traps (Full Game Rules) keep out Vehicles
-    def canEnter(u : Squad, h : Hex) = canAssault(u, h) && (u.utype.vehicle.not || traps.contains(h).not) && (u.kind != Infantry || wire.contains(h).not)
+    def canEnter(u : Squad, h : Hex) = (boat(u).not || (Board.wet(h) && Board.traps.has(h).not)) && canAssault(u, h) && (u.utype.vehicle.not || traps.contains(h).not) && (u.kind != Infantry || wire.contains(h).not)
 
     // the same, but past built barbed wire and tank traps, as an Assault on an enemy unit behind them may go
-    def canAssault(u : Squad, h : Hex) = (terrainAt(h) != Water || devils(u)) && (u.utype.vehicle.not || (inBuilding(h).not && (full && Board.traps.has(h)).not))
+    def canAssault(u : Squad, h : Hex) = boat(u).?(Board.wet(h)).|((terrainAt(h) != Water && terrainAt(h) != Anchorage) || devils(u)) && (u.utype.vehicle.not || (inBuilding(h).not && (full && Board.traps.has(h)).not))
 
     // a hex with built Battlefield Defenses that two damage would destroy: sandbags, barbed wire, tank traps
     def defended(h : Hex) = sandbags.contains(h) || wire.contains(h) || traps.contains(h) || barricades.exists(_._1 == h)
@@ -2205,20 +2255,23 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     // the barbed wire and tank traps a unit with a Wrench may build on its hex (1 CP; both at once with two Wrenches); not in a
     // Building, nor where an Assault is going on
-    def defenseChoices(f : Faction, u : Squad, k : Int) : $[UserAction] = (full && wrenchesOf(u) > 0 && onBuilding(u).not && isPassenger(u).not && assaultAt(where(u)).not && assaults.contains(u).not).??{
+    def defenseChoices(f : Faction, u : Squad, k : Int) : $[UserAction] = (full && wrenchesOf(u) > 0 && onBuilding(u).not && terrainAt(where(u)) != Fortification && isPassenger(u).not && assaultAt(where(u)).not && assaults.contains(u).not).??{
         val h = where(u)
         val w = wire.contains(h).not
         val t = traps.contains(h).not && Board.traps.has(h).not
         w.$(DefensesAction(f, u, true, false, k)) ++ t.$(DefensesAction(f, u, false, true, k)) ++ (w && t && wrenchesOf(u) >= 2).$(DefensesAction(f, u, true, true, k))
     }
 
-    def stepsFrom(u : Squad, h : Hex) = Board.neighbors(h).%(n => Board.joined(h, n) && barred(h, n).not && canEnter(u, n))
+    def stepsFrom(u : Squad, h : Hex) = Board.neighbors(h).%(n => Board.joined(h, n) && barred(h, n).not && unwired(u, h, n) && canEnter(u, n))
+
+    // the 3rd printing's permanent barbed wire: no Infantry moves across it
+    def unwired(u : Squad, a : Hex, b : Hex) = u.kind != Infantry || Board.wired(a, b).not
 
     // a Barricade on the edge between two hexes, on either side: no move across it
     def barred(a : Hex, b : Hex) = barricades.nonEmpty && barricades.exists { case (h, e) => (h == a && Board.toward(a, e).has(b)) || (h == b && Board.toward(b, e).has(a)) }
 
     // the edges of its hex Infantry with a Wrench may barricade (1 CP): open edges with a hex past them and no Barricade yet
-    def barricadeChoices(f : Faction, u : Squad, k : Int) : $[UserAction] = (barricading && u.kind == Infantry && wrenchesOf(u) > 0 && onBuilding(u).not && isPassenger(u).not && assaultAt(where(u)).not && assaults.contains(u).not).??{
+    def barricadeChoices(f : Faction, u : Squad, k : Int) : $[UserAction] = (barricading && u.kind == Infantry && wrenchesOf(u) > 0 && onBuilding(u).not && terrainAt(where(u)) != Fortification && isPassenger(u).not && assaultAt(where(u)).not && assaults.contains(u).not).??{
         val h = where(u)
         0.until(6).$.%(e => Board.toward(h, e).exists(n => Board.joined(h, n) && barred(h, n).not))./(e => BarricadeAction(f, u, e, k))
     }
@@ -2232,7 +2285,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         (left >= 2).??(one.%(occupant(_).any)./~(m => stepsFrom(u, m).%(n => n != h && occupant(n).none && one.has(n).not)./($(m, _)))).distinctBy(_.last)
     }
 
-    def transports(u : Squad) : $[Squad] = (u.kind == Infantry && pointsLeft(u) >= 1).??(stepsFrom(u, where(u))./~(occupant).%(v => v.faction == u.faction && carries(v) && passenger(v).none))
+    def transports(u : Squad) : $[Squad] = (u.kind == Infantry && pointsLeft(u) >= 1).??(stepsFrom(u, where(u))./~(occupant).%(v => v.faction == u.faction && carries(v) && passenger(v).none)) ++
+        // a Vehicle (not a Troop Transport, nor a transport with a passenger) boards a Troop Transport next to it
+        (u.utype.vehicle && boat(u).not && passenger(u).none && pointsLeft(u) >= 1).??(Board.neighbors(where(u)).%(n => Board.joined(where(u), n))./~(occupant).%(v => v.faction == u.faction && boat(v) && passenger(v).none))
 
     def mayMove(u : Squad) = setUp.contains(u).not && u.kind != Emplacement && stance.contains(u).not && beaconed.contains(u).not
 
@@ -2249,14 +2304,14 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             mayMove(u).??(planeOptions(u)./{ case (p, e) => PlaneMoveAction(f, u, p, e, k) })
         else
         if (full && isPassenger(u).not && u.kind == HeavyVehicle)
-            heavyOptions(u)./{ case (p, e, true) => AssaultAction(f, u, p.last, e, k) ; case (p, e, false) => HeavyMoveAction(f, u, p, e, k) } ++ noFireMode(u).$(NoFireModeAction(f, u, k)) ++ commanderActions(f, u, k) ++ printingActions(f, u, k)
+            heavyOptions(u)./{ case (p, e, true) => AssaultAction(f, u, p.last, e, k) ; case (p, e, false) => HeavyMoveAction(f, u, p, e, k) } ++ mayMove(u).??(transports(u)./(v => EmbarkAction(f, u, v, where(v), k))) ++ noFireMode(u).$(NoFireModeAction(f, u, k)) ++ commanderActions(f, u, k) ++ printingActions(f, u, k)
         else
         if (full && isPassenger(u).not) {
             val m = mayMove(u).??(moves(u)./(p => MoveAction(f, u, p, k)) ++ assaultHexes(u)./(h => AssaultAction(f, u, h, -1, k)) ++ transports(u)./(v => EmbarkAction(f, u, v, where(v), k)) ++
                 // a Kradschützen at 2 Health may leave a rider on the hex it leaves
                 (u.utype == Kradschutzen && health(u) == 2 && passenger(u).none).??(moves(u)./(p => KradDropAction(f, u, p, k))))
             val s = setsUp(u).??(setUp.contains(u).?($(PackUpAction(f, u, k))).|((u.utype.noBuildingSetup && onBuilding(u)).not.??(0.until(6).$./(e => SetUpFacingAction(f, u, e, k)))))
-            val b = (wrenchesOf(u) > 0 && onBuilding(u).not).??(0.until(6).$.%(e => Sandbags.edges(e).forall(sandbags.getOrElse(where(u), Set()).contains).not)./(e => SandbagsAction(f, u, e, k)))
+            val b = (wrenchesOf(u) > 0 && onBuilding(u).not && terrainAt(where(u)) != Fortification).??(0.until(6).$.%(e => Sandbags.edges(e).forall(sandbags.getOrElse(where(u), Set()).contains).not)./(e => SandbagsAction(f, u, e, k)))
             m ++ s ++ b ++ defenseChoices(f, u, k) ++ barricadeChoices(f, u, k) ++ noFireMode(u).$(NoFireModeAction(f, u, k)) ++ commanderActions(f, u, k) ++ blitzMoves(u, k)./(p => BlitzMoveAction(f, u, p, k)) ++ printingActions(f, u, k)
         }
         else
@@ -2266,7 +2321,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             val m = mayMove(u).??(moves(u)./(p => MoveAction(f, u, p, k)) ++ transports(u)./(v => EmbarkAction(f, u, v, where(v), k)) ++
                 (u.utype == Kradschutzen && health(u) == 2 && passenger(u).none).??(moves(u)./(p => KradDropAction(f, u, p, k))))
             val s = weaponTeam(u).??(setUp.contains(u).?($(PackUpAction(f, u, k))).|((u.utype.noBuildingSetup && onBuilding(u)).not.$(SetUpAction(f, u, k))))
-            val b = (wrenchesOf(u) > 0 && onBuilding(u).not).??(0.until(6).$.%(e => Sandbags.edges(e).forall(sandbags.getOrElse(where(u), Set()).contains).not)./(e => SandbagsAction(f, u, e, k)))
+            val b = (wrenchesOf(u) > 0 && onBuilding(u).not && terrainAt(where(u)) != Fortification).??(0.until(6).$.%(e => Sandbags.edges(e).forall(sandbags.getOrElse(where(u), Set()).contains).not)./(e => SandbagsAction(f, u, e, k)))
             m ++ s ++ b ++ noFireMode(u).$(NoFireModeAction(f, u, k)) ++ blitzMoves(u, k)./(p => BlitzMoveAction(f, u, p, k)) ++ printingActions(f, u, k)
         }
     }
@@ -2383,7 +2438,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         else {
             val h = where(t)
             terrainAt(h) @@ {
-                case Building | Cathedral => 3
+                case Building | Cathedral | Fortification => 3
                 // a Devil's Brigade in a Destroyed Building gets 3
                 case Ruin => ((t.utype == DevilsBrigade && unlocked(t.faction, DevilsBrigadeSpawn)) || t.utype == SSFCanadian).?(3).|(1)
                 case _ =>
@@ -2422,13 +2477,18 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         val station = t.vehicle.??(units(f).%(u => u.utype == ForwardStation || u.utype == ForwardRepair)./~(u => Board.neighbors(where(u)).%(n => Board.joined(where(u), n) && terrainAt(n) != Water && occupant(n).none)))
         // the M1919A6 LMG Paratrooper Beacon: Riflemen next to a Pathfinder Squad
         val lmg = (t == Riflemen && unlocked(f, PathfinderLMGBeacon)).??(units(f).%(u => u.utype == Pathfinder && isPassenger(u).not)./~(u => Board.neighbors(where(u)).%(n => Board.joined(where(u), n) && terrainAt(n) != Water && occupant(n).none)))
+        // a Troop Transport's hold, wherever it is (3rd printing)
+        val hold = (boating && (t.kind == Infantry || t.vehicle) && t.isInstanceOf[TroopTransport].not).??(holds(f)./(where))
+        if (t.isInstanceOf[TroopTransport])
+            boatSpawn(f).%(occupant(_).none)
+        else
         if (t == Stormtroopers || t == AIPartisans || t == ATPartisans)
-            stormHexes(f)
+            stormHexes(f) ++ hold
         else
         if (t == PPShGuards || t == FG42Jager)
             dropHexes(f)
         else
-            (area ++ transports ++ major ++ building ++ station ++ lmg).distinct.%(h => t.vehicle.not || inBuilding(h).not)
+            (area ++ transports ++ major ++ building ++ station ++ lmg ++ hold).distinct.%(h => t.vehicle.not || inBuilding(h).not)
     }
 
     // OKW's Tier Buildings on the map
@@ -2517,7 +2577,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         val n = spawned.getOrElse(t, 0) + 1
         spawned += t -> n
         val u = Squad(f, t, n)
-        occupant(h).%(v => v.faction == f && carries(v) && t.kind == Infantry).foreach { v => carried += u -> v }
+        occupant(h).%(v => v.faction == f && carries(v) && passenger(v).none && (t.kind == Infantry || (boat(v) && t.vehicle))).foreach { v => carried += u -> v }
         pos += u -> h
         health += u -> maxHealth(u)
         // Conscript Support Tactics: new Conscripts come with both +1 Health upgrades
@@ -2692,7 +2752,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def mayRetreat(u : Squad) = full && u.kind == Infantry && beaconed.contains(u).not && isPassenger(u).not && assaults.contains(u).not && retreating.contains(u).not
 
     // a Retreat passes through units and Battlefield Defenses, but ends in an empty hex it may enter
-    def passable(u : Squad, h : Hex) = (terrainAt(h) != Water || devils(u)) && (u.utype.vehicle.not || inBuilding(h).not)
+    def passable(u : Squad, h : Hex) = boat(u).?(Board.wet(h)).|((terrainAt(h) != Water && terrainAt(h) != Anchorage) || devils(u)) && (u.utype.vehicle.not || inBuilding(h).not)
 
     def mayEnd(u : Squad, h : Hex) = canEnter(u, h) && standing(h).none
 
@@ -2702,7 +2762,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         var i = 0
         while (front.any) {
             i += 1
-            front = front./~(h => Board.neighbors(h).%(n => Board.joined(h, n) && barred(h, n).not && passable(u, n) && d.contains(n).not)).distinct
+            front = front./~(h => Board.neighbors(h).%(n => Board.joined(h, n) && barred(h, n).not && unwired(u, h, n) && passable(u, n) && d.contains(n).not)).distinct
             front.foreach(n => d += n -> i)
         }
         d
@@ -2715,7 +2775,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         var path = $[Hex]()
         var going = d.contains(cur)
         while (going && path.num < 6 && cur != point) {
-            Board.neighbors(cur).%(n => Board.joined(cur, n) && barred(cur, n).not && d.get(n).has(d(cur) - 1)).sortBy(h => (h.r, h.c)).starting match {
+            Board.neighbors(cur).%(n => Board.joined(cur, n) && barred(cur, n).not && unwired(u, cur, n) && d.get(n).has(d(cur) - 1)).sortBy(h => (h.r, h.c)).starting match {
                 case Some(n) =>
                     path :+= n
                     cur = n
@@ -2763,7 +2823,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         var front = $(where(u))
         var found = $[Hex]()
         while (front.any && found.none) {
-            front = front./~(h => Board.neighbors(h).%(n => Board.joined(h, n) && barred(h, n).not && passable(u, n) && seen.contains(n).not)).distinct
+            front = front./~(h => Board.neighbors(h).%(n => Board.joined(h, n) && barred(h, n).not && unwired(u, h, n) && passable(u, n) && seen.contains(n).not)).distinct
             seen ++= front
             found = front.%(mayEnd(u, _))
         }
@@ -3270,7 +3330,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         // the 3rd printing core Lost Brigades' units
         printingCalledIn(f) ++
         // the plane unlocked (3rd printing)
-        planeOf.get(f).$ ++
+        planeOf.get(f).$ ++ boatsBuyable(f).$(TroopTransport.of(f)) ++
         // the DAK Lost Brigades' units
         unlocked(f, MarderCallIn).$(MarderIII) ++ unlocked(f, NebelwerferCallIn).$(Nebelwerfer) ++ unlocked(f, VeteranCoastalReserves).$(CoastalReservesVet) ++
         unlocked(f, TankBustersCallIn).$(TankBusters) ++ (unlocked(f, VeteranFlammpanzers) && unlocked(f, FlammpanzerCallIn).not).$(FlammpanzerIII)
@@ -3651,6 +3711,12 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
             case BrigadeStartSkipAction(f, rest) =>
                 BrigadeOpeningAction(rest)
+
+            case BoatUnlockAction(f) =>
+                gain(f, XP, -1)
+                boatsOf += f
+                log(f, "unlocked", TroopTransport.of(f), "for", 1.hl, XP.icon)
+                PurchaseAction(f)
 
             case PlaneUnlockAction(f, t) =>
                 gain(f, XP, -2)
@@ -4818,7 +4884,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                     }
                 }
 
-                Board.points.keys.$.sortBy(h => (h.r, h.c)).foreach { h =>
+                Board.points.keys.$.%(lostPoint(_).not).sortBy(h => (h.r, h.c)).foreach { h =>
                     if (control.contains(h).not)
                         occupant(h).%(u => (u.kind == Infantry && pinned.contains(u).not && (full && retreating.contains(u)).not) || u.kind == Emplacement || (u.utype.vehicle && captures(u))).%(u => operators.exists(o => foe(o.faction, u.faction) && contests(o).has(h)).not).foreach { u =>
                             control += h -> u.faction
@@ -4869,6 +4935,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                         .add(commanderPurchases(f))
                         .add(brigadePicks(f))
                         .add((planes && planeOf.contains(f).not && f.stock(XP) >= 2).??(Aircraft.of(f)./(t => PlaneUnlockAction(f, t))))
+                        .add((boating && boatsOf.contains(f).not && f.stock(XP) >= 1 && boatTeam(f)).$(BoatUnlockAction(f)))
                         .add(emplacements(f))
                         .add(conversions(f))
                         .add(PassAction(f))
