@@ -749,8 +749,37 @@ Bad Crow's "3rd printing balance changes" sheet's new rules, each a setup toggle
   - Defense in Depth, Field Engineers and Advanced Fortifications (their engineers): spending its first CP of a round, the unit may leave
     Barbed Wire or a Tank Trap in its hex for nothing (read as "in the hex they are leaving": the player then moves it; Sandbags, which
     need a facing, and Barricades are left out); when it Assaults, it may remove one Battlefield Defense of the assaulted hex at once.
-  - Every Commander of the sheet is played (`tools/third-printing-art.py` lists them by picture); the core factions' new Lost Brigades
-    are still to come.
+  - Every Commander of the sheet is played (`tools/third-printing-art.py` lists them by picture).
+- **New Lost Brigades** (`ThirdPrintingBrigades`, only with the Lost Brigades; `Brigade.printing` in `brigades.scala`, 2026-11-28): the
+  sheet's 26 new Lost Brigades of the core factions (pictures 69 to 94, cut by `tools/core-brigade-art.py`) are shuffled into each
+  faction's deck with its others. US: Artillery Observers (1 XP), M3 Lee (2), I.R. Pathfinders (0, one as starting Infantry), Rangers
+  (0, up to three); Wehrmacht: Command Panzer IV (2), Marder III (1), Panzerwerfer (1), Tiger Ace (4); Soviet: PPSh-41 SMG Airborne
+  Guards (3), Katyusha (1), KV-1 Heavy Tank (1), Combat Engineers (0, up to three); OKW: FG42 Fallschirmjägers (3), Precision LeFH 18
+  Artillery (1), MG 34 Team (0, one), Veteran Coastal Reserves (2), Marder III (1); British: ANZAC Light Infantry (0, one), Dingo (1),
+  M3 Grant (2), Matilda II (1), Polish Lancer Section (0, one), M3 Stuart "Honey" (1), Black Prince Churchill (3), Canadian Shock Troops
+  (1), Land Mattress (1). Readings:
+  - A unit a 3rd printing Commander already brings is that unit, with its rules (the Matilda's free move onto a Control Point, the Land
+    Mattress's discount in a new Universal Carrier, the Canadian Shock Troops' two squads), at the card's price. The M3 Stuart "Honey" is
+    the M5 Stuart the Commanders bring (the card prints its stats), and the Marder IIIs are the DAK's.
+  - Artillery Observers: a Jeep bought may spawn as an Artillery Observer (asked when it spawns), the Field Ordnance Veterancy option for
+    free; no Jeep can take it later. The brigade has no unit of its own, so the Jeep keeps its board price.
+  - I.R. Pathfinders: the Pathfinder Squad for 3 Manpower. "Riflemen squads can spawn adjacent to a Pathfinder Squad with a Range upgrade,
+    but spawn with Slow the first round" is read as Riflemen spawning next to a Pathfinder Squad, with a +1 Range upgrade (the M1919A6 LMG)
+    for free, Slow the first round; with the Pathfinder Company's Airdrop Beacon too (the card's "compatible"), every Riflemen spawned next
+    to a Pathfinder gets the LMG.
+  - Rangers: Ranger Training (4 CP a round, the Munitions upgrade 1 less) for every Riflemen; "up to three may be selected as starting
+    infantry" changes nothing, as Riflemen are the US starting Infantry anyway.
+  - Tiger Ace: a unit of its own, the Tiger with range 3 (6 health, 3 AP and 1 AI turreted, a Defense Die), a Tiger for the limit, 3
+    Manpower 5 Fuel. KV-1: 5 health, range 2, 1 AI and 1 AP turreted, Slow, the Matilda's free move onto an adjacent Control Point, a
+    KV-8 for the limit (it uses that model), 2 Manpower 3 Fuel.
+  - PPSh-41 SMG Airborne Guards (4 health, range 2, 3 AI of which 2 Close Range, 5 Manpower 2 Munitions) and FG42 Fallschirmjäger
+    (Volksgrenadiers with 2 AI and Sight 3 in place of their Defense Die, the two figures on the card, 5 Manpower 2 Munitions) are bought
+    in the purchases like the G43 Stormtroopers, one a round, on any visible non-Building hex, Double Slow the first round.
+  - Precision LeFH 18 Artillery: the LeFH 18 Emplacement the Sturmpioneers build for 4 Munitions, with the Veterancy option for 1 XP of
+    Precision Strike (its damage may also go to a second unit next to the target).
+  - OKW Veteran Coastal Reserves: a unit of its own (not the DAK's): 5 health, range 2, 2 AI of which 1 Close Range and 1 AP, 2 Wrenches,
+    4 Manpower 3 Munitions; it builds what the Sturmpioneers build, the Flak Gun among them.
+  - Black Prince Churchill and MG 34 Team: as their Commanders bring them, with no free one.
 
 ## Units
 

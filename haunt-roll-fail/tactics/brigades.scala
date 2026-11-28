@@ -126,6 +126,34 @@ case object LBDAKCoastalReserves extends Brigade("lb-dak-coastal-reserves", "Vet
 case object LBDAKFlammpanzer extends Brigade("lb-dak-flammpanzer", "Veteran Flammpanzer III", DAK, 2, $(VeteranFlammpanzers), |(FlammpanzerIII), |(Cost(3, 0, 2)))
 case object LBDAKTankBusters extends Brigade("lb-dak-tank-busters", "Veteran Tank Busters", DAK, 2, $(TankBustersCallIn), |(TankBusters), |(Cost(4, 3, 0)))
 
+// the 3rd printing's new Lost Brigades of the core factions (2026-11-28; the change sheet's pictures 69 to 94, the setup's ThirdPrintingBrigades)
+case object LBArtilleryObservers extends Brigade("lb-artillery-observers", "Artillery Observers", US, 1, $(ArtilleryObserverSpawn))
+case object LBM3Lee extends Brigade("lb-m3-lee", "M3 Lee", US, 2, $(M3LeeCallInPlain), |(M3Lee), |(Cost(1, 0, 4)))
+case object LBPathfinders extends Brigade("lb-pathfinders", "I.R. Pathfinders", US, 0, $(PathfinderLMGBeacon), |(Pathfinder), |(Cost(3, 0, 0)), 1)
+case object LBRangers extends Brigade("lb-rangers", "Rangers", US, 0, $(RangerTraining), None, None, 3)
+case object LBCommandPanzerIV extends Brigade("lb-command-panzer-iv", "Command Panzer IV", Wehrmacht, 2, $(CommandPanzerIVCallIn), |(PanzerIVF1), |(Cost(2, 0, 4)))
+case object LBMarderWM extends Brigade("lb-marder-wehrmacht", "Marder III", Wehrmacht, 1, $(MarderCallIn), |(MarderIII), |(Cost(2, 0, 3)))
+case object LBPanzerwerfer extends Brigade("lb-panzerwerfer", "Panzerwerfer", Wehrmacht, 1, $(PanzerwerferCallIn), |(Panzerwerfer), |(Cost(1, 0, 4)))
+case object LBTigerAce extends Brigade("lb-tiger-ace", "Tiger Ace", Wehrmacht, 4, $(TigerAceCallIn), |(TigerAceTank), |(Cost(3, 0, 5)))
+case object LBPPShGuards extends Brigade("lb-ppsh-guards", "PPSh-41 SMG Airborne Guards", Soviet, 3, $(PPShGuardsSpawn), |(PPShGuards), |(Cost(5, 2, 0)))
+case object LBKatyusha extends Brigade("lb-katyusha", "Katyusha", Soviet, 1, $(KatyushaCallIn), |(Katyusha), |(Cost(1, 0, 4)))
+case object LBKV1 extends Brigade("lb-kv1", "KV-1 Heavy Tank", Soviet, 1, $(KV1CallIn), |(KV1), |(Cost(2, 0, 3)))
+case object LBCombatEngineers extends Brigade("lb-combat-engineers", "Combat Engineers", Soviet, 0, $(CombatEngineerSpawn), |(CombatEngineers), |(Cost(4, 0, 0)), 3)
+case object LBFG42 extends Brigade("lb-fg42", "FG42 Fallschirmjägers", OKW, 3, $(FG42Spawn), |(FG42Jager), |(Cost(5, 2, 0)))
+case object LBPrecisionLeFH extends Brigade("lb-precision-lefh", "Precision LeFH 18 Artillery", OKW, 1, $(PrecisionLeFHBrigade))
+case object LBMG34 extends Brigade("lb-mg34", "MG 34 Team", OKW, 0, $(MG34CallIn), |(MG34), |(Cost(4, 1, 0)), 1)
+case object LBCoastalReservesOKW extends Brigade("lb-coastal-reserves-okw", "Veteran Coastal Reserves", OKW, 2, $(CoastalReservesOKWCallIn), |(CoastalReservesOKW), |(Cost(4, 3, 0)))
+case object LBMarderOKW extends Brigade("lb-marder-okw", "Marder III", OKW, 1, $(MarderCallIn), |(MarderIII), |(Cost(2, 0, 3)))
+case object LBANZAC extends Brigade("lb-anzac", "ANZAC Light Infantry", British, 0, $(ANZACCallIn), |(ANZAC), |(Cost(4, 1, 0)), 1)
+case object LBDingo extends Brigade("lb-dingo", "Dingo", British, 1, $(DingoCallIn), |(Dingo), |(Cost(2, 0, 1)))
+case object LBM3Grant extends Brigade("lb-m3-grant", "M3 Grant", British, 2, $(M3GrantCallInPlain), |(M3Grant), |(Cost(1, 0, 4)))
+case object LBMatilda extends Brigade("lb-matilda", "Matilda II", British, 1, $(MatildaCallIn), |(MatildaII), |(Cost(2, 0, 3)))
+case object LBPolishLancers extends Brigade("lb-polish-lancers", "Polish Lancer Section", British, 0, $(PolishLancerCallInPlain), |(PolishLancer), |(Cost(4, 1, 0)), 1)
+case object LBStuartHoney extends Brigade("lb-stuart-honey", "M3 Stuart \"Honey\"", British, 1, $(StuartHoneyCallIn), |(Stuart), |(Cost(2, 0, 3)))
+case object LBBlackPrince extends Brigade("lb-black-prince", "Black Prince Churchill", British, 3, $(BlackPrinceCallInPlain), |(BlackPrince), |(Cost(3, 0, 5)))
+case object LBCanadianShock extends Brigade("lb-canadian-shock", "Canadian Shock Troops", British, 1, $(CanadianShockCallIn), |(CanadianShock), |(Cost(4, 1, 0)))
+case object LBLandMattress extends Brigade("lb-land-mattress", "Land Mattress", British, 1, $(LandMattressCallIn), |(LandMattress), |(Cost(5, 0, 1)))
+
 object Brigade {
     val all = $[Brigade](
         LBAssaultEngineers, LBCavalryRiflemen, LBVeteranDevils, LBUSMGBunker, LBParadropEquipment, LBEasyEight,
@@ -141,14 +169,21 @@ object Brigade {
         LBCommandPantherUS, LBCommandPantherWM, LBCommandPantherBR, LBCommandPantherSU, LBCommandPantherOKW,
         LBDAKHowitzer, LBDAKArtillery, LBDAKBersaglieri, LBDAKElefant, LBDAKGuastatori, LBDAKKradschutzen, LBDAKL640, LBDAKMarder,
         LBDAKNebelwerfer, LBDAKPanzerpioneer, LBDAKSemovente, LBDAKStormtroopers, LBDAKStuG, LBDAKCoastalReserves, LBDAKFlammpanzer,
-        LBDAKTankBusters, LBCommandPantherDAK)
+        LBDAKTankBusters, LBCommandPantherDAK) ++ printing
 
-    // a faction's deck: its twelve and its Command Panther
-    def of(f : Faction) = all.%(_.faction == f.base)
+    // the 3rd printing's new ones of the core factions (the setup's ThirdPrintingBrigades)
+    lazy val printing = $[Brigade](
+        LBArtilleryObservers, LBM3Lee, LBPathfinders, LBRangers, LBCommandPanzerIV, LBMarderWM, LBPanzerwerfer, LBTigerAce,
+        LBPPShGuards, LBKatyusha, LBKV1, LBCombatEngineers, LBFG42, LBPrecisionLeFH, LBMG34, LBCoastalReservesOKW, LBMarderOKW,
+        LBANZAC, LBDingo, LBM3Grant, LBMatilda, LBPolishLancers, LBStuartHoney, LBBlackPrince, LBCanadianShock, LBLandMattress)
+
+    // a faction's deck: its twelve and its Command Panther, and with the 3rd printing toggle its new ones
+    def of(f : Faction, options : $[BaseOption]) = all.%(_.faction == f.base).%(b => options.has(ThirdPrintingBrigades) || printing.has(b).not)
 
     // the starting Infantry a brigade gives
     def startUnit(b : Brigade) : |[UnitType] = b @@ {
         case LBStG44Volks => |(StG44Volksgrenadiers)
+        case LBRangers => |(Riflemen)
         case _ => (b.starting > 0).?(b.unit).|(None)
     }
 }
@@ -159,4 +194,12 @@ case object LostBrigades extends GameOption with ToggleOption {
     def valueOn = "Lost Brigade Building Extensions".hl
     override val explain = $[Elem]("Each player draws three of their faction's Lost Brigades (its twelve and the Command Panther) and may pick one, once, for its XP: its units need no Tier Building. Those of 0 XP may be picked at the start, some giving starting Infantry (Full Game Rules only).".txt)
     override def required(all : $[BaseOption]) = $($(FullGameRules))
+}
+
+// the 3rd printing's new Lost Brigades of the core factions, shuffled in with the others (2026-11-28; only with the Lost Brigades)
+case object ThirdPrintingBrigades extends GameOption with ToggleOption {
+    val group = "3rd printing".txt
+    def valueOn = "New Lost Brigades".hl
+    override val explain = $[Elem]("The players' Lost Brigade decks also hold the 3rd printing's new Lost Brigades of the core factions (from Bad Crow's change sheet: four or five for each faction).".txt)
+    override def required(all : $[BaseOption]) = $($(LostBrigades))
 }

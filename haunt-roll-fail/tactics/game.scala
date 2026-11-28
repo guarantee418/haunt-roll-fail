@@ -343,7 +343,8 @@ object UnitType {
         PolishLancer, MatildaII, BlackPrince, CanadianShock, ANZAC, Dingo, LandMattress, LandMattressEmplacement,
         ForwardRepair, PanzerIVF1, Fallschirmjager, MG34, Gurkha, MedicalStation, M3CarriageMortar, M3CarriageMG, M3CarriageAT,
         P47AntiTank, P47Bomber, P47Recon, StukaAntiTankWM, StukaBomberWM, StukaReconWM, IL2Bomber, IL2AntiTank, IL2Recon,
-        StukaAntiTankOKW, StukaBomberOKW, StukaReconOKW, TyphoonBomber, TyphoonAntiTank, TyphoonRecon, StukaAntiTankDAK, StukaBomberDAK, StukaReconDAK)
+        StukaAntiTankOKW, StukaBomberOKW, StukaReconOKW, TyphoonBomber, TyphoonAntiTank, TyphoonRecon, StukaAntiTankDAK, StukaBomberDAK, StukaReconDAK,
+        TigerAceTank, KV1, PPShGuards, FG42Jager, CoastalReservesOKW)
 
     // the Wehrmacht units the OKW's expansion Commanders bring too (the StuG Pack's shared Commanders, and the ECC's King Tiger and
     // Jagdpanther): an OKW squad of the Wehrmacht's type, drawn with its own token
@@ -635,7 +636,7 @@ case object SchwererHQ extends UnitType("Schwerer Panzer HQ", OKW, 3, Emplacemen
 case object Flak37 extends UnitType("Flak 37", OKW, 1, Emplacement, 2, 1, 3, $(ai, ai), Cost(0, 4, 0), $) {
     override def antiAir = true
     override def id = "flak"
-    override def builtBy = $(Sturmpioneers)
+    override def builtBy = $(Sturmpioneers, CoastalReservesOKW)
 }
 
 // DAK HEADQUARTERS 1 (2026-11-27, read off the change sheet's boards)
@@ -865,12 +866,12 @@ case object Puma extends UnitType("Puma", OKW, 2, LightVehicle, 3, 1, 3, $(ap, a
 case object LeFH18 extends UnitType("LeFH 18 Artillery", OKW, 1, Emplacement, 3, 1, 5, $(heIndirect, heIndirect), Cost(0, 4, 0), $) {
     override def id = "lefh18"
     override def commander = true
-    override def builtBy = $(Sturmpioneers)
+    override def builtBy = $(Sturmpioneers, CoastalReservesOKW)
 }
 case object OKWPak43 extends UnitType("Pak 43 Emplacement", OKW, 1, Emplacement, 3, 1, 4, $(ap, ap, ap), Cost(4, 0, 0), $) {
     override def id = "okw-pak43"
     override def commander = true
-    override def builtBy = $(Sturmpioneers)
+    override def builtBy = $(Sturmpioneers, CoastalReservesOKW)
     override def innate = $(AddAttack(ap))
 }
 case object Kettenkrad extends UnitType("Kettenkrad", OKW, 1, LightVehicle, 1, 1, 0, $, Cost(2, 0, 1), $) {
@@ -1329,6 +1330,37 @@ case object StukaAntiTankDAK extends Aircraft(DAK, "Stuka JU-87", "Anti-Tank")
 case object StukaBomberDAK extends Aircraft(DAK, "Stuka JU-87", "Bomber")
 case object StukaReconDAK extends Aircraft(DAK, "Stuka JU-87", "Recon")
 
+// the 3rd printing's core Lost Brigades' own units (2026-11-28): the Tiger Ace (a Tiger for the limit), the KV-1 (the KV-8's model), the
+// PPSh-41 SMG Airborne Guards and FG42 Fallschirmjäger (dropped like Stormtroopers, one a round), and the OKW's Veteran Coastal Reserves
+case object TigerAceTank extends UnitType("Tiger Ace", Wehrmacht, 3, HeavyVehicle, 6, 1, 3, $(ap, ap, ap, ai), Cost(3, 0, 5), $) {
+    override def id = "tiger-ace"
+    override def commander = true
+    override def chassis = Tiger
+    override def defense = 1
+}
+case object KV1 extends UnitType("KV-1 Heavy Tank", Soviet, 3, HeavyVehicle, 5, 1, 2, $(ai, ap), Cost(2, 0, 3), $) {
+    override def id = "kv1"
+    override def commander = true
+    override def chassis = KV8
+    override def slow = 1
+}
+case object PPShGuards extends UnitType("PPSh-41 SMG Airborne Guards", Soviet, 1, Infantry, 4, 1, 2, $(ai, ai, ai), Cost(5, 2, 0), $) {
+    override def id = "ppsh-guards"
+    override def commander = true
+    override def close = 2
+}
+case object FG42Jager extends UnitType("FG42 Fallschirmjäger", OKW, 1, Infantry, 3, 1, 3, $(ai, ai), Cost(5, 2, 0), Volksgrenadiers.upgrades) {
+    override def id = "fg42"
+    override def commander = true
+    override def sight = 3
+}
+case object CoastalReservesOKW extends UnitType("Veteran Coastal Reserves", OKW, 1, Infantry, 5, 1, 2, $(ai, ai, ap), Cost(4, 3, 0), $) {
+    override def id = "coastal-reserves"
+    override def commander = true
+    override def close = 1
+    override def wrenches = 2
+}
+
 object Aircraft {
     def of(f : Faction) : $[Aircraft] = UnitType.all.collect { case a : Aircraft if a.faction == f.base => a }
 }
@@ -1684,6 +1716,7 @@ case class OpDrawAction(f : Faction) extends ForcedAction
 case class OpPickAction(self : Faction, card : OpCard, upper : Boolean) extends BaseAction("Operation", "(the other team learns only top or bottom)".spn(styles.small))(Image(card.image, styles.opCard) ~ " " ~ upper.?("Top").|("Bottom").hl ~ ": " ~ card.turns(upper).hlb ~ " turns", ("(" + Operations.side(upper) + ")").spn(styles.small))
 
 // facing: a Heavy Vehicle always faces a hex side; a Weapon Team picks one when it sets up
+case class ObserverSpawnAction(self : Faction, squad : Squad, yes : Boolean) extends BaseAction(squad, "spawned in", (g : Game) => g.where(squad).elem)(yes.?("As an Artillery Observer").|("As a Jeep"))
 case class SpawnFaceAction(self : Faction, squad : Squad, edge : Int) extends BaseAction(squad, "spawned in", (g : Game) => g.where(squad).elem, "faces")(Facing.elem(edge))
 case class SetUpFacingAction(self : Faction, squad : Squad, edge : Int, k : Int) extends BaseAction(squad, "in", (g : Game) => g.where(squad).elem, "sets up to fire", (g : Game) => g.costNote(squad, 1), "facing")(Facing.elem(edge))
 // a Heavy Vehicle's CP: forward or backward, rotating one hex side before or after, or rotating in place (the path is then only its own hex)
@@ -2387,10 +2420,15 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         val building = brigadeUnit(f, t).?($[Hex]()).|(((t.tier >= 2).??(tierBuildingOf(f, t.tier).$) ++ (t == Obersoldaten && unlocked(f, TerrorWestOber)).??(tierBuildingOf(f, 2).$))./~(u => Board.neighbors(where(u)).%(n => Board.joined(where(u), n) && terrainAt(n) != Water && occupant(n).none)))
         // the Soviet Forward Station: Vehicles next to it
         val station = t.vehicle.??(units(f).%(u => u.utype == ForwardStation || u.utype == ForwardRepair)./~(u => Board.neighbors(where(u)).%(n => Board.joined(where(u), n) && terrainAt(n) != Water && occupant(n).none)))
+        // the M1919A6 LMG Paratrooper Beacon: Riflemen next to a Pathfinder Squad
+        val lmg = (t == Riflemen && unlocked(f, PathfinderLMGBeacon)).??(units(f).%(u => u.utype == Pathfinder && isPassenger(u).not)./~(u => Board.neighbors(where(u)).%(n => Board.joined(where(u), n) && terrainAt(n) != Water && occupant(n).none)))
         if (t == Stormtroopers || t == AIPartisans || t == ATPartisans)
             stormHexes(f)
         else
-            (area ++ transports ++ major ++ building ++ station).distinct.%(h => t.vehicle.not || inBuilding(h).not)
+        if (t == PPShGuards || t == FG42Jager)
+            dropHexes(f)
+        else
+            (area ++ transports ++ major ++ building ++ station ++ lmg).distinct.%(h => t.vehicle.not || inBuilding(h).not)
     }
 
     // OKW's Tier Buildings on the map
@@ -2587,7 +2625,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             wire.contains(where(u)).not.$(DigInAction(f, u, true, k)) ++ (traps.contains(where(u)).not && Board.traps.has(where(u)).not).$(DigInAction(f, u, false, k))) ++
         // Disruption Beacons: an Infantry's first CP for Camouflage this round, for 2 Munitions, in place of moving
         // the Matilda II: after a CP, onto an adjacent Control Point for free
-        (full && u.utype == MatildaII && cp.getOrElse(u, 0) >= 1 && raided.contains(u).not && mayMove(u) && isPassenger(u).not && assaults.contains(u).not).??(
+        (full && (u.utype == MatildaII || u.utype == KV1) && cp.getOrElse(u, 0) >= 1 && raided.contains(u).not && mayMove(u) && isPassenger(u).not && assaults.contains(u).not).??(
             Board.neighbors(where(u)).%(h => Board.points.contains(h) && Board.joined(where(u), h) && barred(where(u), h).not && occupant(h).none && standing(h).none && canEnter(u, h))./(h => MatildaPointAction(f, u, h, k))) ++
         // Seek Vengeance: a Polish Lancer drops to the ground, +1 Range this round
         (u.utype == PolishLancer && unlocked(f, SeekVengeance) && paidLeft(u) >= 1 && isPassenger(u).not && mayMove(u) && assaults.contains(u).not).$(VengeanceAction(f, u, k)) ++
@@ -3086,7 +3124,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         (unlocked(u.faction, TigerAce) && u.utype == Tiger).$((32, Slot(true, 2, $(RangeUp)))) ++
         (unlocked(u.faction, TankBusterKit) && u.kind == Infantry).$((33, Slot(false, 3, $(BusterKit)))) ++
         (u.utype == SSFCanadian).$((34, Slot(false, 0, $(AddAttack(UnitType.ai), AddAttack(UnitType.ap))))) ++
-        ((unlocked(u.faction, PrecisionStrike) || unlocked(u.faction, PrecisionStrikeLeFH)) && (u.utype == StukaHalftrack || u.utype == LeFH18) && has(u, SplashUp).not).$((35, Slot(true, 1, $(PrecisionUp)))) ++
+        ((unlocked(u.faction, PrecisionStrike) || unlocked(u.faction, PrecisionStrikeLeFH) || (unlocked(u.faction, PrecisionLeFHBrigade) && u.utype == LeFH18)) && (u.utype == StukaHalftrack || u.utype == LeFH18) && has(u, SplashUp).not).$((35, Slot(true, 1, $(PrecisionUp)))) ++
         (unlocked(u.faction, OKWCoastalReserves) && u.utype == Sturmpioneers).$((31, Slot(true, 2, $(HealthTwo)))) ++
         (u.utype == PolishLancer).$((36, Slot(true, 3, $(AddAttacks(UnitType.ap))))) ++
         (u.utype == Gurkha).$((42, Slot(false, 3, $(GurkhaRecon, GurkhaShock)))) ++
@@ -3142,6 +3180,14 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         val d = (tier == 3 && unlocked(f, GermanIndustry)).?(Cost(c.mp, c.mun, max(0, c.fuel - 2))).|(c)
         (tier == 3 && unlocked(f, TerrorWestOber)).?(Cost(max(0, d.mp - 1), d.mun, d.fuel)).|(d)
     }
+
+    // the units of the 3rd printing's core Lost Brigades (apart from `calledIn`, whose chain is long)
+    def printingCalledIn(f : Faction) : $[UnitType] =
+        (unlocked(f, PathfinderLMGBeacon) && unlocked(f, PathfinderSquads).not).$(Pathfinder) ++ unlocked(f, TigerAceCallIn).$(TigerAceTank) ++
+        (unlocked(f, PPShGuardsSpawn) && usedIn.get((f, PPShGuardsSpawn)).has(round).not).$(PPShGuards) ++ unlocked(f, KV1CallIn).$(KV1) ++
+        (unlocked(f, FG42Spawn) && usedIn.get((f, FG42Spawn)).has(round).not).$(FG42Jager) ++ unlocked(f, CoastalReservesOKWCallIn).$(CoastalReservesOKW) ++
+        (unlocked(f, MG34CallIn) && unlocked(f, MG34CallInFree).not).$(MG34) ++ (unlocked(f, BlackPrinceCallInPlain) && unlocked(f, BlackPrinceCallIn).not).$(BlackPrince) ++
+        (unlocked(f, PrecisionLeFHBrigade) && unlocked(f, LeFH18Ability).not && unlocked(f, VeteranLeFH).not).$(LeFH18)
 
     // the Commander units a faction may buy
     def calledIn(f : Faction) : $[UnitType] =
@@ -3221,6 +3267,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         unlocked(f, PanzerwerferCallIn).$(Panzerwerfer) ++ unlocked(f, KatyushaCallIn).$(Katyusha) ++
         ((unlocked(f, TigerCallInPlain) || unlocked(f, TigerAce)) && unlocked(f, TigerCallIn).not).$(Tiger) ++
         ((unlocked(f, StuGCallInDAK) || unlocked(f, StuGCallInFreeDAK) || unlocked(f, TargetWeakPointDAK)) && unlocked(f, StuGCallIn).not && unlocked(f, StuGCallInFree).not && unlocked(f, TargetWeakPoint).not).$(StuG) ++
+        // the 3rd printing core Lost Brigades' units
+        printingCalledIn(f) ++
         // the plane unlocked (3rd printing)
         planeOf.get(f).$ ++
         // the DAK Lost Brigades' units
@@ -3564,7 +3612,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                     Shuffle[Commander](Commander.pool(setup(0), options), CommandersShuffledAction(setup(0), _))
                 else
                 if (brigades)
-                    Shuffle[Brigade](Brigade.of(setup(0)), BrigadesShuffledAction(setup(0), _))
+                    Shuffle[Brigade](Brigade.of(setup(0), options), BrigadesShuffledAction(setup(0), _))
                 else
                     Roll[Face]((3 * teams.num).times(Face.die), FirstRolledAction(_))
 
@@ -3574,7 +3622,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 log(f, "drew three Commanders")
                 setup.dropWhile(_ != f).drop(1).starting match {
                     case Some(e) => Shuffle[Commander](Commander.pool(e, options), CommandersShuffledAction(e, _))
-                    case None if brigades => Shuffle[Brigade](Brigade.of(setup(0)), BrigadesShuffledAction(setup(0), _))
+                    case None if brigades => Shuffle[Brigade](Brigade.of(setup(0), options), BrigadesShuffledAction(setup(0), _))
                     case None => Roll[Face]((3 * teams.num).times(Face.die), FirstRolledAction(_))
                 }
 
@@ -3583,7 +3631,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 brigadesDrawn += f -> l.take(3)
                 log(f, "drew three Lost Brigades")
                 setup.dropWhile(_ != f).drop(1).starting match {
-                    case Some(e) => Shuffle[Brigade](Brigade.of(e), BrigadesShuffledAction(e, _))
+                    case Some(e) => Shuffle[Brigade](Brigade.of(e, options), BrigadesShuffledAction(e, _))
                     case None => Roll[Face]((3 * teams.num).times(Face.die), FirstRolledAction(_))
                 }
 
@@ -4841,6 +4889,16 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 }
                 if (t == Stormtroopers)
                     usedIn += (f, StormtrooperSpawn) -> round
+                // PPSh-41 SMG Airborne Guards and FG42 Fallschirmjäger: Double Slow the first round, one a round
+                if (t == PPShGuards || t == FG42Jager) {
+                    usedIn += (f, (t == PPShGuards).?(PPShGuardsSpawn).|(FG42Spawn)) -> round
+                    slowed += u -> (round + 1)
+                    doubleSlow += u
+                }
+                // the M1919A6 LMG Paratrooper Beacon: Riflemen spawned next to a Pathfinder take a Range upgrade
+                if (t == Riflemen && unlocked(f, PathfinderLMGBeacon) && Board.spawn(team(f)).has(h).not && units(f).exists(p => p.utype == Pathfinder && isPassenger(p).not && Board.adjacent(where(p), h))) {
+                    bought += u -> (bought.getOrElse(u, $[Bought]()) :+ Bought(44, RangeUp))
+                }
                 log(f, "spawned", u, "in", h, "for", c.elem)
                 // Osttruppen (and the Canadian Shock Troops): two squads for one
                 if (t == Osttruppen || t == CanadianShock) {
@@ -4857,11 +4915,22 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                         FreeNextAction(f)
                 }
                 else
+                // the Artillery Observers Lost Brigade: a Jeep may spawn as an Artillery Observer
+                if (t == Jeep && unlocked(f, ArtilleryObserverSpawn))
+                    Ask(f).add(ObserverSpawnAction(f, u, true)).add(ObserverSpawnAction(f, u, false))
+                else
                 // in the Full Game Rules a Heavy Vehicle (and a plane) faces a hex side
                 if (full && (t.kind == HeavyVehicle || t.kind == Plane))
                     Ask(f).each(0.until(6).$)(e => SpawnFaceAction(f, u, e))
                 else
                     PurchaseNextAction(f)
+
+            case ObserverSpawnAction(f, u, yes) =>
+                if (yes) {
+                    bought += u -> (bought.getOrElse(u, $[Bought]()) :+ Bought(43, ObserverUp))
+                    log(u, "is an Artillery Observer")
+                }
+                PurchaseNextAction(f)
 
             case SpawnFaceAction(f, u, e) =>
                 facing += u -> e

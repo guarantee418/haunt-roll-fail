@@ -12,12 +12,12 @@ import hrf.logger._
 
 // Headless bot games on the JVM (see HANDOFF.md): `sbt "runMain tactics.Host"`, TACTICS_GAMES games of two Easy bots
 // (default 20), each checking that every recorded action writes and parses back. TACTICS_RULES=first plays the First Game Rules,
-// anything else the Full Game Rules (here, in Dump and in Replay), with Commanders unless TACTICS_COMMANDERS=0; TACTICS_MAP=<id> plays that mission's map (moro, don, rivers, ardennes, frozen, moscow, moroffa); TACTICS_FACTIONS=BR,OKW (US, WM, BR, SU, OKW) the factions; TACTICS_EXPANSION=1 adds the expansion Commanders, TACTICS_BRIGADES=1 the Lost Brigades (TACTICS_BRIGADE=<id> forcing one), TACTICS_OPTIONAL=1 the optional Modular Bunkers, TACTICS_BARRICADES=1 and TACTICS_BLITZ=1 and TACTICS_PLANES=1 the 3rd printing's Barricades, Blitz Cubes and Planes, TACTICS_PRINTING=1 its new Commanders (TACTICS_COMMANDER=<id> forcing one).
+// anything else the Full Game Rules (here, in Dump and in Replay), with Commanders unless TACTICS_COMMANDERS=0; TACTICS_MAP=<id> plays that mission's map (moro, don, rivers, ardennes, frozen, moscow, moroffa); TACTICS_FACTIONS=BR,OKW (US, WM, BR, SU, OKW) the factions; TACTICS_EXPANSION=1 adds the expansion Commanders, TACTICS_BRIGADES=1 the Lost Brigades (TACTICS_BRIGADE=<id> forcing one), TACTICS_OPTIONAL=1 the optional Modular Bunkers, TACTICS_BARRICADES=1 and TACTICS_BLITZ=1 and TACTICS_PLANES=1 the 3rd printing's Barricades, Blitz Cubes and Planes, TACTICS_PRINTING=1 its new Commanders (TACTICS_COMMANDER=<id> forcing one) and Lost Brigades.
 object Rules {
     // TACTICS_FACTIONS=BR,OKW plays those two (the first goes first in the seating); US and Wehrmacht by default
     def factions : $[Faction] = sys.env.get("TACTICS_FACTIONS")./(_.split(",").toList./(x => Meta.parseFaction(x).get)).|($(US, Wehrmacht))
 
-    def options : $[Meta.O] = (sys.env.get("TACTICS_RULES") == Some("first")).?($[Meta.O]()).|($[Meta.O](FullGameRules) ++ (sys.env.get("TACTICS_COMMANDERS") != Some("0")).$(DrawCommanders)) ++ MapChoice.all.%(_.map.id == sys.env.getOrElse("TACTICS_MAP", "")) ++ (sys.env.get("TACTICS_EXPANSION") == Some("1")).$(ExpansionCommanders) ++ (sys.env.get("TACTICS_BRIGADES") == Some("1")).$(LostBrigades) ++ (sys.env.get("TACTICS_OPTIONAL") == Some("1")).$(OptionalMapFeatures) ++ (sys.env.get("TACTICS_BARRICADES") == Some("1")).$(Barricades) ++ (sys.env.get("TACTICS_BLITZ") == Some("1")).$(BlitzCubes) ++ (sys.env.get("TACTICS_PLANES") == Some("1")).$(Planes) ++ (sys.env.get("TACTICS_PRINTING") == Some("1")).$(ThirdPrintingCommanders) ++ $(TeamRetreatPoints)
+    def options : $[Meta.O] = (sys.env.get("TACTICS_RULES") == Some("first")).?($[Meta.O]()).|($[Meta.O](FullGameRules) ++ (sys.env.get("TACTICS_COMMANDERS") != Some("0")).$(DrawCommanders)) ++ MapChoice.all.%(_.map.id == sys.env.getOrElse("TACTICS_MAP", "")) ++ (sys.env.get("TACTICS_EXPANSION") == Some("1")).$(ExpansionCommanders) ++ (sys.env.get("TACTICS_BRIGADES") == Some("1")).$(LostBrigades) ++ (sys.env.get("TACTICS_OPTIONAL") == Some("1")).$(OptionalMapFeatures) ++ (sys.env.get("TACTICS_BARRICADES") == Some("1")).$(Barricades) ++ (sys.env.get("TACTICS_BLITZ") == Some("1")).$(BlitzCubes) ++ (sys.env.get("TACTICS_PLANES") == Some("1")).$(Planes) ++ (sys.env.get("TACTICS_PRINTING") == Some("1")).$(ThirdPrintingCommanders, ThirdPrintingBrigades) ++ $(TeamRetreatPoints)
 }
 
 object Host extends hrf.host.BaseHost {
@@ -57,8 +57,19 @@ object Host extends hrf.host.BaseHost {
     // the three drawn (alone, so no other is taken first) and takes its tiers whenever it may
     val commander = sys.env.get("TACTICS_COMMANDER")./(id => Commander.all.find(_.id == id).get)
 
-    // the forced Commander alone among those drawn (Replay does the same after each action, so its moves validate)
-    def forceDraw(g : G) = commander.foreach { c =>
+    // the forced Commander alone among those drawn, and the forced Lost Brigade among those drawn (Replay does the same after each
+    // action, so its moves validate)
+    def forceDraw(g : G) : Unit = {
+        brigade.foreach { b =>
+            g.setup.%(_.base == b.faction).foreach { f =>
+                if (g.brigadeOf.contains(f).not && g.brigadesDrawn.get(f).exists(_.has(b).not))
+                    g.brigadesDrawn += f -> (b +: g.brigadesDrawn(f).drop(1))
+            }
+        }
+        forceCommander(g)
+    }
+
+    def forceCommander(g : G) = commander.foreach { c =>
         g.setup.%(_.base == c.faction).foreach { f =>
             if (g.commanderOf.contains(f).not && g.drawn.get(f).exists(_ != $(c))) {
                 g.drawn += f -> $(c)
@@ -88,8 +99,7 @@ object Host extends hrf.host.BaseHost {
         case SpawnAction(_, t, _) => force.contains("Unit:" + t.id)
         case _ => false
     })))) || brigade.%(_.faction == f.base)./~{ b =>
-        if (g.brigadeOf.contains(f).not && g.brigadesDrawn.get(f).exists(_.has(b).not))
-            g.brigadesDrawn += f -> (b +: g.brigadesDrawn(f).drop(1))
+        forceDraw(g)
         val units = b.unit.any.?(b.unit.$).|(g.calledIn(f).%(t => t.builtBy.any))
         g.explode(actions, false, None).find {
             case BrigadePickAction(_, x) => x == b

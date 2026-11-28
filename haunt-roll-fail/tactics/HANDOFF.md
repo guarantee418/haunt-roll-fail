@@ -140,8 +140,10 @@ booklet's pictures (pages 9 and 10). Moro River's first rows had the bridge poin
     `TACTICS_XP=n` and `TACTICS_MUN=n` (a head start for that player) and `TACTICS_FORCE=<action kinds>` (also `Aircraft`, `Unit:<id>`,
     `Effect:<effect>`). On 2026-11-28 every new Commander was played that way, its dumps replaying valid; the M3 Carriage merge was
     checked by hand, as the bots make every Jeep a Veteran Observer first.
-  To do, all on the sheet: the core factions' new Lost Brigades (pictures
-  69 to 94: US 69-72, Wehrmacht 73-76, Soviet 77-80, OKW 81-85, British 86-94); Troop Transports (boats, cards 133-138); the Black Gold
+  The core factions' 26 new Lost Brigades (pictures 69 to 94) are the setup's `ThirdPrintingBrigades` (`Brigade.printing`, `Brigade.of`
+  takes the options; cards and the five new units' tokens by `tools/core-brigade-art.py`); `TACTICS_PRINTING=1` turns them on in
+  `tactics.Host` too, and `TACTICS_BRIGADE=<id>` forces one (Replay forces it the same way, `Host.forceDraw`).
+  To do, all on the sheet: Troop Transports (boats, cards 133-138); the Black Gold
   and Twin Beaches
   panels (Fortifications, Anchors, Shorelines, permanent barbed wire) and 17 1v1 scenarios. The sheet's 15
   new boards for the five core factions are, compared pixel by pixel on 2026-11-27, the very boards the site already plays (the mod
